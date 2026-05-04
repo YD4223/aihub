@@ -17,7 +17,8 @@
     "crawl:latest": "tsx src/scripts/latest-tools-crawler.ts",
     "crawl:itc": "tsx src/scripts/itc-crawler.ts",
     "crawl:github": "tsx src/scripts/github-trending-crawler.ts",
-    "update-data": "tsx src/scripts/update-data.ts"
+    "update-data": "tsx src/scripts/update-data.ts",
+    "vercel-build": "prisma generate && next build"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
@@ -37,7 +38,6 @@
     "nodemailer": "^8.0.7",
     "postcss": "^8.4.32",
     "prisma": "^5.7.0",
-    "puppeteer": "^21.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rss-parser": "^3.13.0",
@@ -54,6 +54,7 @@
     "@types/react-dom": "^18.2.18",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
+    "puppeteer": "^21.6.1",
     "tsx": "^4.21.0",
     "typescript": "^5.3.3"
   }
