@@ -75,25 +75,23 @@ function timeAgo(dateStr: string): string {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>('tools')
-  // 权限检查
+  // 权限检查：非管理员直接显示空白
   const [authChecked, setAuthChecked] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   
   useEffect(() => {
     const userStr = localStorage.getItem('user')
     if (!userStr) {
-      window.location.href = '/login?redirect=/admin'
+      setAuthChecked(true)
       return
     }
     try {
       const user = JSON.parse(userStr)
       if (user.role === 'ADMIN') {
         setIsAdmin(true)
-      } else {
-        window.location.href = '/'
       }
     } catch {
-      window.location.href = '/login?redirect=/admin'
+      // ignore
     } finally {
       setAuthChecked(true)
     }
