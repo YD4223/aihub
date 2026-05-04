@@ -47,6 +47,9 @@ full-audit.js
 
 # Migration helper scripts
 fix-*.py
+export-*.py
+migrate-*.sql
+full-migrate.sql
 
 # WorkBuddy / CodeBuddy metadata
 .workbuddy/
