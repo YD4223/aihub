@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
         ${description || null}, 
         ${reporterId || null}, 
         'pending',
-        datetime('now'), 
-        datetime('now')
+        NOW(), 
+        NOW()
       )
     `
 

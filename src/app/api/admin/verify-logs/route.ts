@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // 查询数据（sentAt 用 strftime 转为标准字符串，避免 DateTime 解析成空对象）
     const rawLogs = await prisma.$queryRawUnsafe(
       `SELECT id, email, ipAddress, userAgent,
-              strftime('%Y-%m-%dT%H:%M:%S', sentAt) as sentAt,
+              to_char(sentAt, 'YYYY-MM-DD\"T\"HH24:MI:SS') as sentAt,
               success, reason
        FROM verification_logs ${whereClause}
        ORDER BY sentAt DESC

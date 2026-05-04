@@ -82,7 +82,7 @@ export async function POST(
     // 创建评论到 comments 表，使用 toolId 字段
     await prisma.$executeRaw`
       INSERT INTO comments (content, userId, toolId, targetType, createdAt, updatedAt)
-      VALUES (${content.trim()}, ${userId}, ${toolId}, 'tool', datetime('now'), datetime('now'))
+      VALUES (${content.trim()}, ${userId}, ${toolId}, 'tool', NOW(), NOW())
     `
 
     // 获取刚创建的评论

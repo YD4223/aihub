@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     await prisma.$executeRaw`
       UPDATE users 
       SET avatarUrl = ${avatarUrl},
-          updatedAt = datetime('now')
+          updatedAt = NOW()
       WHERE id = ${parseInt(userId)}
     `
 
@@ -91,7 +91,7 @@ export async function DELETE(request: NextRequest) {
       await prisma.$executeRaw`
         UPDATE users 
         SET avatarUrl = NULL,
-            updatedAt = datetime('now')
+            updatedAt = NOW()
         WHERE id = ${parseInt(userId)}
       `
     }

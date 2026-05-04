@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
           notifyComment = ${settings.comment ? 1 : 0},
           notifyLike = ${settings.like ? 1 : 0},
           notifyFollow = ${settings.follow ? 1 : 0},
-          updatedAt = datetime('now')
+          updatedAt = NOW()
         WHERE id = ${parseInt(userId)}
       `
     } else if (type === 'privacy') {
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest) {
           showWebsite = ${settings.showWebsite ? 1 : 0},
           allowComment = ${settings.allowComment ? 1 : 0},
           showStats = ${settings.showStats ? 1 : 0},
-          updatedAt = datetime('now')
+          updatedAt = NOW()
         WHERE id = ${parseInt(userId)}
       `
     } else {

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       // 未关注 -> 关注
       await prisma.$executeRaw`
         INSERT INTO follows (followerId, followingId, createdAt)
-        VALUES (${parseInt(followerId)}, ${parseInt(followingId)}, datetime('now'))
+        VALUES (${parseInt(followerId)}, ${parseInt(followingId)}, NOW())
       `
       return NextResponse.json({ following: true, message: '关注成功' })
     }

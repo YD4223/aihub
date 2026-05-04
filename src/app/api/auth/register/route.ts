@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 设置邮箱验证时间（通过原生 SQL，绕过 Prisma Client 缓存问题）
-    await prisma.$executeRaw`UPDATE users SET emailVerified = datetime('now') WHERE id = ${user.id}`
+    await prisma.$executeRaw`UPDATE users SET emailVerified = NOW() WHERE id = ${user.id}`
 
     // 返回用户信息（不包含密码）
     const { password: _, ...userWithoutPassword } = user

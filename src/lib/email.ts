@@ -73,12 +73,12 @@ export function generateCode(): string {
 export async function saveVerificationCode(email: string, code: string): Promise<void> {
   // 清除该邮箱之前的失效验证码
   await prisma.$executeRawUnsafe(
-    `DELETE FROM verification_codes WHERE email = ? AND expiresAt < datetime('now')`,
+    `DELETE FROM verification_codes WHERE email = $1 AND expiresAt < NOW()`,
     email.toLowerCase()
   )
   // 插入新验证码
   await prisma.$executeRawUnsafe(
-    `INSERT INTO verification_codes (email, code, expiresAt, used, createdAt) VALUES (?, ?, datetime('now', '+5 minutes'), 0, datetime('now'))`,
+    `INSERT INTO verification_codes (email, code, expiresAt, used, createdAt) VALUES ($1, $2, NOW() + INTERVAL '5 minutes', 0, NOW())`,
     email.toLowerCase(), code
   )
 }
@@ -87,14 +87,14 @@ export async function saveVerificationCode(email: string, code: string): Promise
 export async function verifyCode(email: string, inputCode: string): Promise<boolean> {
   const result = await prisma.$queryRawUnsafe<Array<{ id: number }>>(
     `SELECT id FROM verification_codes 
-     WHERE email = ? AND code = ? AND used = 0 AND expiresAt > datetime('now')
+     WHERE email = $1 AND code = $2 AND used = 0 AND expiresAt > NOW()
      ORDER BY createdAt DESC LIMIT 1`,
     email.toLowerCase(), inputCode
   )
   if (!Array.isArray(result) || result.length === 0) return false
   // 标记为已使用（一次性验证码）
   await prisma.$executeRawUnsafe(
-    `UPDATE verification_codes SET used = 1 WHERE id = ?`,
+    `UPDATE verification_codes SET used = 1 WHERE id = $1`,
     result[0].id
   )
   return true

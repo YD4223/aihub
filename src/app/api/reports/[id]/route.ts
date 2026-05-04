@@ -45,8 +45,8 @@ export async function PATCH(
           UPDATE tools 
           SET status = 'suspended', 
               suspendedReason = ${suspendReason},
-              suspendedAt = datetime('now'),
-              updatedAt = datetime('now')
+              suspendedAt = NOW(),
+              updatedAt = NOW()
           WHERE id = ${targetId}
         `
       } else if (type === 'share') {
@@ -55,8 +55,8 @@ export async function PATCH(
           UPDATE shares 
           SET status = 'suspended', 
               suspendedReason = ${suspendReason},
-              suspendedAt = datetime('now'),
-              updatedAt = datetime('now')
+              suspendedAt = NOW(),
+              updatedAt = NOW()
           WHERE id = ${targetId}
         `
       } else if (type === 'comment' || type === 'share_comment') {
@@ -65,8 +65,8 @@ export async function PATCH(
           UPDATE comments 
           SET status = 'suspended', 
               suspendedReason = ${suspendReason},
-              suspendedAt = datetime('now'),
-              updatedAt = datetime('now')
+              suspendedAt = NOW(),
+              updatedAt = NOW()
           WHERE id = ${targetId}
         `
       }
@@ -78,9 +78,9 @@ export async function PATCH(
       SET 
         status = ${action},
         resolution = ${resolution || null},
-        resolvedAt = datetime('now'),
+        resolvedAt = NOW(),
         resolvedBy = ${adminId || null},
-        updatedAt = datetime('now')
+        updatedAt = NOW()
       WHERE id = ${reportId}
     `
 

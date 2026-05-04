@@ -47,7 +47,7 @@ export async function POST(
         UPDATE tools 
         SET status = ${status}, 
             isActive = ${isActive}, 
-            suspendedAt = datetime('now'), 
+            suspendedAt = NOW(), 
             suspendedReason = ${suspendedReason},
             suspendedBy = ${suspendedBy}
         WHERE id = ${toolId}
@@ -67,7 +67,7 @@ export async function POST(
         UPDATE tools 
         SET status = ${status}, 
             isActive = ${isActive}, 
-            reviewedAt = datetime('now'), 
+            reviewedAt = NOW(), 
             reviewNote = ${reviewNote}
         WHERE id = ${toolId}
       `

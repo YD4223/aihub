@@ -180,13 +180,13 @@ async function main() {
     const tool = allTools[i]
     await prisma.$executeRawUnsafe(
       `INSERT INTO tool_trend_histories (toolId, date, upvotes, viewCount, stars, rank, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
        ON CONFLICT(toolId, date) DO UPDATE SET
-         upvotes = excluded.upvotes,
-         viewCount = excluded.viewCount,
-         stars = excluded.stars,
-         rank = excluded.rank,
-         updatedAt = datetime('now')`,
+         upvotes = EXCLUDED.upvotes,
+         viewCount = EXCLUDED.viewCount,
+         stars = EXCLUDED.stars,
+         rank = EXCLUDED.rank,
+         updatedAt = NOW()`,
       tool.id, today, tool.upvotes, tool.viewCount, tool.stars, i + 1
     )
   }

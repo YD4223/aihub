@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest) {
         bio = ${bio || null},
         location = ${location || null},
         website = ${website || null},
-        updatedAt = datetime('now')
+        updatedAt = NOW()
       WHERE id = ${parseInt(userId)}
     `
 
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
       await prisma.$executeRaw`
         UPDATE users 
         SET avatarUrl = ${avatarUrl || null},
-            updatedAt = datetime('now')
+            updatedAt = NOW()
         WHERE id = ${parseInt(userId)}
       `
     }

@@ -68,13 +68,13 @@ export async function POST(
       // 回复评论
       await prisma.$executeRaw`
         INSERT INTO share_comments (content, userId, shareId, parentId, createdAt, updatedAt)
-        VALUES (${content.trim()}, ${userId}, ${shareId}, ${parentId}, datetime('now'), datetime('now'))
+        VALUES (${content.trim()}, ${userId}, ${shareId}, ${parentId}, NOW(), NOW())
       `
     } else {
       // 主评论
       await prisma.$executeRaw`
         INSERT INTO share_comments (content, userId, shareId, createdAt, updatedAt)
-        VALUES (${content.trim()}, ${userId}, ${shareId}, datetime('now'), datetime('now'))
+        VALUES (${content.trim()}, ${userId}, ${shareId}, NOW(), NOW())
       `
     }
 

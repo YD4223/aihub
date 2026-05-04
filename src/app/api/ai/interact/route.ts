@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       // 创建 AI 用户
       const newUser = await prisma.$queryRaw`
         INSERT INTO users (username, email, password, avatarUrl, role, createdAt, updatedAt)
-        VALUES ('AI助手', 'ai@aihub.local', 'ai-bot-password', '/avatars/ai-lobster.svg', 'BOT', datetime('now'), datetime('now'))
+        VALUES ('AI助手', 'ai@aihub.local', 'ai-bot-password', '/avatars/ai-lobster.svg', 'BOT', NOW(), NOW())
         RETURNING *
       `
       aiUser = newUser
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         // 记录 AI 互动
         await prisma.$executeRaw`
           INSERT INTO ai_interactions (targetType, targetId, action, aiUserId, createdAt)
-          VALUES (${targetType}, ${parseInt(targetId)}, 'like', ${aiUserId}, datetime('now'))
+          VALUES (${targetType}, ${parseInt(targetId)}, 'like', ${aiUserId}, NOW())
         `
 
         results.liked = true
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         if (targetType === 'share') {
           await prisma.$executeRaw`
             INSERT INTO share_comments (content, userId, shareId, createdAt, updatedAt)
-            VALUES (${aiResponse.reply}, ${aiUserId}, ${parseInt(targetId)}, datetime('now'), datetime('now'))
+            VALUES (${aiResponse.reply}, ${aiUserId}, ${parseInt(targetId)}, NOW(), NOW())
           `
         } else if (targetType === 'share_comment') {
           // 回复评论时，需要找到对应的 shareId
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
           if (shareId) {
             await prisma.$executeRaw`
               INSERT INTO share_comments (content, userId, shareId, parentId, createdAt, updatedAt)
-              VALUES (${aiResponse.reply}, ${aiUserId}, ${shareId}, ${parseInt(targetId)}, datetime('now'), datetime('now'))
+              VALUES (${aiResponse.reply}, ${aiUserId}, ${shareId}, ${parseInt(targetId)}, NOW(), NOW())
             `
           }
         } else if (targetType === 'comment') {
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           if (toolId) {
             await prisma.$executeRaw`
               INSERT INTO comments (content, userId, toolId, parentId, targetType, createdAt, updatedAt)
-              VALUES (${aiResponse.reply}, ${aiUserId}, ${toolId}, ${parseInt(targetId)}, 'tool', datetime('now'), datetime('now'))
+              VALUES (${aiResponse.reply}, ${aiUserId}, ${toolId}, ${parseInt(targetId)}, 'tool', NOW(), NOW())
             `
           }
         }
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         // 记录 AI 互动
         await prisma.$executeRaw`
           INSERT INTO ai_interactions (targetType, targetId, action, content, aiUserId, createdAt)
-          VALUES (${targetType}, ${parseInt(targetId)}, 'reply', ${aiResponse.reply}, ${aiUserId}, datetime('now'))
+          VALUES (${targetType}, ${parseInt(targetId)}, 'reply', ${aiResponse.reply}, ${aiUserId}, NOW())
         `
 
         results.replied = true

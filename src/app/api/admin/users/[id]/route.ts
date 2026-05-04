@@ -52,11 +52,11 @@ export async function PATCH(
         UPDATE users 
         SET 
           status = 'banned',
-          bannedAt = datetime('now'),
+          bannedAt = NOW(),
           bannedUntil = ${bannedUntil ? bannedUntil.toISOString() : null},
           bannedReason = ${reason},
           bannedBy = ${adminId || null},
-          updatedAt = datetime('now')
+          updatedAt = NOW()
         WHERE id = ${userId}
       `
 
@@ -74,7 +74,7 @@ export async function PATCH(
           bannedUntil = null,
           bannedReason = null,
           bannedBy = null,
-          updatedAt = datetime('now')
+          updatedAt = NOW()
         WHERE id = ${userId}
       `
 

@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     
     const result = await prisma.$queryRaw`
       INSERT INTO shares (type, content, toolId, userId, images, video, status, likes, createdAt, updatedAt)
-      VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, 'pending', 0, datetime('now'), datetime('now'))
+      VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, 'pending', 0, NOW(), NOW())
       RETURNING *
     `
     const share = (result as any[])[0]
