@@ -21,36 +21,36 @@ export async function GET(request: NextRequest) {
       whereClause += ` AND s.type = 'life'`
     }
     if (toolId) {
-      whereClause += ` AND s.toolId = ${parseInt(toolId)}`
+      whereClause += ` AND s."toolId" = ${parseInt(toolId)}`
     }
     if (search) {
       const lowerSearch = search.toLowerCase()
       whereClause += ` AND (LOWER(s.content) LIKE '%${lowerSearch}%' OR LOWER(u.username) LIKE '%${lowerSearch}%' OR LOWER(t.name) LIKE '%${lowerSearch}%')`
     }
 
-    const orderBy = sort === 'hot' ? 's.likes DESC, s.createdAt DESC' : 's.createdAt DESC'
+    const orderBy = sort === 'hot' ? 's.likes DESC, s."createdAt" DESC' : 's."createdAt" DESC'
 
     // 获取分享列表 - 使用子查询避免GROUP BY问题
     const shares = await prisma.$queryRawUnsafe(`
       SELECT 
-        s.id, s.content, s.images, s.video, s.likes, s.status, s.type, s.createdAt, s.userId,
-        s.toolId, s.submitToolName, s.submitToolWebsite, s.submitToolDesc,
-        s.submitToolCategory, s.submitToolPricing, s.submitToolGithub, s.submitToolLogo,
-        u.username as userName,
-        u.avatarUrl as userAvatarUrl,
-        t.name as toolName,
-        t.slug as toolSlug,
-        t.shortDesc as toolShortDesc,
-        t.description as toolDescription,
-        t.websiteUrl as toolWebsiteUrl,
-        t.tags as toolTags,
-        c.name as categoryName,
-        c.slug as categorySlug,
-        (SELECT COUNT(*) FROM share_comments sc WHERE sc.shareId = s.id AND (sc.status IS NULL OR sc.status = 'approved')) as commentsCount
+        s.id, s.content, s.images, s.video, s.likes, s.status, s.type, s."createdAt", s."userId",
+        s."toolId", s."submitToolName", s."submitToolWebsite", s."submitToolDesc",
+        s."submitToolCategory", s."submitToolPricing", s."submitToolGithub", s."submitToolLogo",
+        u.username as "userName",
+        u."avatarUrl" as "userAvatarUrl",
+        t.name as "toolName",
+        t.slug as "toolSlug",
+        t."shortDesc" as "toolShortDesc",
+        t.description as "toolDescription",
+        t."websiteUrl" as "toolWebsiteUrl",
+        t.tags as "toolTags",
+        c.name as "categoryName",
+        c.slug as "categorySlug",
+        (SELECT COUNT(*) FROM share_comments sc WHERE sc."shareId" = s.id AND (sc.status IS NULL OR sc.status = 'approved')) as "commentsCount"
       FROM shares s
-      LEFT JOIN users u ON s.userId = u.id
-      LEFT JOIN tools t ON s.toolId = t.id
-      LEFT JOIN categories c ON t.categoryId = c.id
+      LEFT JOIN users u ON s."userId" = u.id
+      LEFT JOIN tools t ON s."toolId" = t.id
+      LEFT JOIN categories c ON t."categoryId" = c.id
       ${whereClause}
       ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${skip}
@@ -102,8 +102,8 @@ export async function GET(request: NextRequest) {
     // 获取总数
     const totalResult = await prisma.$queryRawUnsafe(`
       SELECT COUNT(*) as count FROM shares s
-      LEFT JOIN users u ON s.userId = u.id
-      LEFT JOIN tools t ON s.toolId = t.id
+      LEFT JOIN users u ON s."userId" = u.id
+      LEFT JOIN tools t ON s."toolId" = t.id
       ${whereClause}
     `)
     const total = Number((totalResult as any)[0].count)
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
     const toolIdValue = toolId ? parseInt(toolId) : null
     
     const result = await prisma.$queryRaw`
-      INSERT INTO shares (type, content, toolId, userId, images, video, status, likes, createdAt, updatedAt)
+      INSERT INTO shares (type, content, "toolId", "userId", images, video, status, likes, "createdAt", "updatedAt")
       VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, 'pending', 0, NOW(), NOW())
       RETURNING *
     `
