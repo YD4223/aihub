@@ -400,7 +400,21 @@ export default function ToolShareSection({ toolId, toolName, toolSlug, toolDesc 
                 )}
 
                 {/* 工具栏 */}
-                <div className="px-4 pb-3 border-t border-cyber-border pt-3">
+                <div className="px-4 pb-3 border-t border-cyber-border pt-3 space-y-2">
+                  {/* 热门话题 - 放在上面 */}
+                  <div className="flex gap-1.5 overflow-x-auto">
+                    {HOT_TOPICS.slice(0, 3).map(topic => (
+                      <button
+                        key={topic}
+                        onClick={() => addTopic(topic)}
+                        className="px-2 py-1 bg-neon-cyan/10 text-neon-cyan text-[11px] whitespace-nowrap hover:bg-neon-cyan/20 transition-colors font-mono flex-shrink-0"
+                        style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                  {/* 操作按钮和发布 */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <button
@@ -434,19 +448,6 @@ export default function ToolShareSection({ toolId, toolName, toolSlug, toolDesc 
                       {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       {isSubmitting ? '发布中...' : '发布'}
                     </button>
-                  </div>
-                  {/* 热门话题 - 单独一行 */}
-                  <div className="flex gap-1.5 mt-2 overflow-x-auto">
-                    {HOT_TOPICS.slice(0, 3).map(topic => (
-                      <button
-                        key={topic}
-                        onClick={() => addTopic(topic)}
-                        className="px-2 py-1 bg-neon-cyan/10 text-neon-cyan text-[11px] whitespace-nowrap hover:bg-neon-cyan/20 transition-colors font-mono flex-shrink-0"
-                        style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}
-                      >
-                        {topic}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
