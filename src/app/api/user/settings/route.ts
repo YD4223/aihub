@@ -65,12 +65,12 @@ export async function PUT(request: NextRequest) {
       await prisma.$executeRaw`
         UPDATE users 
         SET 
-          notifyEmail = ${settings.email ? 1 : 0},
-          notifySite = ${settings.site ? 1 : 0},
-          notifyComment = ${settings.comment ? 1 : 0},
-          notifyLike = ${settings.like ? 1 : 0},
-          notifyFollow = ${settings.follow ? 1 : 0},
-          updatedAt = NOW()
+          "notifyEmail" = ${settings.email ? 1 : 0},
+          "notifySite" = ${settings.site ? 1 : 0},
+          "notifyComment" = ${settings.comment ? 1 : 0},
+          "notifyLike" = ${settings.like ? 1 : 0},
+          "notifyFollow" = ${settings.follow ? 1 : 0},
+          "updatedAt" = NOW()
         WHERE id = ${parseInt(userId)}
       `
     } else if (type === 'privacy') {
@@ -78,13 +78,13 @@ export async function PUT(request: NextRequest) {
       await prisma.$executeRaw`
         UPDATE users 
         SET 
-          profilePublic = ${settings.profilePublic ? 1 : 0},
-          showEmail = ${settings.showEmail ? 1 : 0},
-          showLocation = ${settings.showLocation ? 1 : 0},
-          showWebsite = ${settings.showWebsite ? 1 : 0},
-          allowComment = ${settings.allowComment ? 1 : 0},
-          showStats = ${settings.showStats ? 1 : 0},
-          updatedAt = NOW()
+          "profilePublic" = ${settings.profilePublic ? 1 : 0},
+          "showEmail" = ${settings.showEmail ? 1 : 0},
+          "showLocation" = ${settings.showLocation ? 1 : 0},
+          "showWebsite" = ${settings.showWebsite ? 1 : 0},
+          "allowComment" = ${settings.allowComment ? 1 : 0},
+          "showStats" = ${settings.showStats ? 1 : 0},
+          "updatedAt" = NOW()
         WHERE id = ${parseInt(userId)}
       `
     } else {

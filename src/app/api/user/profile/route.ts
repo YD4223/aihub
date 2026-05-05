@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest) {
         bio = ${bio || null},
         location = ${location || null},
         website = ${website || null},
-        updatedAt = NOW()
+        "updatedAt" = NOW()
       WHERE id = ${parseInt(userId)}
     `
 
@@ -54,15 +54,15 @@ export async function PUT(request: NextRequest) {
     if (avatarUrl !== undefined) {
       await prisma.$executeRaw`
         UPDATE users 
-        SET avatarUrl = ${avatarUrl || null},
-            updatedAt = NOW()
+        SET "avatarUrl" = ${avatarUrl || null},
+            "updatedAt" = NOW()
         WHERE id = ${parseInt(userId)}
       `
     }
 
     // 获取更新后的用户信息
     const updatedUser = await prisma.$queryRaw`
-      SELECT id, username, email, avatarUrl, bio, location, website, createdAt
+      SELECT id, username, email, "avatarUrl", bio, location, website, "createdAt"
       FROM users
       WHERE id = ${parseInt(userId)}
       LIMIT 1
