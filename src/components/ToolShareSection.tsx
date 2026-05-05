@@ -423,12 +423,12 @@ export default function ToolShareSection({ toolId, toolName, toolSlug, toolDesc 
                       <ImageIcon className="w-4 h-4" />
                     </button>
                     <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-                    <div className="flex gap-1 ml-1">
+                    <div className="flex gap-1 ml-1 flex-nowrap overflow-x-auto">
                       {HOT_TOPICS.slice(0, 3).map(topic => (
                         <button
                           key={topic}
                           onClick={() => addTopic(topic)}
-                          className="px-2 py-1 bg-neon-cyan/10 text-neon-cyan text-xs hover:bg-neon-cyan/20 transition-colors font-mono"
+                          className="px-1.5 md:px-2 py-1 bg-neon-cyan/10 text-neon-cyan text-[10px] md:text-xs whitespace-nowrap hover:bg-neon-cyan/20 transition-colors font-mono flex-shrink-0"
                           style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}
                         >
                           {topic}
