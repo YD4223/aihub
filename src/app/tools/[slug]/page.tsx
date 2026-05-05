@@ -129,9 +129,9 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
                 {/* Info */}
                 <div className="flex-1">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div>
-                      <h1 className="text-3xl font-bold text-cyber-foreground font-orbitron">{tool.name}</h1>
+                      <h1 className="text-2xl md:text-3xl font-bold text-cyber-foreground font-orbitron break-words">{tool.name}</h1>
                       {tool.category && (
                         <Link
                           href={`/tools?category=${tool.category.slug}`}
