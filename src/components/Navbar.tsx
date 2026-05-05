@@ -319,7 +319,7 @@ export default function Navbar() {
               
               {/* 用户入口 */}
               {user ? (
-                <div className="relative group" style={{overflow:'visible'}}>
+                <div style={{position:'relative', display:'inline-flex', alignItems:'center'}}>
                   <Link 
                     href="/user-center"
                     className="flex items-center gap-2 px-2 md:px-3 py-2 border border-cyber-border hover:border-neon-green transition-colors"
@@ -334,14 +334,15 @@ export default function Navbar() {
                     <span className="status-dot status-dot-online" />
                   </Link>
                   {/* 下拉菜单 */}
-                  <div className="absolute right-0 top-full mt-1 bg-[#12121a] border border-[#2a2a3a] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[999]"
-                    style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))', width: '200px', whiteSpace: 'nowrap' }}
+                  <div style={{position:'absolute', right:'0', top:'100%', marginTop:'4px', background:'#12121a', border:'1px solid #2a2a3a', opacity:'0', visibility:'hidden', transition:'all 0.2s', zIndex:'999', width:'200px', whiteSpace:'nowrap'}}
+                    className="group-hover:opacity-100 group-hover:visible"
                   >
-                    <Link href="/user-center" className="block px-4 py-2 text-xs text-[#e0e0e0] font-mono hover:bg-[#1c1c2e] transition-colors">👤 用户中心</Link>
-                    <Link href="/user-center/edit" className="block px-4 py-2 text-xs text-[#e0e0e0] font-mono hover:bg-[#1c1c2e] transition-colors">⚙️ 设置</Link>
+                    <Link href="/user-center" style={{display:'block', padding:'8px 16px', fontSize:'12px', color:'#e0e0e0', fontFamily:'monospace', textDecoration:'none'}} onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}>👤 用户中心</Link>
+                    <Link href="/user-center/edit" style={{display:'block', padding:'8px 16px', fontSize:'12px', color:'#e0e0e0', fontFamily:'monospace', textDecoration:'none'}} onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}>⚙️ 设置</Link>
                     <button 
                       onClick={() => { localStorage.removeItem('user'); window.location.href = '/' }}
-                      className="block w-full text-left px-4 py-2 text-xs text-[#ff3366] font-mono hover:bg-[#1c1c2e] transition-colors"
+                      style={{display:'block', width:'100%', textAlign:'left', padding:'8px 16px', fontSize:'12px', color:'#ff3366', fontFamily:'monospace', border:'none', background:'transparent', cursor:'pointer'}}
+                      onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}
                     >🚪 退出登录</button>
                   </div>
                 </div>

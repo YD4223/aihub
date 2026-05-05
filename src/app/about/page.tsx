@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { BrainCircuit, Github, Zap, Globe, Users, Shield, Code2, Cpu, Radio, Heart, Target, Eye } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: '关于我们 | AI Hub',
@@ -77,7 +80,13 @@ function TimelineItem({ year, title, desc, isLast = false }: { year: string; tit
   )
 }
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  // 从数据库获取真实统计数据
+  const [toolCount, categoryCount] = await Promise.all([
+    prisma.tool.count({ where: { status: 'approved', isActive: true } }),
+    prisma.category.count(),
+  ])
+  
   return (
     <div className="min-h-screen bg-cyber-background text-cyber-foreground">
       <Navbar />
@@ -104,8 +113,8 @@ export default function AboutPage() {
           {/* Stats row */}
           <div className="flex justify-center gap-8 mt-12">
             {[
-              { value: '500+', label: 'AI 工具' },
-              { value: '20+', label: '工具分类' },
+              { value: toolCount + '+', label: 'AI 工具' },
+              { value: categoryCount + '+', label: '工具分类' },
               { value: '日更', label: '资讯更新' },
             ].map((s) => (
               <div key={s.label} className="text-center">
