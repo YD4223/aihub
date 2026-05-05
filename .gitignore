@@ -8,6 +8,7 @@ out/
 # Environment variables
 .env
 .env.local
+.env.bak
 .env.development
 .env.production
 
