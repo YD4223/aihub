@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
+// BigInt → Number 序列化修复
+function toNum(v: any): number {
+  if (typeof v === 'bigint') return Number(v)
+  return v
+}
+
 // GET /api/tools/search?q=关键词&limit=8
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -63,12 +71,13 @@ export async function GET(request: NextRequest) {
     `)
 
     const formatted = (tools as any[]).map(t => ({
-      id: t.id,
+      id: toNum(t.id),
       name: t.name,
       slug: t.slug,
       shortDesc: t.shortDesc,
       logoUrl: t.logoUrl,
-      categoryName: t.categoryName
+      categoryName: t.categoryName,
+      viewCount: toNum(t.viewCount)
     }))
 
     return NextResponse.json({ tools: formatted })
