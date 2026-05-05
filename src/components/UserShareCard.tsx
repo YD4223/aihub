@@ -414,8 +414,14 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       return
     }
     
+    const currentUser = JSON.parse(userStr)
+    
     try {
-      const res = await fetch(`/api/comments/${commentId}/like`, { method: 'POST' })
+      const res = await fetch(`/api/comments/${commentId}/like`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      })
       if (res.ok) {
         setComments(prev => prev.map(c => {
           if (c.id === commentId) {
