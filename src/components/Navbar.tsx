@@ -319,19 +319,32 @@ export default function Navbar() {
               
               {/* 用户入口 */}
               {user ? (
-                <Link 
-                  href="/user-center"
-                  className="flex items-center gap-2 px-2 md:px-3 py-2 border border-cyber-border hover:border-neon-green transition-colors"
-                >
-                  <Avatar
-                    userId={user.id}
-                    username={user.username}
-                    avatarUrl={user.avatarUrl}
-                    size="xs"
-                  />
-                  <span className="text-xs text-cyber-foreground font-mono hidden lg:inline">{user.username}</span>
-                  <span className="status-dot status-dot-online" />
-                </Link>
+                <div className="relative group">
+                  <Link 
+                    href="/user-center"
+                    className="flex items-center gap-2 px-2 md:px-3 py-2 border border-cyber-border hover:border-neon-green transition-colors"
+                  >
+                    <Avatar
+                      userId={user.id}
+                      username={user.username}
+                      avatarUrl={user.avatarUrl}
+                      size="xs"
+                    />
+                    <span className="text-xs text-cyber-foreground font-mono hidden lg:inline">{user.username}</span>
+                    <span className="status-dot status-dot-online" />
+                  </Link>
+                  {/* 下拉菜单 */}
+                  <div className="absolute right-0 top-full mt-1 w-36 bg-[#12121a] border border-[#2a2a3a] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+                    style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                  >
+                    <Link href="/user-center" className="block px-4 py-2 text-xs text-[#e0e0e0] font-mono hover:bg-[#1c1c2e] transition-colors">👤 用户中心</Link>
+                    <Link href="/settings" className="block px-4 py-2 text-xs text-[#e0e0e0] font-mono hover:bg-[#1c1c2e] transition-colors">⚙️ 设置</Link>
+                    <button 
+                      onClick={() => { localStorage.removeItem('user'); window.location.href = '/' }}
+                      className="block w-full text-left px-4 py-2 text-xs text-[#ff3366] font-mono hover:bg-[#1c1c2e] transition-colors"
+                    >🚪 退出登录</button>
+                  </div>
+                </div>
               ) : (
                 <Link 
                   href="/login"
