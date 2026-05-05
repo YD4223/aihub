@@ -23,19 +23,19 @@ export async function GET(request: NextRequest) {
       SELECT 
         c.id,
         c.content,
-        c.userId,
-        c.toolId,
-        c.createdAt,
+        c."userId",
+        c."toolId",
+        c."createdAt",
         c.status,
-        c.suspendedAt,
-        c.suspendedReason,
-        u.username as userName,
-        u.avatarUrl as userAvatarUrl,
-        t.name as toolName,
-        'tool' as sourceType
+        c."suspendedAt",
+        c."suspendedReason",
+        u.username as "userName",
+        u."avatarUrl" as "userAvatarUrl",
+        t.name as "toolName",
+        'tool' as "sourceType"
       FROM comments c
-      LEFT JOIN users u ON c.userId = u.id
-      LEFT JOIN tools t ON c.toolId = t.id
+      LEFT JOIN users u ON c."userId" = u.id
+      LEFT JOIN tools t ON c."toolId" = t.id
       ${whereClause1}
     `)
 
@@ -44,20 +44,20 @@ export async function GET(request: NextRequest) {
       SELECT 
         c.id,
         c.content,
-        c.userId,
-        c.shareId,
-        c.createdAt,
+        c."userId",
+        c."shareId",
+        c."createdAt",
         c.status,
-        c.suspendedAt,
-        c.suspendedReason,
-        u.username as userName,
-        u.avatarUrl as userAvatarUrl,
-        t.name as toolName,
-        'share' as sourceType
+        c."suspendedAt",
+        c."suspendedReason",
+        u.username as "userName",
+        u."avatarUrl" as "userAvatarUrl",
+        t.name as "toolName",
+        'share' as "sourceType"
       FROM share_comments c
-      LEFT JOIN users u ON c.userId = u.id
-      LEFT JOIN shares s ON c.shareId = s.id
-      LEFT JOIN tools t ON s.toolId = t.id
+      LEFT JOIN users u ON c."userId" = u.id
+      LEFT JOIN shares s ON c."shareId" = s.id
+      LEFT JOIN tools t ON s."toolId" = t.id
       ${whereClause2}
     `)
 

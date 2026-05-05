@@ -33,22 +33,22 @@ export async function GET(request: NextRequest) {
     if (whereClause) {
       users = await prisma.$queryRawUnsafe(`
         SELECT 
-          id, username, email, avatarUrl, bio, location, website,
-          role, status, bannedAt, bannedUntil, bannedReason, bannedBy,
-          createdAt, updatedAt
+          id, username, email, "avatarUrl", bio, location, website,
+          role, status, "bannedAt", "bannedUntil", "bannedReason", "bannedBy",
+          "createdAt", "updatedAt"
         FROM users
         ${whereClause}
-        ORDER BY createdAt DESC
+        ORDER BY "createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
       `)
     } else {
       users = await prisma.$queryRaw`
         SELECT 
-          id, username, email, avatarUrl, bio, location, website,
-          role, status, bannedAt, bannedUntil, bannedReason, bannedBy,
-          createdAt, updatedAt
+          id, username, email, "avatarUrl", bio, location, website,
+          role, status, "bannedAt", "bannedUntil", "bannedReason", "bannedBy",
+          "createdAt", "updatedAt"
         FROM users
-        ORDER BY createdAt DESC
+        ORDER BY "createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
       `
     }

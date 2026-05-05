@@ -10,7 +10,7 @@ export async function DELETE(
     const shareId = parseInt(params.id)
     
     // 先删除关联评论，再删除分享（避免外键约束报错）
-    await prisma.$executeRawUnsafe('DELETE FROM share_comments WHERE shareId = $1', shareId)
+    await prisma.$executeRawUnsafe('DELETE FROM share_comments WHERE "shareId" = $1', shareId)
     await prisma.$executeRawUnsafe('DELETE FROM shares WHERE id = $1', shareId)
 
     return NextResponse.json({ success: true })

@@ -28,20 +28,20 @@ export async function GET(request: NextRequest) {
   const shares = await prisma.$queryRawUnsafe(`
     SELECT 
       s.id, s.type, s.content, s.images, s.video, s.likes, s.status, 
-      s.suspendedReason, 
-      strftime('%Y-%m-%dT%H:%M:%S', s.suspendedAt) as suspendedAt,
-      strftime('%Y-%m-%dT%H:%M:%S', s.createdAt) as createdAt,
-      s.userId, s.toolId,
-      s.submitToolName, s.submitToolWebsite, s.submitToolDesc,
-      s.submitToolCategory, s.submitToolPricing, s.submitToolGithub, s.submitToolLogo,
-      u.id as userId, u.username as userUsername, u.avatarUrl as userAvatarUrl,
-      t.id as toolId, t.name as toolName, t.slug as toolSlug,
-      (SELECT COUNT(*) FROM share_comments sc WHERE sc.shareId = s.id) as commentsCount
+      s."suspendedReason", 
+      to_char(s."suspendedAt", 'YYYY-MM-DD"T"HH24:MI:SS') as "suspendedAt",
+      to_char(s."createdAt", 'YYYY-MM-DD"T"HH24:MI:SS') as "createdAt",
+      s."userId", s."toolId",
+      s."submitToolName", s."submitToolWebsite", s."submitToolDesc",
+      s."submitToolCategory", s."submitToolPricing", s."submitToolGithub", s."submitToolLogo",
+      u.id as "userId", u.username as "userUsername", u."avatarUrl" as "userAvatarUrl",
+      t.id as "toolId", t.name as "toolName", t.slug as "toolSlug",
+      (SELECT COUNT(*) FROM share_comments sc WHERE sc."shareId" = s.id) as "commentsCount"
     FROM shares s
-    LEFT JOIN users u ON s.userId = u.id
-    LEFT JOIN tools t ON s.toolId = t.id
+    LEFT JOIN users u ON s."userId" = u.id
+    LEFT JOIN tools t ON s."toolId" = t.id
     ${whereClause}
-    ORDER BY s.createdAt DESC
+    ORDER BY s."createdAt" DESC
     LIMIT ${limit} OFFSET ${skip}
   `)
 

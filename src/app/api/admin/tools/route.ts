@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
 
     // 获取工具列表
     const tools = await prisma.$queryRawUnsafe(`
-      SELECT t.*, c.name as categoryName
+      SELECT t.*, c.name as "categoryName"
       FROM tools t
-      LEFT JOIN categories c ON t.categoryId = c.id
+      LEFT JOIN categories c ON t."categoryId" = c.id
       ${whereClause}
-      ORDER BY t.createdAt DESC
+      ORDER BY t."createdAt" DESC
       LIMIT ${limit} OFFSET ${skip}
     `)
 
