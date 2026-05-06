@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
     const { userId, shareId, shareData } = await request.json()
     if (!userId || !shareId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
-    const existing = await (prisma as any).userFavoriteShare.findUnique({
-      where: { userId_shareId: { userId, shareId } }
+    const existing = await (prisma as any).userFavoriteShare.findFirst({
+      where: { userId, shareId }
     })
 
     if (existing) {
@@ -58,8 +58,8 @@ export async function DELETE(request: NextRequest) {
     const shareId = parseInt(searchParams.get('shareId') || '0')
     if (!userId || !shareId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
-    const existing = await (prisma as any).userFavoriteShare.findUnique({
-      where: { userId_shareId: { userId, shareId } }
+    const existing = await (prisma as any).userFavoriteShare.findFirst({
+      where: { userId, shareId }
     })
     if (existing) {
       await (prisma as any).userFavoriteShare.delete({ where: { id: existing.id } })

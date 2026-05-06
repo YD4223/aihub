@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
     const { userId, toolId, toolData } = await request.json()
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
-    const existing = await (prisma as any).userLikeTool.findUnique({
-      where: { userId_toolId: { userId, toolId } }
+    const existing = await (prisma as any).userLikeTool.findFirst({
+      where: { userId, toolId }
     })
 
     if (existing) {
@@ -58,8 +58,8 @@ export async function DELETE(request: NextRequest) {
     const toolId = parseInt(searchParams.get('toolId') || '0')
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
-    const existing = await (prisma as any).userLikeTool.findUnique({
-      where: { userId_toolId: { userId, toolId } }
+    const existing = await (prisma as any).userLikeTool.findFirst({
+      where: { userId, toolId }
     })
     if (existing) {
       await (prisma as any).userLikeTool.delete({ where: { id: existing.id } })
