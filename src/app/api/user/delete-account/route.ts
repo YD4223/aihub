@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     // 2. 按顺序删除用户所有关联数据（每个删除单独try-catch，避免某张表不存在时报错）
     const uid = parseInt(userId)
 
-    async function safeDelete(sql: string, ...params: any[]) {
+    const safeDelete = async (sql: string, ...params: any[]) => {
       try { await prisma.$executeRawUnsafe(sql, ...params) } catch (e) { /* 表不存在跳过 */ }
     }
 
