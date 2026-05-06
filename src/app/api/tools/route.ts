@@ -116,6 +116,26 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // 同时创建 tool 记录
+    const slug = 'user-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO tools (name, slug, "shortDesc", description, "websiteUrl", "githubUrl", "logoUrl", "categoryId", "pricingType", source, status, "submittedBy", "isActive", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+      name.trim(),
+      slug,
+      shortDesc.trim(),
+      description?.trim() || null,
+      websiteUrl.trim(),
+      githubUrl?.trim() || null,
+      logoUrl?.trim() || null,
+      categoryId ? parseInt(categoryId) : null,
+      pricingType || 'FREE',
+      'user',
+      toolStatus,
+      submitterId,
+      true
+    )
+
     return NextResponse.json({ 
       share,
       message: toolStatus === 'approved' ? '提交成功，已自动发布' : '提交成功，等待审核' 
