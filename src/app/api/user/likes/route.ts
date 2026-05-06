@@ -8,14 +8,14 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId')
     if (!userId) return NextResponse.json({ error: '需要userId' }, { status: 400 })
 
-    const records = await (prisma as any).userLikeTool.findMany({
-      where: { userId: parseInt(userId) },
-      orderBy: { likedAt: 'desc' }
-    })
+    const records = await prisma.$queryRawUnsafe<Array<any>>(
+      `SELECT id, tool_data, liked_at FROM user_like_tools WHERE user_id = $1 ORDER BY liked_at DESC`,
+      parseInt(userId)
+    )
 
     const likes = records.map((r: any) => ({
-      ...JSON.parse(r.toolData),
-      likedAt: r.likedAt?.toISOString?.() || r.likedAt
+      ...JSON.parse(r.tool_data),
+      likedAt: r.liked_at?.toISOString?.() || r.liked_at
     }))
 
     return NextResponse.json({ likes })
@@ -31,18 +31,20 @@ export async function POST(request: NextRequest) {
     const { userId, toolId, toolData } = await request.json()
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
-    const existing = await (prisma as any).userLikeTool.findFirst({
-      where: { userId, toolId }
-    })
+    const existing = await prisma.$queryRawUnsafe<Array<any>>(
+      `SELECT id FROM user_like_tools WHERE user_id = $1 AND tool_id = $2 LIMIT 1`,
+      userId, toolId
+    )
 
-    if (existing) {
-      await (prisma as any).userLikeTool.delete({ where: { id: existing.id } })
+    if (Array.isArray(existing) && existing.length > 0) {
+      await prisma.$executeRawUnsafe(`DELETE FROM user_like_tools WHERE id = $1`, existing[0].id)
       return NextResponse.json({ liked: false })
     }
 
-    await (prisma as any).userLikeTool.create({
-      data: { userId, toolId, toolData: JSON.stringify(toolData) }
-    })
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO user_like_tools (user_id, tool_id, tool_data) VALUES ($1, $2, $3)`,
+      userId, toolId, JSON.stringify(toolData)
+    )
     return NextResponse.json({ liked: true })
   } catch (error: any) {
     console.error('[Likes] POST错误:', error)
@@ -58,12 +60,10 @@ export async function DELETE(request: NextRequest) {
     const toolId = parseInt(searchParams.get('toolId') || '0')
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
-    const existing = await (prisma as any).userLikeTool.findFirst({
-      where: { userId, toolId }
-    })
-    if (existing) {
-      await (prisma as any).userLikeTool.delete({ where: { id: existing.id } })
-    }
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM user_like_tools WHERE user_id = $1 AND tool_id = $2`,
+      userId, toolId
+    )
     return NextResponse.json({ message: '已删除' })
   } catch (error: any) {
     console.error('[Likes] DELETE错误:', error)
