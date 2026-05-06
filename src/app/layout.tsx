@@ -49,18 +49,8 @@ export default function RootLayout({
         
         <BackToTop />
 
-        {/* 百度统计 - 直接注入 */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            var _hmt = _hmt || [];
-            (function() {
-              var hm = document.createElement("script");
-              hm.src = "https://hm.baidu.com/hm.js?c1237f3793cdd5e33b25d70dc0911c49";
-              var s = document.getElementsByTagName("script")[0]; 
-              s.parentNode.insertBefore(hm, s);
-            })();
-          `
-        }} />
+        {/* 百度统计 */}
+        <script src="https://hm.baidu.com/hm.js?c1237f3793cdd5e33b25d70dc0911c49"></script>
       </body>
     </html>
   )
