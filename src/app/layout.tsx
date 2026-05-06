@@ -49,7 +49,7 @@ export default function RootLayout({
         
         <BackToTop />
 
-        {/* 百度统计 - 直接HTML注入 */}
+        {/* 百度统计 */}
         <script
           dangerouslySetInnerHTML={{
             __html: [
@@ -63,6 +63,8 @@ export default function RootLayout({
             ].join('\n')
           }}
         />
+        {/* Cloudflare Web Analytics */}
+        <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "d65a7e9772b64b83b38a2cfbbab4dd19"}'></script>
       </body>
     </html>
   )
