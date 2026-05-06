@@ -19,11 +19,10 @@ async function logVerification(params: {
   reason?: string
 }) {
   try {
-    const successVal = params.success ? 1 : 0
     const reasonVal = params.reason || null
     await prisma.$executeRawUnsafe(
       `INSERT INTO verification_logs (email, "ipAddress", "userAgent", "sentAt", success, reason) VALUES ($1, $2, $3, NOW(), $4, $5)`,
-      params.email, params.ipAddress, params.userAgent, successVal, reasonVal
+      params.email, params.ipAddress, params.userAgent, params.success, reasonVal
     )
   } catch (err) {
     // 日志写入失败不影响主流程

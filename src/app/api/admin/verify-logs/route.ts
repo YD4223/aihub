@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (success !== 'all') {
-      conditions.push(`success = ${success === 'true' ? 1 : 0}`)
+      conditions.push(`success = ${success === 'true' ? 'true' : 'false'}`)
     }
 
     if (ip) {
@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
     const rawStats = await prisma.$queryRawUnsafe(
       `SELECT 
         COUNT(*) as totalRequests,
-        SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successCount,
-        SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failCount,
+        SUM(CASE WHEN success = true THEN 1 ELSE 0 END) as successCount,
+        SUM(CASE WHEN success = false THEN 1 ELSE 0 END) as failCount,
         COUNT(DISTINCT email) as uniqueEmails,
         COUNT(DISTINCT "ipAddress") as uniqueIps
        FROM verification_logs
