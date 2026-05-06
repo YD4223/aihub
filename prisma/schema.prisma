@@ -354,6 +354,42 @@ model ToolTrendHistory {
   @@map("tool_trend_histories")
 }
 
+// 用户收藏的工具
+model UserFavoriteTool {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  toolId    Int
+  toolData  String   // JSON
+  addedAt   DateTime @default(now())
+
+  @@unique([userId, toolId])
+  @@map("user_favorite_tools")
+}
+
+// 用户点赞的工具
+model UserLikeTool {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  toolId    Int
+  toolData  String   // JSON
+  likedAt   DateTime @default(now())
+
+  @@unique([userId, toolId])
+  @@map("user_like_tools")
+}
+
+// 用户收藏的分享
+model UserFavoriteShare {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  shareId   Int
+  shareData String   // JSON
+  addedAt   DateTime @default(now())
+
+  @@unique([userId, shareId])
+  @@map("user_favorite_shares")
+}
+
 model Subscriber {
   id         Int       @id @default(autoincrement())
   email      String    @unique

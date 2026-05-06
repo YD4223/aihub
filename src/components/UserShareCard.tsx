@@ -141,12 +141,29 @@ export default function UserShareCard({ share }: UserShareCardProps) {
     if (isCommentModalOpen) {
       loadComments()
     }
-    const favoriteShares = JSON.parse(localStorage.getItem('favoriteShares') || '[]')
-    setIsFavorited(favoriteShares.some((s: any) => s.id === share.id))
-    if (share.tool) {
-      const likedTools = JSON.parse(localStorage.getItem('likedTools') || '[]')
-      setIsLiked(likedTools.some((t: any) => t.id === share.tool!.id))
+    // 从服务器加载收藏/点赞状态
+    const loadStatus = async () => {
+      const userStr = localStorage.getItem('user')
+      if (!userStr) return
+      const userData = JSON.parse(userStr)
+      try {
+        const [favRes, likeRes] = await Promise.all([
+          fetch(`/api/user/favorite-shares?userId=${userData.id}`),
+          share.tool ? fetch(`/api/user/likes?userId=${userData.id}`) : Promise.resolve(null)
+        ])
+        if (favRes.ok) {
+          const data = await favRes.json()
+          setIsFavorited(data.shares?.some((s: any) => s.id === share.id) || false)
+        }
+        if (likeRes && likeRes.ok) {
+          const data = await likeRes.json()
+          setIsLiked(data.likes?.some((t: any) => t.id === share.tool!.id) || false)
+        }
+      } catch (e) {
+        // 静默失败
+      }
     }
+    loadStatus()
   }, [isCommentModalOpen, share.id, share.tool])
 
   // 记录浏览
@@ -267,6 +284,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       }
       return
     }
+    const user = JSON.parse(userStr)
     
     if (!share.tool) {
       setLikeCount(prev => isLiked ? prev - 1 : prev + 1)
@@ -274,24 +292,25 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       return
     }
     
-    const likedTools = JSON.parse(localStorage.getItem('likedTools') || '[]')
+    const toolData = {
+      id: share.tool.id,
+      slug: share.tool.slug,
+      name: share.tool.name,
+      description: share.tool.shortDesc || share.tool.description,
+      iconUrl: share.tool.logoUrl,
+      websiteUrl: share.tool.websiteUrl || '',
+      category: share.tool.category?.name || '未分类',
+    }
     
+    fetch('/api/user/likes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, toolId: share.tool.id, toolData })
+    }).catch(() => {})
+
     if (isLiked) {
-      const newLikedTools = likedTools.filter((t: any) => t.id !== share.tool!.id)
-      localStorage.setItem('likedTools', JSON.stringify(newLikedTools))
       setLikeCount(prev => prev - 1)
     } else {
-      likedTools.push({
-        id: share.tool.id,
-        slug: share.tool.slug,
-        name: share.tool.name,
-        description: share.tool.shortDesc || share.tool.description,
-        iconUrl: share.tool.logoUrl,
-        websiteUrl: share.tool.websiteUrl || '',
-        category: share.tool.category?.name || '未分类',
-        likedAt: new Date().toISOString()
-      })
-      localStorage.setItem('likedTools', JSON.stringify(likedTools))
       setLikeCount(prev => prev + 1)
       const btn = document.getElementById(`like-btn-${share.id}`)
       btn?.classList.add('scale-125')
@@ -310,23 +329,23 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       }
       return
     }
+    const userData = JSON.parse(userStr)
     
-    const favoriteShares = JSON.parse(localStorage.getItem('favoriteShares') || '[]')
-    if (isFavorited) {
-      const newFavorites = favoriteShares.filter((s: any) => s.id !== share.id)
-      localStorage.setItem('favoriteShares', JSON.stringify(newFavorites))
-    } else {
-      favoriteShares.push({
-        id: share.id,
-        content: share.content,
-        images: share.images,
-        createdAt: share.createdAt,
-        tool: tool || null,
-        user: user,
-        addedAt: new Date().toISOString()
-      })
-      localStorage.setItem('favoriteShares', JSON.stringify(favoriteShares))
+    const shareData = {
+      id: share.id,
+      content: share.content,
+      images: share.images,
+      createdAt: share.createdAt,
+      tool: tool || null,
+      user: user,
     }
+    
+    fetch('/api/user/favorite-shares', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: userData.id, shareId: share.id, shareData })
+    }).catch(() => {})
+
     setIsFavorited(!isFavorited)
     window.dispatchEvent(new Event('localStorageChange'))
   }
