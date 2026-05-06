@@ -18,15 +18,23 @@ interface LikeButtonProps {
 
 export default function LikeButton({ toolId, toolData }: LikeButtonProps) {
   const [isLiked, setIsLiked] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // 从 localStorage 读取点赞状态
-    const likedTools = JSON.parse(localStorage.getItem('likedTools') || '[]')
-    setIsLiked(likedTools.some((t: any) => t.id === toolId))
+    const userStr = localStorage.getItem('user')
+    if (!userStr) return
+    const user = JSON.parse(userStr)
+    fetch(`/api/user/likes?userId=${user.id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.likes) {
+          setIsLiked(data.likes.some((t: any) => t.id === toolId))
+        }
+      })
+      .catch(() => {})
   }, [toolId])
 
-  const handleLike = () => {
-    // 检查登录
+  const handleLike = async () => {
     const userStr = localStorage.getItem('user')
     if (!userStr) {
       if (confirm('请先登录后再点赞，是否跳转到登录页面？')) {
@@ -34,30 +42,28 @@ export default function LikeButton({ toolId, toolData }: LikeButtonProps) {
       }
       return
     }
-    
-    const likedTools = JSON.parse(localStorage.getItem('likedTools') || '[]')
-    
-    if (isLiked) {
-      // 取消点赞
-      const newLikedTools = likedTools.filter((t: any) => t.id !== toolId)
-      localStorage.setItem('likedTools', JSON.stringify(newLikedTools))
-      setIsLiked(false)
-    } else {
-      // 添加点赞 - 存储完整工具信息
-      likedTools.push({
-        ...toolData,
-        likedAt: new Date().toISOString()
+    const user = JSON.parse(userStr)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/user/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, toolId, toolData })
       })
-      localStorage.setItem('likedTools', JSON.stringify(likedTools))
-      setIsLiked(true)
+      const data = await res.json()
+      setIsLiked(data.liked)
+      window.dispatchEvent(new Event('localStorageChange'))
+    } catch (e) {
+      console.error('点赞失败:', e)
+    } finally {
+      setLoading(false)
     }
-    // 触发自定义事件，通知其他组件 localStorage 已更新
-    window.dispatchEvent(new Event('localStorageChange'))
   }
 
   return (
     <button
       onClick={handleLike}
+      disabled={loading}
       className={`flex items-center gap-2 px-6 py-3 font-orbitron font-medium transition-all ${
         isLiked
           ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan hover:bg-neon-cyan/30'

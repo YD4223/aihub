@@ -170,7 +170,7 @@ export default function UserCenterPage() {
     }
   }
 
-  // 从 localStorage 加载数据的函数
+  // 从服务器加载数据的函数
   const loadDataFromStorage = () => {
     try {
       const savedUser = localStorage.getItem('user')
@@ -184,33 +184,37 @@ export default function UserCenterPage() {
           if (activeTab === 'shares') {
             loadSubmittedTools(1, parsedUser.id)
           }
+          // 从数据库加载收藏/点赞数据
+          loadFromServer(parsedUser.id)
         }
-      }
-      const savedLikes = localStorage.getItem('likedTools')
-      if (savedLikes) {
-        const parsed = JSON.parse(savedLikes)
-        // 过滤掉没有 slug 的旧数据
-        const validLikes = Array.isArray(parsed) ? parsed.filter((t: any) => t.slug) : []
-        setLikedTools(validLikes)
-      }
-      const savedFavorites = localStorage.getItem('favorites')
-      if (savedFavorites) {
-        const parsed = JSON.parse(savedFavorites)
-        // 过滤掉没有 slug 的旧数据
-        const validFavorites = Array.isArray(parsed) ? parsed.filter((t: any) => t.slug) : []
-        setFavorites(validFavorites)
-      }
-      const savedFavoriteShares = localStorage.getItem('favoriteShares')
-      if (savedFavoriteShares) {
-        const parsed = JSON.parse(savedFavoriteShares)
-        setFavoriteShares(Array.isArray(parsed) ? parsed : [])
       }
     } catch (error) {
       console.error('加载用户数据失败:', error)
-      // 如果解析失败，重置为默认值
-      setLikedTools([])
-      setFavorites([])
-      setFavoriteShares([])
+    }
+  }
+
+  // 从服务器加载收藏/点赞数据
+  const loadFromServer = async (userId: number) => {
+    try {
+      const [likesRes, favRes, shareFavRes] = await Promise.all([
+        fetch(`/api/user/likes?userId=${userId}`),
+        fetch(`/api/user/favorites?userId=${userId}`),
+        fetch(`/api/user/favorite-shares?userId=${userId}`)
+      ])
+      if (likesRes.ok) {
+        const data = await likesRes.json()
+        setLikedTools(data.likes || [])
+      }
+      if (favRes.ok) {
+        const data = await favRes.json()
+        setFavorites(data.favorites || [])
+      }
+      if (shareFavRes.ok) {
+        const data = await shareFavRes.json()
+        setFavoriteShares(data.shares || [])
+      }
+    } catch (e) {
+      console.error('加载收藏数据失败:', e)
     }
   }
 
@@ -251,23 +255,35 @@ export default function UserCenterPage() {
 
   // 删除点赞
   const removeLike = (toolId: number) => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) return
+    const user = JSON.parse(userStr)
+    fetch(`/api/user/likes?userId=${user.id}&toolId=${toolId}`, { method: 'DELETE' })
+      .catch(() => {})
     const newLikes = likedTools.filter(t => t.id !== toolId)
     setLikedTools(newLikes)
-    localStorage.setItem('likedTools', JSON.stringify(newLikes))
   }
 
   // 删除收藏
   const removeFavorite = (toolId: number) => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) return
+    const user = JSON.parse(userStr)
+    fetch(`/api/user/favorites?userId=${user.id}&toolId=${toolId}`, { method: 'DELETE' })
+      .catch(() => {})
     const newFavorites = favorites.filter(t => t.id !== toolId)
     setFavorites(newFavorites)
-    localStorage.setItem('favorites', JSON.stringify(newFavorites))
   }
 
   // 删除收藏的分享
   const removeFavoriteShare = (shareId: number) => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) return
+    const user = JSON.parse(userStr)
+    fetch(`/api/user/favorite-shares?userId=${user.id}&shareId=${shareId}`, { method: 'DELETE' })
+      .catch(() => {})
     const newFavoriteShares = favoriteShares.filter(s => s.id !== shareId)
     setFavoriteShares(newFavoriteShares)
-    localStorage.setItem('favoriteShares', JSON.stringify(newFavoriteShares))
   }
 
   // 获取用户的分享列表
