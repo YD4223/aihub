@@ -24,8 +24,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning className="bg-[#0a0a0f]">
-      {/* 百度统计 - 放在head区域 */}
-      <script src="https://hm.baidu.com/hm.js?c1237f3793cdd5e33b25d70dc0911c49"></script>
       <body className="min-h-screen bg-[#0a0a0f] text-cyber-foreground font-mono relative transition-colors duration-300">
         {/* Grid Background Pattern - Hidden in light mode */}
         <div className="fixed inset-0 grid-pattern pointer-events-none dark-only" />
@@ -50,6 +48,19 @@ export default function RootLayout({
         </div>
         
         <BackToTop />
+
+        {/* 百度统计 */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?c1237f3793cdd5e33b25d70dc0911c49";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+`
+        }} />
       </body>
     </html>
   )
