@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (ip) {
-      conditions.push(`ipAddress LIKE '%${ip}%'`)
+      conditions.push(`"ipAddress" LIKE '%${ip}%'`)
     }
 
     const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''
@@ -51,13 +51,13 @@ export async function GET(request: NextRequest) {
     ) as any[]
     const total = Number(countResult[0]?.total || 0)
 
-    // 查询数据（sentAt 用 strftime 转为标准字符串，避免 DateTime 解析成空对象）
+    // 查询数据
     const rawLogs = await prisma.$queryRawUnsafe(
-      `SELECT id, email, ipAddress, userAgent,
-              to_char(sentAt, 'YYYY-MM-DD\"T\"HH24:MI:SS') as sentAt,
+      `SELECT id, email, "ipAddress", "userAgent",
+              to_char("sentAt", 'YYYY-MM-DD"T"HH24:MI:SS') as sentAt,
               success, reason
        FROM verification_logs ${whereClause}
-       ORDER BY sentAt DESC
+       ORDER BY "sentAt" DESC
        LIMIT ${limit} OFFSET ${offset}`
     ) as any[]
     const logs = serialize(rawLogs)
@@ -69,9 +69,9 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successCount,
         SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failCount,
         COUNT(DISTINCT email) as uniqueEmails,
-        COUNT(DISTINCT ipAddress) as uniqueIps
+        COUNT(DISTINCT "ipAddress") as uniqueIps
        FROM verification_logs
-       WHERE sentAt > datetime('now', '-24 hours')`
+       WHERE "sentAt" > NOW() - INTERVAL '24 hours'`
     ) as any[]
     const stats = rawStats[0] ? serialize(rawStats[0]) : { totalRequests: 0, successCount: 0, failCount: 0, uniqueEmails: 0, uniqueIps: 0 }
 

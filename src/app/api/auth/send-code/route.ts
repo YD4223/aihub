@@ -22,7 +22,7 @@ async function logVerification(params: {
     const successVal = params.success ? 1 : 0
     const reasonVal = params.reason || null
     await prisma.$executeRawUnsafe(
-      `INSERT INTO verification_logs (email, ipAddress, userAgent, sentAt, success, reason) VALUES ($1, $2, $3, NOW(), $4, $5)`,
+      `INSERT INTO verification_logs (email, "ipAddress", "userAgent", "sentAt", success, reason) VALUES ($1, $2, $3, NOW(), $4, $5)`,
       params.email, params.ipAddress, params.userAgent, successVal, reasonVal
     )
   } catch (err) {
