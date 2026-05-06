@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET /api/user/tools?userId=xxx - 获取指定用户提交的工具列表
+// GET /api/user/tools?userId=xxx - 获取指定用户提交的工具列表（从 shares 表查）
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
   const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '10')
+  const limit = parseInt(searchParams.get('limit') || '12')
   const skip = (page - 1) * limit
 
   if (!userId) {
@@ -14,45 +14,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 获取用户提交的工具列表
-    const tools = await prisma.$queryRawUnsafe(`
+    // 获取用户提交的 share 记录（type='tool' 的提交）
+    const shares = await prisma.$queryRawUnsafe(`
       SELECT 
-        t.*,
-        c.name as "categoryName",
-        c.slug as "categorySlug",
-        (SELECT COUNT(*) FROM comments WHERE "toolId" = t.id) as "commentsCount",
-        (SELECT COUNT(*) FROM shares WHERE "toolId" = t.id) as "sharesCount"
-      FROM tools t
-      LEFT JOIN categories c ON t."categoryId" = c.id
-      WHERE t."submittedBy" = ${parseInt(userId)}
-      ORDER BY t."createdAt" DESC
+        id, content, images, status, "createdAt",
+        "submitToolName" as name,
+        "submitToolWebsite" as website_url,
+        "submitToolDesc" as short_desc,
+        "submitToolCategory" as category_name,
+        "submitToolPricing" as pricing_type,
+        "submitToolGithub" as github_url,
+        "submitToolLogo" as logo_url
+      FROM shares
+      WHERE "userId" = ${parseInt(userId)} AND type = 'tool'
+      ORDER BY "createdAt" DESC
       LIMIT ${limit} OFFSET ${skip}
     `)
 
-    // 格式化数据 - 将 BigInt 转换为 Number
-    const formattedTools = (tools as any[]).map(t => ({
+    // 格式化数据
+    const formattedTools = (shares as any[]).map(t => ({
       id: Number(t.id),
-      name: t.name,
-      slug: t.slug,
-      shortDesc: t.shortDesc,
-      description: t.description,
-      websiteUrl: t.websiteUrl,
-      logoUrl: t.logoUrl,
-      status: t.status,
+      name: t.name || '未命名工具',
+      slug: 'share-' + t.id,
+      shortDesc: t.short_desc || null,
+      description: t.content || null,
+      websiteUrl: t.website_url || null,
+      logoUrl: t.logo_url || null,
+      status: t.status || 'pending',
       createdAt: t.createdAt,
-      category: t.categoryName ? {
-        name: t.categoryName,
-        slug: t.categorySlug
-      } : null,
-      _count: {
-        comments: Number(t.commentsCount || 0),
-        shares: Number(t.sharesCount || 0)
-      }
+      category: t.category_name ? { name: t.category_name, slug: '' } : null,
+      _count: { comments: 0, shares: 0 }
     }))
 
     // 获取总数
     const totalResult = await prisma.$queryRawUnsafe(`
-      SELECT COUNT(*) as count FROM tools WHERE "submittedBy" = ${parseInt(userId)}
+      SELECT COUNT(*) as count FROM shares WHERE "userId" = ${parseInt(userId)} AND type = 'tool'
     `)
     const total = Number((totalResult as any)[0].count)
 
