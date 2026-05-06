@@ -1805,6 +1805,16 @@ export default function AdminPage() {
               >
                 搜索
               </button>
+              <button
+                onClick={async () => {
+                  if (!confirm('确定清空所有验证码日志？此操作不可恢复！')) return
+                  await fetch('/api/admin/verify-logs', { method: 'DELETE' })
+                  loadVerifyLogs(1)
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 ml-auto"
+              >
+                清空所有日志
+              </button>
             </div>
 
             {/* 日志列表 */}
@@ -1826,6 +1836,7 @@ export default function AdminPage() {
                       <th className="text-left py-3 px-4 font-medium text-gray-600">原因</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-600">User-Agent</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-600">时间</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1853,6 +1864,19 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
                           {log.sentAt ? new Date(log.sentAt).toLocaleString('zh-CN') : '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={async () => {
+                              if (!confirm('确定删除这条日志？')) return
+                              await fetch('/api/admin/verify-logs?id=' + log.id, { method: 'DELETE' })
+                              loadVerifyLogs()
+                            }}
+                            className="text-red-400 hover:text-red-600 transition-colors"
+                            title="删除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))}
