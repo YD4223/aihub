@@ -39,10 +39,15 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(existing) && existing.length > 0) {
       await prisma.$executeRawUnsafe(`DELETE FROM user_like_tools WHERE id = $1`, existing[0].id)
       // 同步更新 shares 表的点赞数
+      let newLikes = 0
       if (shareId) {
-        await prisma.$executeRawUnsafe(`UPDATE shares SET likes = GREATEST(0, likes - 1) WHERE id = $1`, shareId)
+        const result = await prisma.$queryRawUnsafe<Array<any>>(
+          `UPDATE shares SET likes = GREATEST(0, likes - 1) WHERE id = $1 RETURNING likes`,
+          shareId
+        )
+        newLikes = Number(result[0]?.likes || 0)
       }
-      return NextResponse.json({ liked: false })
+      return NextResponse.json({ liked: false, likes: newLikes })
     }
 
     await prisma.$executeRawUnsafe(
@@ -50,10 +55,15 @@ export async function POST(request: NextRequest) {
       userId, toolId, JSON.stringify(toolData)
     )
     // 同步更新 shares 表的点赞数
+    let newLikes = 0
     if (shareId) {
-      await prisma.$executeRawUnsafe(`UPDATE shares SET likes = likes + 1 WHERE id = $1`, shareId)
+      const result = await prisma.$queryRawUnsafe<Array<any>>(
+        `UPDATE shares SET likes = likes + 1 WHERE id = $1 RETURNING likes`,
+        shareId
+      )
+      newLikes = Number(result[0]?.likes || 0)
     }
-    return NextResponse.json({ liked: true })
+    return NextResponse.json({ liked: true, likes: newLikes })
   } catch (error: any) {
     console.error('[Likes] POST错误:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

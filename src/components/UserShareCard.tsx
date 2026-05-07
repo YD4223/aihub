@@ -151,19 +151,16 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       if (!userStr) return
       const userData = JSON.parse(userStr)
       try {
-        // 刷新最新点赞数（切tab重建时同步数据）
-        fetch(`/api/shares/${share.id}/like`, { method: 'GET' })
-          .then(r => r.json())
-          .then(data => {
-            if (data.likes !== undefined) setLikeCount(data.likes)
-          })
-          .catch(() => {})
-
-        const [favRes, likeRes] = await Promise.all([
+        const [favRes, likeRes, countRes] = await Promise.all([
           fetch(`/api/user/favorite-shares?userId=${userData.id}`),
-          fetch(`/api/user/likes?userId=${userData.id}`)
+          fetch(`/api/user/likes?userId=${userData.id}`),
+          fetch(`/api/shares/${share.id}/like`, { method: 'GET' }).then(r => r.json()).catch(() => null)
         ])
         if (statusLoadedRef.current) return
+        // 更新点赞数
+        if (countRes && countRes.likes !== undefined) {
+          setLikeCount(countRes.likes)
+        }
         if (favRes.ok) {
           const data = await favRes.json()
           setIsFavorited(data.shares?.some((s: any) => s.id === share.id) || false)
@@ -174,10 +171,10 @@ export default function UserShareCard({ share }: UserShareCardProps) {
           const targetToolId = share.tool?.id || (-1 - share.id)
           setIsLiked(data.likes?.some((t: any) => t.id === targetToolId) || false)
         }
+        statusLoadedRef.current = true
       } catch (e) {
-        // 静默失败
+        statusLoadedRef.current = true
       }
-      statusLoadedRef.current = true
     }
     loadInitialStatus()
   }, [share.id, share.tool])
@@ -334,22 +331,15 @@ export default function UserShareCard({ share }: UserShareCardProps) {
     }
     window.dispatchEvent(new Event('localStorageChange'))
     
-    // 然后发请求，如果失败就回滚
+    // 发请求，API返回后用真实数据纠正
     fetch('/api/user/likes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id, toolId, toolData, shareId: share.id })
     }).then(res => res.json()).then(data => {
-      if (data.liked === isLiked) {
-        // API 结果和乐观更新不一致，回滚
-        setIsLiked(data.liked)
-        setLikeCount(prev => data.liked ? prev + 1 : Math.max(0, prev - 1))
-      }
-    }).catch(() => {
-      // 请求失败，回滚
-      setIsLiked(isLiked)
-      setLikeCount(prev => isLiked ? prev + 1 : Math.max(0, prev - 1))
-    })
+      setIsLiked(data.liked)
+      if (data.likes !== undefined) setLikeCount(data.likes)
+    }).catch(() => {})
   }
 
   // 收藏分享
