@@ -2,12 +2,28 @@
 
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function ToolsSearchBar() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('search') || '')
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const isLoggedIn = !!localStorage.getItem('user')
+    setLoggedIn(isLoggedIn)
+    // 如果未登录但有搜索参数，跳转首页并提示
+    if (!isLoggedIn && searchParams.get('search')) {
+      setTimeout(() => {
+        if (confirm('请先登录后再使用搜索功能')) {
+          window.location.href = '/login'
+        } else {
+          router.push('/tools')
+        }
+      }, 100)
+    }
+  }, [])
 
   const buildUrl = (overrides: Record<string, string | undefined>) => {
     const params = new URLSearchParams()
@@ -34,6 +50,12 @@ export default function ToolsSearchBar() {
   }
 
   const handleSearch = () => {
+    if (!loggedIn) {
+      if (confirm('请先登录后再使用搜索功能，是否跳转到登录页面？')) {
+        window.location.href = '/login'
+      }
+      return
+    }
     // 搜索时清除分类、来源和排序，只保留搜索词
     const params = new URLSearchParams()
     const searchValue = query.trim()
