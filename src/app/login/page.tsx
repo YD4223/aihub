@@ -67,6 +67,7 @@ export default function LoginPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '操作失败')
       localStorage.setItem('user', JSON.stringify(data.user))
+      if (data.sessionToken) localStorage.setItem('sessionToken', data.sessionToken)
       router.push('/user-center'); router.refresh()
     } catch (err: any) { setError(err.message) }
     finally { setLoading(false) }

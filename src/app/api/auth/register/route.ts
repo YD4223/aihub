@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import { verifyCode } from '@/lib/email'
 
 // 写入验证码日志
@@ -94,6 +95,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // 生成 sessionToken
+    const sessionToken = crypto.randomUUID()
+    await prisma.$executeRawUnsafe(
+      `UPDATE users SET "sessionToken" = $1 WHERE id = ${user.id}`,
+      sessionToken
+    )
+
     // 返回用户信息（不包含密码）
     const { password: _, ...userWithoutPassword } = user
 
@@ -101,7 +109,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: '注册成功',
-      user: userWithoutPassword
+      user: userWithoutPassword,
+      sessionToken
     })
   } catch (error: any) {
     console.error('注册错误:', error)

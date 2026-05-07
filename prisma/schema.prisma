@@ -99,6 +99,7 @@ model User {
   bannedUntil   DateTime?
   bannedReason  String?
   bannedBy      Int?
+  sessionToken  String?     // 单设备登录token
   notifyEmail   Boolean        @default(true)
   notifySite    Boolean        @default(true)
   notifyComment Boolean        @default(true)
