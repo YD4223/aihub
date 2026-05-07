@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import UserShareCard from '@/components/UserShareCard'
@@ -29,8 +29,6 @@ interface UserSharePageProps {
 }
 
 async function getToolShares(sort?: string, search?: string) {
-  const prisma = new PrismaClient()
-  
   // 构建基础查询条件
   const whereConditions: any = {
     status: 'approved',
@@ -122,8 +120,6 @@ async function getToolShares(sort?: string, search?: string) {
 }
 
 async function getLifeShares(sort?: string, search?: string) {
-  const prisma = new PrismaClient()
-  
   const orderBy = sort === 'hot' || sort === 'mostLiked' 
     ? 's.likes DESC, s.createdAt DESC' 
     : 's.createdAt DESC'
@@ -189,8 +185,6 @@ async function getLifeShares(sort?: string, search?: string) {
 }
 
 async function getStats() {
-  const prisma = new PrismaClient()
-  
   const [toolCount, lifeCount, totalLikes, totalComments] = await Promise.all([
     prisma.share.count({ where: { type: 'tool', status: 'approved' } }),
     prisma.share.count({ where: { type: 'life', status: 'approved' } }),
