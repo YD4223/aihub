@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Search, Menu, X, Zap, Plus, User, BrainCircuit, Sun, Moon } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Avatar from '@/components/Avatar'
 
@@ -147,58 +147,73 @@ export default function Navbar() {
   const pathname = usePathname()
 
   // 获取登录用户信息 + 校验单设备登录
-  useEffect(() => {
+  const doVerifySession = useCallback(() => {
     const savedUser = localStorage.getItem('user')
+    if (!savedUser) {
+      // bfcache 恢复时 localStorage 已被清空，清除内存中的 state
+      setUser(null)
+      return
+    }
     const sessionToken = localStorage.getItem('sessionToken')
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser)
-      setUser(parsed)
-      // 老用户没有 sessionToken 的话尝试获取
-      const doVerify = (token: string) => {
-        fetch(`/api/auth/verify?userId=${parsed.id}&token=${token}`)
-          .then(res => res.json())
-          .then(data => {
-            if (!data?.valid) {
-              localStorage.removeItem('user')
-              localStorage.removeItem('sessionToken')
-              setUser(null)
-              alert('账号已在其他设备登录，已自动登出')
-            }
-          })
-          .catch(() => {})
-      }
-      if (parsed?.id && sessionToken) {
-        doVerify(sessionToken)
-      } else if (parsed?.id) {
-        // 没有 token 就去获取（已有则返回旧token，没有则生成新token）
-        fetch('/api/auth/refresh-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: parsed.id })
-        })
-          .then(r => r.json())
-          .then(data => {
-            if (data.sessionToken) {
-              localStorage.setItem('sessionToken', data.sessionToken)
-              doVerify(data.sessionToken)
-            }
-          })
-          .catch(() => {})
-      }
-
-      // 从服务器获取最新用户数据
-      fetch(`/api/user/profile/${parsed.id}?viewerId=${parsed.id}`)
-        .then(res => res.ok ? res.json() : null)
+    const parsed = JSON.parse(savedUser)
+    setUser(parsed)
+    // 老用户没有 sessionToken 的话尝试获取
+    const doVerify = (token: string) => {
+      fetch(`/api/auth/verify?userId=${parsed.id}&token=${token}`)
+        .then(res => res.json())
         .then(data => {
-          if (data?.user) {
-            const merged = { ...parsed, ...data.user }
-            setUser(merged)
-            localStorage.setItem('user', JSON.stringify(merged))
+          if (!data?.valid) {
+            localStorage.removeItem('user')
+            localStorage.removeItem('sessionToken')
+            setUser(null)
+            alert('账号已在其他设备登录，已自动登出')
           }
         })
         .catch(() => {})
     }
+    if (parsed?.id && sessionToken) {
+      doVerify(sessionToken)
+    } else if (parsed?.id) {
+      // 没有 token 就去获取（已有则返回旧token，没有则生成新token）
+      fetch('/api/auth/refresh-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: parsed.id })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.sessionToken) {
+            localStorage.setItem('sessionToken', data.sessionToken)
+            doVerify(data.sessionToken)
+          }
+        })
+        .catch(() => {})
+    }
+
+    // 从服务器获取最新用户数据
+    fetch(`/api/user/profile/${parsed.id}?viewerId=${parsed.id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) {
+          const merged = { ...parsed, ...data.user }
+          setUser(merged)
+          localStorage.setItem('user', JSON.stringify(merged))
+        }
+      })
+      .catch(() => {})
   }, [])
+
+  // 挂载时立即校验
+  useEffect(() => { doVerifySession() }, [doVerifySession])
+
+  // 页面从 bfcache（历史记录）恢复时重新校验
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) doVerifySession()
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [doVerifySession])
 
   // 防止滚动穿透
   useEffect(() => {
