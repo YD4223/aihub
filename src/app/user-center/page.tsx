@@ -330,6 +330,7 @@ export default function UserCenterPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('user')
+    localStorage.removeItem('sessionToken')
     router.push('/')
     router.refresh()
   }
@@ -2062,6 +2063,7 @@ export default function UserCenterPage() {
                       const data = await res.json()
                       if (res.ok) {
                         localStorage.removeItem('user')
+                        localStorage.removeItem('sessionToken')
                         router.push('/')
                         router.refresh()
                       } else {

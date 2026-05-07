@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,10 +40,8 @@ export async function POST(request: NextRequest) {
     // 验证密码（支持明文和bcrypt）
     let isValid = false
     if (user.password.startsWith('$2')) {
-      // bcrypt 加密密码
       isValid = await bcrypt.compare(password, user.password)
     } else {
-      // 明文密码
       isValid = user.password === password
     }
 
@@ -53,12 +52,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 生成新 sessionToken，覆盖旧的（单设备登录）
+    const sessionToken = crypto.randomUUID()
+    await prisma.$executeRawUnsafe(
+      `UPDATE users SET "sessionToken" = $1 WHERE id = $2`,
+      sessionToken, user.id
+    )
+
     // 返回用户信息（不包含密码）
     const { password: _, ...userWithoutPassword } = user
 
     return NextResponse.json({
       message: '登录成功',
-      user: userWithoutPassword
+      user: userWithoutPassword,
+      sessionToken
     })
   } catch (error) {
     console.error('登录错误:', error)

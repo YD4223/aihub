@@ -146,14 +146,27 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // 获取登录用户信息
+  // 获取登录用户信息 + 校验单设备登录
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
+    const sessionToken = localStorage.getItem('sessionToken')
     if (savedUser) {
       const parsed = JSON.parse(savedUser)
       setUser(parsed)
-      // 从服务器获取最新用户数据（含头像等）
-      if (parsed?.id) {
+      // 校验 token 有效性
+      if (parsed?.id && sessionToken) {
+        fetch(`/api/auth/verify?userId=${parsed.id}&token=${sessionToken}`)
+          .then(res => res.json())
+          .then(data => {
+            if (!data?.valid) {
+              localStorage.removeItem('user')
+              localStorage.removeItem('sessionToken')
+              setUser(null)
+              alert('账号已在其他设备登录，已自动登出')
+            }
+          })
+          .catch(() => {})
+        // 从服务器获取最新用户数据
         fetch(`/api/user/profile/${parsed.id}?viewerId=${parsed.id}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => {
@@ -340,7 +353,7 @@ export default function Navbar() {
                     <Link href="/user-center" style={{display:'block', padding:'8px 16px', fontSize:'12px', color:'#e0e0e0', fontFamily:'monospace', textDecoration:'none'}} onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}>👤 用户中心</Link>
                     <Link href="/user-center/edit" style={{display:'block', padding:'8px 16px', fontSize:'12px', color:'#e0e0e0', fontFamily:'monospace', textDecoration:'none'}} onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}>⚙️ 设置</Link>
                     <button 
-                      onClick={() => { localStorage.removeItem('user'); window.location.href = '/' }}
+                      onClick={() => { localStorage.removeItem('user'); localStorage.removeItem('sessionToken'); window.location.href = '/' }}
                       style={{display:'block', width:'100%', textAlign:'left', padding:'8px 16px', fontSize:'12px', color:'#ff3366', fontFamily:'monospace', border:'none', background:'transparent', cursor:'pointer'}}
                       onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}
                     >🚪 退出登录</button>
