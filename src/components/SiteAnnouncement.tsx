@@ -78,15 +78,20 @@ export default function SiteAnnouncement() {
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex items-center gap-1.5">
+        <div className="flex-shrink-0 flex items-center gap-2">
           {list.map((_, i) => (
             <button
               key={i}
               onClick={() => { setVisible(false); setTimeout(() => { setCurrent(i); setVisible(true) }, 300) }}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? 'bg-neon-green w-4' : 'bg-cyber-muted-foreground/30 hover:bg-cyber-muted-foreground/60'
+              title={`切换到第 ${i+1} 条公告`}
+              className={`transition-all duration-300 cursor-pointer ${
+                i === current
+                  ? 'w-6 h-6 bg-neon-green text-cyber-background text-[10px] font-bold rounded flex items-center justify-center'
+                  : 'w-1.5 h-1.5 rounded-full bg-cyber-muted-foreground/30 hover:bg-neon-green/60 hover:scale-125'
               }`}
-            />
+            >
+              {i === current ? i + 1 : ''}
+            </button>
           ))}
         </div>
 
