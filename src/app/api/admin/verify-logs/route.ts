@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // 查询数据
     const rawLogs = await prisma.$queryRawUnsafe(
       `SELECT id, email, "ipAddress", "userAgent",
-              to_char("sentAt" + interval '8 hours', 'YYYY-MM-DD"T"HH24:MI:SS') as "sentAt",
+              to_char("sentAt", 'YYYY-MM-DD"T"HH24:MI:SS') as "sentAt",
               success, reason
        FROM verification_logs ${whereClause}
        ORDER BY "sentAt" DESC
