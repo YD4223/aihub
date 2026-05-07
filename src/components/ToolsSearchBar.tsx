@@ -12,6 +12,12 @@ export default function ToolsSearchBar() {
   // 挂载时拦截：如果 URL 有 search 参数但未登录，立刻跳登录
   useEffect(() => {
     if (searchParams.get('search') && !localStorage.getItem('user')) {
+      alert('请先登录后再使用搜索功能')
+      router.replace('/login?redirect=/tools')
+    }
+  }, [])
+  useEffect(() => {
+    if (searchParams.get('search') && !localStorage.getItem('user')) {
       router.replace('/login?redirect=/tools')
     }
   }, [])  // 仅首次挂载执行
