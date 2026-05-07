@@ -165,6 +165,7 @@ export default function Navbar() {
           if (!data?.valid) {
             localStorage.removeItem('user')
             localStorage.removeItem('sessionToken')
+            document.cookie = 'auth_token=; Max-Age=0; path=/;'
             setUser(null)
             alert('账号已在其他设备登录，已自动登出')
           }
@@ -387,7 +388,13 @@ export default function Navbar() {
                     <Link href="/user-center" style={{display:'block', padding:'8px 16px', fontSize:'12px', color:'#e0e0e0', fontFamily:'monospace', textDecoration:'none'}} onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}>👤 用户中心</Link>
                     <Link href="/user-center/edit" style={{display:'block', padding:'8px 16px', fontSize:'12px', color:'#e0e0e0', fontFamily:'monospace', textDecoration:'none'}} onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}>⚙️ 设置</Link>
                     <button 
-                      onClick={() => { localStorage.removeItem('user'); localStorage.removeItem('sessionToken'); window.location.href = '/' }}
+                      onClick={() => { 
+                        localStorage.removeItem('user'); 
+                        localStorage.removeItem('sessionToken'); 
+                        // 清除登录cookie
+                        document.cookie = 'auth_token=; Max-Age=0; path=/;';
+                        window.location.href = '/' 
+                      }}
                       style={{display:'block', width:'100%', textAlign:'left', padding:'8px 16px', fontSize:'12px', color:'#ff3366', fontFamily:'monospace', border:'none', background:'transparent', cursor:'pointer'}}
                       onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}
                     >🚪 退出登录</button>
