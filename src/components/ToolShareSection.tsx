@@ -282,6 +282,12 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium text-cyber-foreground font-mono">{comment.user.username}</span>
+                      {comment.user.role === 'ADMIN' && (
+                        <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold font-mono"
+                          style={{ clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' }}>
+                          👑 站长
+                        </span>
+                      )}
                       {isAIUser(comment.user.username) && (
                         <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-neon-cyan to-neon-magenta text-cyber-background font-bold font-mono"
                           style={{ clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' }}>
