@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { 
-  MessageCircle, Search, Clock, Loader2, Send, Zap
+  MessageCircle, Search, Clock, Loader2, Send, Zap, ChevronUp, ChevronDown
 } from 'lucide-react'
 
 interface ToolShareSectionProps {
@@ -58,6 +58,8 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
   const [showSearch, setShowSearch] = useState(false)
   const [commentInput, setCommentInput] = useState('')
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
 
   const commentRef = useRef<HTMLTextAreaElement>(null)
 
@@ -156,8 +158,11 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
       <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-neon-cyan" />
       <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-neon-cyan" />
 
-      {/* 标题 */}
-      <div className="flex items-center justify-between border-b border-cyber-border px-6 py-4">
+      {/* 标题 — 可折叠 */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="w-full flex items-center justify-between border-b border-cyber-border px-6 py-4 hover:bg-cyber-muted/10 transition-colors"
+      >
         <h2 className="text-xl font-bold text-cyber-foreground font-orbitron flex items-center gap-2">
           <span className="text-neon-cyan">{'>'}</span> 讨论区
           {commentsTotal > 0 && (
@@ -168,29 +173,36 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
           )}
         </h2>
         <div className="flex items-center gap-2">
-          {/* 排序 */}
-          <div className="flex bg-cyber-background border border-cyber-border p-0.5"
-            style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}>
-            <button
-              onClick={() => setSortBy('new')}
-              className={`px-3 py-1.5 text-xs font-mono transition-colors flex items-center gap-1 ${
-                sortBy === 'new' ? 'bg-neon-cyan text-cyber-background' : 'text-cyber-muted-foreground hover:text-cyber-foreground'
-              }`}
-              style={{ clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' }}
-            >
-              <Clock className="w-3 h-3" /> 最新
-            </button>
-          </div>
-          {/* 搜索 */}
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            className="p-2 text-cyber-muted-foreground hover:text-neon-cyan transition-colors"
-          >
-            <Search className="w-4 h-4" />
-          </button>
+          {!collapsed && (
+            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+              {/* 排序 */}
+              <div className="flex bg-cyber-background border border-cyber-border p-0.5"
+                style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}>
+                <button
+                  onClick={() => setSortBy('new')}
+                  className={`px-3 py-1.5 text-xs font-mono transition-colors flex items-center gap-1 ${
+                    sortBy === 'new' ? 'bg-neon-cyan text-cyber-background' : 'text-cyber-muted-foreground hover:text-cyber-foreground'
+                  }`}
+                  style={{ clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                >
+                  <Clock className="w-3 h-3" /> 最新
+                </button>
+              </div>
+              {/* 搜索 */}
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className="p-2 text-cyber-muted-foreground hover:text-neon-cyan transition-colors"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          {collapsed ? <ChevronDown className="w-5 h-5 text-cyber-muted-foreground" /> : <ChevronUp className="w-5 h-5 text-cyber-muted-foreground" />}
         </div>
-      </div>
+      </button>
 
+      {/* 折叠内容 */}
+      {!collapsed && (
       <div className="p-6">
         {/* 搜索框 */}
         {showSearch && (
@@ -246,7 +258,10 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
             </div>
           ) : (
             <>
-              {filteredComments.map(comment => (
+              {filteredComments.map(comment => {
+                const isLong = comment.content.length > 100
+                const isExpanded = expandedComments.has(comment.id)
+                return (
                 <div key={comment.id} className="flex gap-3 p-4 bg-cyber-muted/10 border border-cyber-border"
                   style={{ clipPath: 'polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px))' }}>
                   {/* 头像 */}
@@ -272,10 +287,26 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
                       )}
                       <span className="text-xs text-cyber-muted-foreground font-mono">{timeAgo(comment.createdAt)}</span>
                     </div>
-                    <p className="text-sm text-cyber-muted-foreground mt-1 font-mono">{comment.content.replace(/#\S+/g, match => `\n${match}`)}</p>
+                    <div className="mt-1">
+                      <p className={`text-sm text-cyber-muted-foreground font-mono ${isLong && !isExpanded ? 'line-clamp-3' : ''}`}>
+                        {comment.content}
+                      </p>
+                      {isLong && (
+                        <button
+                          onClick={() => setExpandedComments(prev => {
+                            const next = new Set(prev)
+                            isExpanded ? next.delete(comment.id) : next.add(comment.id)
+                            return next
+                          })}
+                          className="text-xs text-neon-cyan hover:text-neon-magenta font-mono mt-1 transition-colors"
+                        >
+                          {isExpanded ? '收起' : '展开全部'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))}
+              )})}
               {/* 加载更多 */}
               {comments.length < commentsTotal && (
                 <div className="text-center pt-4">
@@ -292,6 +323,7 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }
