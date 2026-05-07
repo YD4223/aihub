@@ -11,14 +11,6 @@ const requestCounts = new Map<string, { count: number; expiresAt: number }>()
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // === 搜索拦截：未登录不能使用搜索功能 ===
-  if (pathname === '/tools' && request.nextUrl.searchParams.has('search')) {
-    const authToken = request.cookies.get('auth_token')?.value
-    if (!authToken) {
-      return NextResponse.redirect(new URL('/login?redirect=/tools', request.url))
-    }
-  }
-
   // === API 请求限流 ===
   if (!pathname.startsWith('/api/')) {
     return NextResponse.next()
@@ -52,5 +44,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/tools'],
+  matcher: '/api/:path*',
 }

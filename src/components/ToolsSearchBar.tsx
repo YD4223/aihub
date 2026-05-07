@@ -8,16 +8,6 @@ export default function ToolsSearchBar() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('search') || '')
-  const [loggedIn, setLoggedIn] = useState(false)
-
-  useEffect(() => {
-    const isLoggedIn = !!localStorage.getItem('user')
-    setLoggedIn(isLoggedIn)
-    // 未登录强行搜索的，直接重定向
-    if (!isLoggedIn && searchParams.get('search')) {
-      router.replace('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))
-    }
-  }, [])
 
   const buildUrl = (overrides: Record<string, string | undefined>) => {
     const params = new URLSearchParams()
@@ -44,7 +34,7 @@ export default function ToolsSearchBar() {
   }
 
   const handleSearch = () => {
-    if (!loggedIn) {
+    if (!localStorage.getItem('user')) {
       alert('请先登录后再使用搜索功能')
       router.push('/login?redirect=/tools')
       return
