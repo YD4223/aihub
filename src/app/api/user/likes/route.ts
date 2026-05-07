@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { canLike, incrementLikeCount } from '@/lib/daily-limit'
 
 // GET /api/user/likes?userId=xxx
 export async function GET(request: NextRequest) {
@@ -31,10 +32,19 @@ export async function POST(request: NextRequest) {
     const { userId, toolId, toolData, shareId } = await request.json()
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
+    // 只限制"点赞"操作，取消点赞不限制
     const existing = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT id FROM user_like_tools WHERE user_id = $1 AND tool_id = $2 LIMIT 1`,
       userId, toolId
     )
+
+    // 如果已经点过赞（要取消），跳过日限检查
+    if (!(Array.isArray(existing) && existing.length > 0)) {
+      const { allowed } = await canLike(userId)
+      if (!allowed) {
+        return NextResponse.json({ error: '今日点赞次数已达上限（每天5次），请明天再试' }, { status: 429 })
+      }
+    }
 
     if (Array.isArray(existing) && existing.length > 0) {
       await prisma.$executeRawUnsafe(`DELETE FROM user_like_tools WHERE id = $1`, existing[0].id)
@@ -54,6 +64,8 @@ export async function POST(request: NextRequest) {
       `INSERT INTO user_like_tools (user_id, tool_id, tool_data) VALUES ($1, $2, $3)`,
       userId, toolId, JSON.stringify(toolData)
     )
+    // 记录点赞次数
+    await incrementLikeCount(userId)
     // 同步更新 shares 表的点赞数
     let newLikes = 0
     if (shareId) {

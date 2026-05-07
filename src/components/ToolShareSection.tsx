@@ -118,6 +118,7 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
         body: JSON.stringify({ content: commentInput, userId: user.id })
       })
       const data = await res.json()
+      if (data.error) { alert(data.error); return }
       if (res.ok && data.comment) {
         const newComment: ShareComment = {
           id: data.comment.id,

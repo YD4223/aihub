@@ -21,7 +21,7 @@ export async function POST(
     const { allowed, remaining } = await canLike(userId)
     if (!allowed) {
       return NextResponse.json({ 
-        error: '今日点赞次数已达上限（15次），请明天再试' 
+        error: `今日点赞次数已达上限（每天5次），请明天再试` 
       }, { status: 429 })
     }
 

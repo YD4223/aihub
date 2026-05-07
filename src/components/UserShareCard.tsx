@@ -337,6 +337,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id, toolId, toolData, shareId: share.id })
     }).then(res => res.json()).then(data => {
+      if (data.error) { alert(data.error); return }
       setIsLiked(data.liked)
       if (data.likes !== undefined) setLikeCount(data.likes)
     }).catch(() => {})
@@ -401,10 +402,11 @@ export default function UserShareCard({ share }: UserShareCardProps) {
         })
       })
       
-      if (res.ok) {
-        const data = await res.json()
-        const newComment: Comment = {
-          id: data.comment.id,
+      const data = await res.json()
+      if (data.error) { alert(data.error); return }
+      
+      const newComment: Comment = {
+        id: data.comment.id,
           user: { 
             id: currentUser.id,
             name: data.comment.userName || currentUser.username || '匿名用户', 
@@ -437,7 +439,6 @@ export default function UserShareCard({ share }: UserShareCardProps) {
         setUploadedImages([])
         setShowEmoji(false)
         setReplyTo(null)
-      }
     } catch (error) {
       console.error('发表评论失败:', error)
     } finally {

@@ -51,6 +51,7 @@ export default function LikeButton({ toolId, toolData }: LikeButtonProps) {
         body: JSON.stringify({ userId: user.id, toolId, toolData })
       })
       const data = await res.json()
+      if (data.error) { alert(data.error); return }
       setIsLiked(data.liked)
       window.dispatchEvent(new Event('localStorageChange'))
     } catch (e) {
