@@ -16,15 +16,15 @@ export async function POST(request: NextRequest) {
                       'unknown'
 
     // 检查24小时内是否已记录过浏览（用 raw SQL 避免 Prisma 列名映射问题）
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
     const existing = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT id FROM view_records 
        WHERE "targetType" = $1 AND "targetId" = $2 
-       AND "viewedAt" >= $3
+       AND "viewedAt" >= $3::timestamptz
        AND "ipAddress" = $4
        LIMIT 1`,
-      targetType, parseInt(targetId), twentyFourHoursAgo, ipAddress
+      targetType, parseInt(targetId), twentyFourHoursAgo.toISOString(), ipAddress
     )
 
     // 如果24小时内已浏览过，直接返回成功但不增加计数
