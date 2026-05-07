@@ -60,6 +60,7 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
   const [commentSubmitting, setCommentSubmitting] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
+  const [showAllComments, setShowAllComments] = useState(false)
 
   const commentRef = useRef<HTMLTextAreaElement>(null)
 
@@ -258,7 +259,7 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
             </div>
           ) : (
             <>
-              {filteredComments.map(comment => {
+              {filteredComments.slice(0, showAllComments ? undefined : 5).map(comment => {
                 const isLong = comment.content.length > 100
                 const isExpanded = expandedComments.has(comment.id)
                 return (
@@ -307,11 +308,33 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
                   </div>
                 </div>
               )})}
-              {/* 加载更多 */}
+              {/* 折叠控制：默认只显示前5条 */}
+              {!showAllComments && filteredComments.length > 5 && (
+                <div className="text-center pt-4">
+                  <button
+                    onClick={() => setShowAllComments(true)}
+                    className="text-sm text-neon-cyan hover:text-neon-magenta font-mono transition-colors border border-cyber-border px-6 py-2 bg-cyber-muted/10"
+                    style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+                  >
+                    查看全部 {filteredComments.length} 条评论 ↓
+                  </button>
+                </div>
+              )}
+              {showAllComments && filteredComments.length > 5 && (
+                <div className="text-center pt-4">
+                  <button
+                    onClick={() => setShowAllComments(false)}
+                    className="text-sm text-neon-cyan hover:text-neon-magenta font-mono transition-colors"
+                  >
+                    收起 ↑
+                  </button>
+                </div>
+              )}
+              {/* 加载更多 — 点击后自动展开全部 */}
               {comments.length < commentsTotal && (
                 <div className="text-center pt-4">
                   <button
-                    onClick={() => loadComments(commentPage + 1)}
+                    onClick={() => { loadComments(commentPage + 1); setShowAllComments(true) }}
                     disabled={commentsLoading}
                     className="text-sm text-neon-cyan hover:text-neon-magenta font-mono transition-colors"
                   >
