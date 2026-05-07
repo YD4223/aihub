@@ -15,8 +15,16 @@ export async function POST(request: NextRequest) {
     )
 
     if (Array.isArray(result) && result.length > 0 && result[0].sessionToken) {
-      // 已有 token，直接返回（不要替换）
-      return NextResponse.json({ sessionToken: result[0].sessionToken })
+      // 已有 token，返回并同步 cookie
+      const res = NextResponse.json({ sessionToken: result[0].sessionToken })
+      res.cookies.set('auth_token', result[0].sessionToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      })
+      return res
     }
 
     // 没有 token 才生成新的
@@ -26,7 +34,15 @@ export async function POST(request: NextRequest) {
       sessionToken, parseInt(userId)
     )
 
-    return NextResponse.json({ sessionToken })
+    const res = NextResponse.json({ sessionToken })
+    res.cookies.set('auth_token', sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60,
+      path: '/',
+    })
+    return res
   } catch (error: any) {
     console.error('[RefreshToken] 错误:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

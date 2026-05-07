@@ -9,6 +9,13 @@ export default function ToolsSearchBar() {
   const searchParams = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('search') || '')
 
+  // 挂载时拦截：如果 URL 有 search 参数但未登录，立刻跳登录
+  useEffect(() => {
+    if (searchParams.get('search') && !localStorage.getItem('user')) {
+      router.replace('/login?redirect=/tools')
+    }
+  }, [])  // 仅首次挂载执行
+
   const buildUrl = (overrides: Record<string, string | undefined>) => {
     const params = new URLSearchParams()
     const category = searchParams.get('category')
