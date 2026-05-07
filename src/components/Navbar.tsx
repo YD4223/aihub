@@ -153,9 +153,9 @@ export default function Navbar() {
     if (savedUser) {
       const parsed = JSON.parse(savedUser)
       setUser(parsed)
-      // 校验 token 有效性
-      if (parsed?.id && sessionToken) {
-        fetch(`/api/auth/verify?userId=${parsed.id}&token=${sessionToken}`)
+      // 老用户没有 sessionToken 的话尝试获取
+      const doVerify = (token: string) => {
+        fetch(`/api/auth/verify?userId=${parsed.id}&token=${token}`)
           .then(res => res.json())
           .then(data => {
             if (!data?.valid) {
@@ -166,18 +166,37 @@ export default function Navbar() {
             }
           })
           .catch(() => {})
-        // 从服务器获取最新用户数据
-        fetch(`/api/user/profile/${parsed.id}?viewerId=${parsed.id}`)
-          .then(res => res.ok ? res.json() : null)
+      }
+      if (parsed?.id && sessionToken) {
+        doVerify(sessionToken)
+      } else if (parsed?.id) {
+        // 没有 token 就去获取（已有则返回旧token，没有则生成新token）
+        fetch('/api/auth/refresh-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: parsed.id })
+        })
+          .then(r => r.json())
           .then(data => {
-            if (data?.user) {
-              const merged = { ...parsed, ...data.user }
-              setUser(merged)
-              localStorage.setItem('user', JSON.stringify(merged))
+            if (data.sessionToken) {
+              localStorage.setItem('sessionToken', data.sessionToken)
+              doVerify(data.sessionToken)
             }
           })
           .catch(() => {})
       }
+
+      // 从服务器获取最新用户数据
+      fetch(`/api/user/profile/${parsed.id}?viewerId=${parsed.id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.user) {
+            const merged = { ...parsed, ...data.user }
+            setUser(merged)
+            localStorage.setItem('user', JSON.stringify(merged))
+          }
+        })
+        .catch(() => {})
     }
   }, [])
 
