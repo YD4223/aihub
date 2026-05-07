@@ -243,8 +243,9 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
           </div>
         </div>
 
-        {/* 评论列表 */}
-        <div className="space-y-4">
+        {/* 评论列表 — 固定高度可滚动 */}
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#2a2a3a transparent' }}>
           {commentsLoading && comments.length === 0 ? (
             <div className="text-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-neon-cyan mx-auto mb-2" />
