@@ -9,9 +9,10 @@ import {
   Loader2, AlertCircle, Search, Filter,
   ChevronLeft, ChevronRight, RefreshCw,
   ExternalLink, User, Users, Ban, RotateCcw,
-  Flag, Shield, Unlock, Info, Mail
+  Flag, Shield, Unlock, Info, Mail, Megaphone
 } from 'lucide-react'
 import { getAvatarInitial } from '@/lib/utils'
+import AnnouncementManager from '@/components/AnnouncementManager'
 
 interface Tool {
   id: number
@@ -52,7 +53,7 @@ interface Comment {
   createdAt: string
 }
 
-type TabType = 'tools' | 'comments' | 'shares' | 'reports' | 'users' | 'verifyLogs'
+type TabType = 'tools' | 'comments' | 'shares' | 'reports' | 'users' | 'verifyLogs' | 'announcements'
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'suspended'
 type SourceFilter = 'all' | 'crawler' | 'user'
 
@@ -588,6 +589,17 @@ export default function AdminPage() {
           >
             <Mail className="w-5 h-5" />
             验证码日志
+          </button>
+          <button
+            onClick={() => setActiveTab('announcements')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
+              activeTab === 'announcements' 
+                ? 'bg-primary-600 text-white' 
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Megaphone className="w-5 h-5" />
+            公告管理
           </button>
         </div>
 
@@ -1909,6 +1921,11 @@ export default function AdminPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* 公告管理 */}
+        {activeTab === 'announcements' && (
+          <AnnouncementManager />
         )}
       </div>
       {showReviewModal && (

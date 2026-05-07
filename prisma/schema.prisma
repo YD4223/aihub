@@ -429,3 +429,15 @@ model VerificationCode {
   @@index([email, code])
   @@map("verification_codes")
 }
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  text      String   // 公告内容
+  type      String   @default("info") // info | update | event | notice
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("announcements")
+}
