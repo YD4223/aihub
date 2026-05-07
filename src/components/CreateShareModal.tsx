@@ -131,7 +131,10 @@ export default function CreateShareModal({ isOpen, onClose, defaultTool, onSucce
     const timer = setTimeout(async () => {
       setIsSearchingTool(true)
       try {
-        const res = await fetch(`/api/tools/search?q=${encodeURIComponent(toolSearch)}&limit=8`)
+        const userStr = localStorage.getItem('user')
+        const userId = userStr ? JSON.parse(userStr).id : 0
+        if (!userId) { setToolResults([]); setIsSearchingTool(false); return }
+        const res = await fetch(`/api/tools/search?q=${encodeURIComponent(toolSearch)}&limit=8&userId=${userId}`)
         const data = await res.json()
         setToolResults(data.tools || [])
       } catch {

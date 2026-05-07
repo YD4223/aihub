@@ -3,11 +3,17 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/tools/search?q=关键词&limit=8
+// GET /api/tools/search?q=关键词&limit=8&userId=xxx
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q')?.trim() || ''
   const limit = Math.min(parseInt(searchParams.get('limit') || '8'), 20)
+  const userId = searchParams.get('userId')
+
+  // 必须登录才能搜索
+  if (!userId) {
+    return NextResponse.json({ error: '请先登录后再使用搜索功能' }, { status: 401 })
+  }
 
   if (!q) {
     return NextResponse.json({ tools: [] })
