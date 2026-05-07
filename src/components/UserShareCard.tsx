@@ -149,15 +149,17 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       try {
         const [favRes, likeRes] = await Promise.all([
           fetch(`/api/user/favorite-shares?userId=${userData.id}`),
-          share.tool ? fetch(`/api/user/likes?userId=${userData.id}`) : Promise.resolve(null)
+          fetch(`/api/user/likes?userId=${userData.id}`)
         ])
         if (favRes.ok) {
           const data = await favRes.json()
           setIsFavorited(data.shares?.some((s: any) => s.id === share.id) || false)
         }
-        if (likeRes && likeRes.ok) {
+        if (likeRes.ok) {
           const data = await likeRes.json()
-          setIsLiked(data.likes?.some((t: any) => t.id === share.tool!.id) || false)
+          // 用正确的 toolId 比对（有关联工具就用工具ID，否则用虚拟ID）
+          const targetToolId = share.tool?.id || (-1 - share.id)
+          setIsLiked(data.likes?.some((t: any) => t.id === targetToolId) || false)
         }
       } catch (e) {
         // 静默失败
