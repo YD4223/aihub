@@ -86,8 +86,8 @@ export default function SiteAnnouncement() {
               title={`切换到第 ${i+1} 条公告`}
               className={`transition-all duration-300 cursor-pointer ${
                 i === current
-                  ? 'w-6 h-6 bg-neon-green text-cyber-background text-[10px] font-bold rounded flex items-center justify-center'
-                  : 'w-1.5 h-1.5 rounded-full bg-cyber-muted-foreground/30 hover:bg-neon-green/60 hover:scale-125'
+                  ? 'w-5 h-5 bg-neon-green text-cyber-background text-[10px] font-bold rounded-sm flex items-center justify-center'
+                  : 'w-2 h-2 rounded-full bg-cyber-muted-foreground/40 hover:bg-neon-green/60 hover:scale-125'
               }`}
             >
               {i === current ? i + 1 : ''}
