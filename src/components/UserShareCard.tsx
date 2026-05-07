@@ -101,6 +101,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
   const shareMenuRef = useRef<HTMLDivElement>(null)
   const commentsRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const statusLoadedRef = useRef(false)
   
   // 解析分享图片
   const shareImages = (() => {
@@ -141,8 +142,11 @@ export default function UserShareCard({ share }: UserShareCardProps) {
     if (isCommentModalOpen) {
       loadComments()
     }
-    // 从服务器加载收藏/点赞状态
-    const loadStatus = async () => {
+  }, [isCommentModalOpen])
+
+  // 初次加载时从服务器加载收藏/点赞状态（仅一次，不和用户操作抢数据）
+  useEffect(() => {
+    const loadInitialStatus = async () => {
       const userStr = localStorage.getItem('user')
       if (!userStr) return
       const userData = JSON.parse(userStr)
@@ -151,22 +155,24 @@ export default function UserShareCard({ share }: UserShareCardProps) {
           fetch(`/api/user/favorite-shares?userId=${userData.id}`),
           fetch(`/api/user/likes?userId=${userData.id}`)
         ])
+        if (statusLoadedRef.current) return
         if (favRes.ok) {
           const data = await favRes.json()
           setIsFavorited(data.shares?.some((s: any) => s.id === share.id) || false)
         }
+        if (statusLoadedRef.current) return
         if (likeRes.ok) {
           const data = await likeRes.json()
-          // 用正确的 toolId 比对（有关联工具就用工具ID，否则用虚拟ID）
           const targetToolId = share.tool?.id || (-1 - share.id)
           setIsLiked(data.likes?.some((t: any) => t.id === targetToolId) || false)
         }
       } catch (e) {
         // 静默失败
       }
+      statusLoadedRef.current = true
     }
-    loadStatus()
-  }, [isCommentModalOpen, share.id, share.tool])
+    loadInitialStatus()
+  }, [share.id, share.tool])
 
   // 记录浏览
   useEffect(() => {
@@ -288,6 +294,9 @@ export default function UserShareCard({ share }: UserShareCardProps) {
     }
     const user = JSON.parse(userStr)
     
+    // 标记已操作，防止初始加载结果覆盖
+    statusLoadedRef.current = true
+    
     const toolId = share.tool?.id || (-1 - share.id)
     const toolData = share.tool ? {
       id: share.tool.id,
@@ -311,18 +320,15 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id, toolId, toolData, shareId: share.id })
-    }).catch(() => {})
-
-    if (isLiked) {
-      setLikeCount(prev => prev - 1)
-    } else {
-      setLikeCount(prev => prev + 1)
+    }).then(res => res.json()).then(data => {
+      // 根据 API 真实结果更新 UI，不盲目翻转
+      setIsLiked(data.liked)
+      setLikeCount(prev => data.liked ? prev + 1 : Math.max(0, prev - 1))
       const btn = document.getElementById(`like-btn-${share.id}`)
       btn?.classList.add('scale-125')
       setTimeout(() => btn?.classList.remove('scale-125'), 200)
-    }
-    setIsLiked(!isLiked)
-    window.dispatchEvent(new Event('localStorageChange'))
+      window.dispatchEvent(new Event('localStorageChange'))
+    }).catch(() => {})
   }
 
   // 收藏分享
