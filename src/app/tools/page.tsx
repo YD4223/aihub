@@ -7,8 +7,6 @@ import CategoryFilter from '@/components/CategoryFilter'
 import ToolsSearchBar from '@/components/ToolsSearchBar'
 import { Suspense } from 'react'
 import { Terminal, Cpu, ChevronLeft, ChevronRight } from 'lucide-react'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 
 const ITEMS_PER_PAGE = 12
 
@@ -27,15 +25,6 @@ export default async function ToolsPage({
   const source = params.source as string | undefined
   const sort = params.sort as string | undefined
   const page = parseInt(params.page as string || '1', 10)
-  
-  // 未登录用户不能使用搜索功能（服务端拦截）
-  if (search) {
-    const cookieStore = await cookies()
-    const authToken = cookieStore.get('auth_token')?.value
-    if (!authToken) {
-      redirect('/login?redirect=/tools')
-    }
-  }
   
   console.log('[ToolsPage] searchParams:', params)
   console.log('[ToolsPage] search:', search)

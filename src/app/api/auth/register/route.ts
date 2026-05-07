@@ -107,19 +107,11 @@ export async function POST(request: NextRequest) {
 
     await logVerification({ email, success: true, reason: '注册成功' })
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       message: '注册成功',
       user: userWithoutPassword,
       sessionToken
     })
-    response.cookies.set('auth_token', sessionToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    })
-    return response
   } catch (error: any) {
     console.error('注册错误:', error)
     return NextResponse.json(

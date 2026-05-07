@@ -74,20 +74,11 @@ export async function POST(request: NextRequest) {
     // 返回用户信息（不包含密码）
     const { password: _, ...userWithoutPassword } = user
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       message: '登录成功',
       user: userWithoutPassword,
       sessionToken
     })
-    // 设置 cookie 供中间件校验登录状态
-    response.cookies.set('auth_token', sessionToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7天
-      path: '/',
-    })
-    return response
   } catch (error) {
     console.error('登录错误:', error)
     return NextResponse.json(
