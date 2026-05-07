@@ -8,6 +8,7 @@ import FavoriteButton from '@/components/FavoriteButton'
 import LikeButton from '@/components/LikeButton'
 import ReportButton from '@/components/ReportButton'
 import ShareExperienceButton from './ShareExperienceButton'
+import ViewTracker from './ViewTracker'
 import { prisma } from '@/lib/prisma'
 import { formatNumber, formatDate } from '@/lib/utils'
 
@@ -369,6 +370,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         </div>
       </div>
 
+      <ViewTracker toolId={tool.id} />
       <Footer />
     </div>
   )
