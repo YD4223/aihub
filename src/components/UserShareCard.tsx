@@ -286,13 +286,8 @@ export default function UserShareCard({ share }: UserShareCardProps) {
     }
     const user = JSON.parse(userStr)
     
-    if (!share.tool) {
-      setLikeCount(prev => isLiked ? prev - 1 : prev + 1)
-      setIsLiked(!isLiked)
-      return
-    }
-    
-    const toolData = {
+    const toolId = share.tool?.id || (-1 - share.id)
+    const toolData = share.tool ? {
       id: share.tool.id,
       slug: share.tool.slug,
       name: share.tool.name,
@@ -300,12 +295,20 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       iconUrl: share.tool.logoUrl,
       websiteUrl: share.tool.websiteUrl || '',
       category: share.tool.category?.name || '未分类',
+    } : {
+      id: toolId,
+      slug: 'share-' + share.id,
+      name: '分享',
+      description: '',
+      iconUrl: null,
+      websiteUrl: '',
+      category: ''
     }
     
     fetch('/api/user/likes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id, toolId: share.tool.id, toolData, shareId: share.id })
+      body: JSON.stringify({ userId: user.id, toolId, toolData, shareId: share.id })
     }).catch(() => {})
 
     if (isLiked) {
