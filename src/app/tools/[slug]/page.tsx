@@ -9,6 +9,7 @@ import LikeButton from '@/components/LikeButton'
 import ReportButton from '@/components/ReportButton'
 import ShareExperienceButton from './ShareExperienceButton'
 import ViewTracker from './ViewTracker'
+import LiveStats from './LiveStats'
 import { prisma } from '@/lib/prisma'
 import { formatNumber, formatDate } from '@/lib/utils'
 
@@ -156,17 +157,13 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
                   <p className="text-cyber-muted-foreground mt-3 text-lg font-mono">{tool.shortDesc}</p>
 
-                  {/* Stats */}
+                  {/* Stats - 实时更新 */}
                   <div className="flex items-center gap-3 md:gap-6 mt-4 text-sm text-cyber-muted-foreground font-mono flex-wrap">
                     <span className="flex items-center gap-1 whitespace-nowrap">
                       <Star className="w-4 h-4 text-neon-yellow flex-shrink-0" />
                       {formatNumber(tool.stars)} stars
                     </span>
-                    <span className="flex items-center gap-1 whitespace-nowrap">
-                      <Heart className="w-4 h-4 text-neon-magenta flex-shrink-0" />
-                      {formatNumber(likeCount)} 点赞
-                    </span>
-                    <span className="whitespace-nowrap">{formatNumber(tool.viewCount)} 次浏览</span>
+                    <LiveStats toolId={tool.id} initialLikeCount={likeCount} initialViewCount={tool.viewCount} />
                   </div>
                 </div>
               </div>

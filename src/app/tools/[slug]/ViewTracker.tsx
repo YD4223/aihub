@@ -8,7 +8,9 @@ export default function ViewTracker({ toolId }: { toolId: number }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetType: 'tool', targetId: toolId })
-    }).catch(() => {})
+    })
+      .then(() => window.dispatchEvent(new Event('localStorageChange')))
+      .catch(() => {})
   }, [toolId])
 
   return null
