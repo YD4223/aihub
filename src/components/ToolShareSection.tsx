@@ -281,10 +281,14 @@ export default function ToolShareSection({ toolId, toolName }: ToolShareSectionP
                   {/* 内容 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-cyber-foreground font-mono">{comment.user.username}</span>
+                      <span className={`text-sm font-medium font-mono ${comment.user.role === 'ADMIN' ? 'text-[#ffd700]' : 'text-cyber-foreground'}`}>{comment.user.username}</span>
                       {comment.user.role === 'ADMIN' && (
-                        <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold font-mono"
-                          style={{ clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' }}>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold"
+                          style={{ 
+                            background: 'linear-gradient(135deg, #ffd700, #ff8c00)',
+                            color: '#000',
+                            clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' 
+                          }}>
                           👑 站长
                         </span>
                       )}
