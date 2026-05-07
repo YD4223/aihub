@@ -58,6 +58,10 @@ export default function ShareExperienceButton({ tool }: ShareExperienceButtonPro
         }}
         onSuccess={() => {
           router.refresh()
+          // 发布成功自动滚动到评论区，看看别人分享
+          setTimeout(() => {
+            document.getElementById('share-section')?.scrollIntoView({ behavior: 'smooth' })
+          }, 500)
         }}
       />
     </>

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, Github, Star, Heart, Flag, Share2 } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Github, Star, Heart, Flag } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -218,14 +218,6 @@ export default async function ToolPage({ params }: ToolPageProps) {
                     category: tool.category?.name || '未分类'
                   }}
                 />
-                <a
-                  href="#share-section"
-                  className="flex items-center gap-2 bg-cyber-muted/30 text-cyber-foreground border border-cyber-border px-6 py-3 font-orbitron font-semibold hover:border-neon-cyan/50 transition-all"
-                  style={{ clipPath: 'polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))' }}
-                >
-                  <Share2 className="w-5 h-5" />
-                  分享
-                </a>
                 <ShareExperienceButton
                   tool={{
                     id: tool.id,
