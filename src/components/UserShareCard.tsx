@@ -316,19 +316,32 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       category: ''
     }
     
+    // 乐观更新：立即切换 UI
+    setIsLiked(!isLiked)
+    setLikeCount(prev => isLiked ? Math.max(0, prev - 1) : prev + 1)
+    const btn = document.getElementById(`like-btn-${share.id}`)
+    if (!isLiked) {
+      btn?.classList.add('scale-125')
+      setTimeout(() => btn?.classList.remove('scale-125'), 200)
+    }
+    window.dispatchEvent(new Event('localStorageChange'))
+    
+    // 然后发请求，如果失败就回滚
     fetch('/api/user/likes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id, toolId, toolData, shareId: share.id })
     }).then(res => res.json()).then(data => {
-      // 根据 API 真实结果更新 UI，不盲目翻转
-      setIsLiked(data.liked)
-      setLikeCount(prev => data.liked ? prev + 1 : Math.max(0, prev - 1))
-      const btn = document.getElementById(`like-btn-${share.id}`)
-      btn?.classList.add('scale-125')
-      setTimeout(() => btn?.classList.remove('scale-125'), 200)
-      window.dispatchEvent(new Event('localStorageChange'))
-    }).catch(() => {})
+      if (data.liked === isLiked) {
+        // API 结果和乐观更新不一致，回滚
+        setIsLiked(data.liked)
+        setLikeCount(prev => data.liked ? prev + 1 : Math.max(0, prev - 1))
+      }
+    }).catch(() => {
+      // 请求失败，回滚
+      setIsLiked(isLiked)
+      setLikeCount(prev => isLiked ? prev + 1 : Math.max(0, prev - 1))
+    })
   }
 
   // 收藏分享
