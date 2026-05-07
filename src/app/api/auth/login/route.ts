@@ -39,16 +39,28 @@ export async function POST(request: NextRequest) {
 
     // 验证密码（支持明文和bcrypt）
     let isValid = false
+    let needsUpgrade = false
     if (user.password.startsWith('$2')) {
       isValid = await bcrypt.compare(password, user.password)
     } else {
+      // 明文密码兼容（老用户），验证后升级为bcrypt
       isValid = user.password === password
+      if (isValid) needsUpgrade = true
     }
 
     if (!isValid) {
       return NextResponse.json(
         { error: '密码错误' },
         { status: 401 }
+      )
+    }
+
+    // 明文密码自动升级为 bcrypt
+    if (needsUpgrade) {
+      const hashed = await bcrypt.hash(password, 10)
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET password = $1 WHERE id = $2`,
+        hashed, user.id
       )
     }
 
