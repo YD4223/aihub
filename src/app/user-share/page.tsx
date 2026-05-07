@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import UserShareCard from '@/components/UserShareCard'
 import SharePageClient from './SharePageClient'
 import LiveShareStats from './LiveShareStats'
+import SiteAnnouncement from '@/components/SiteAnnouncement'
 import { 
   TrendingUp, 
   Clock, 
@@ -369,6 +370,11 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                 </div>
               </div>
             )}
+
+            {/* 网站公告轮播 */}
+            <div className="mb-6">
+              <SiteAnnouncement />
+            </div>
 
             {/* 内容列表 */}
             {currentShares.length === 0 ? (
