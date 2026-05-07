@@ -1,15 +1,26 @@
 /**
  * 全局中间件
- * 功能：API请求频率限制（60次/分钟），防止爬虫刷API
- * 不影响正常用户使用
+ * 功能1：搜索页拦截 — 未登录不能搜索
+ * 功能2：API 请求频率限制（60次/分钟）
  */
 import { NextRequest, NextResponse } from 'next/server'
 
-// 内存限流（Vercel Edge Runtime 中每个 Edge Node 独立）
+// 内存限流
 const requestCounts = new Map<string, { count: number; expiresAt: number }>()
 
 export function middleware(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith('/api/')) {
+  const { pathname } = request.nextUrl
+
+  // === 搜索拦截：未登录不能使用搜索功能 ===
+  if (pathname === '/tools' && request.nextUrl.searchParams.has('search')) {
+    const authToken = request.cookies.get('auth_token')?.value
+    if (!authToken) {
+      return NextResponse.redirect(new URL('/login?redirect=/tools', request.url))
+    }
+  }
+
+  // === API 请求限流 ===
+  if (!pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
 
@@ -23,7 +34,6 @@ export function middleware(request: NextRequest) {
 
   const record = requestCounts.get(ip)
 
-  // 过期或首次请求
   if (!record || record.expiresAt < now) {
     requestCounts.set(ip, { count: 1, expiresAt: now + windowMs })
     return NextResponse.next()
@@ -42,5 +52,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: ['/api/:path*', '/tools'],
 }

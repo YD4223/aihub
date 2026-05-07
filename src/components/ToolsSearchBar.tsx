@@ -13,15 +13,9 @@ export default function ToolsSearchBar() {
   useEffect(() => {
     const isLoggedIn = !!localStorage.getItem('user')
     setLoggedIn(isLoggedIn)
-    // 如果未登录但有搜索参数，跳转首页并提示
+    // 未登录强行搜索的，直接重定向
     if (!isLoggedIn && searchParams.get('search')) {
-      setTimeout(() => {
-        if (confirm('请先登录后再使用搜索功能')) {
-          window.location.href = '/login'
-        } else {
-          router.push('/tools')
-        }
-      }, 100)
+      router.replace('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))
     }
   }, [])
 
@@ -51,9 +45,8 @@ export default function ToolsSearchBar() {
 
   const handleSearch = () => {
     if (!loggedIn) {
-      if (confirm('请先登录后再使用搜索功能，是否跳转到登录页面？')) {
-        window.location.href = '/login'
-      }
+      alert('请先登录后再使用搜索功能')
+      router.push('/login?redirect=/tools')
       return
     }
     // 搜索时清除分类、来源和排序，只保留搜索词
