@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canLike, incrementLikeCount } from '@/lib/daily-limit'
 
+// GET /api/shares/[id]/like  获取当前点赞数
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const shareId = parseInt(params.id)
+    const share = await prisma.share.findUnique({
+      where: { id: shareId },
+      select: { likes: true }
+    })
+    if (!share) return NextResponse.json({ error: '分享不存在' }, { status: 404 })
+    return NextResponse.json({ likes: share.likes })
+  } catch (error) {
+    console.error('获取点赞数失败:', error)
+    return NextResponse.json({ error: '获取失败' }, { status: 500 })
+  }
+}
+
 // POST /api/shares/[id]/like  点赞/取消点赞
 export async function POST(
   request: NextRequest,

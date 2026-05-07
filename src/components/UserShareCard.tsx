@@ -151,6 +151,14 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       if (!userStr) return
       const userData = JSON.parse(userStr)
       try {
+        // 刷新最新点赞数（切tab重建时同步数据）
+        fetch(`/api/shares/${share.id}/like`, { method: 'GET' })
+          .then(r => r.json())
+          .then(data => {
+            if (data.likes !== undefined) setLikeCount(data.likes)
+          })
+          .catch(() => {})
+
         const [favRes, likeRes] = await Promise.all([
           fetch(`/api/user/favorite-shares?userId=${userData.id}`),
           fetch(`/api/user/likes?userId=${userData.id}`)
