@@ -60,15 +60,15 @@ export async function POST(request: NextRequest) {
     // 增加对应表的浏览量
     if (targetType === 'share') {
       await prisma.$executeRaw`
-        UPDATE shares SET viewCount = viewCount + 1 WHERE id = ${parseInt(targetId)}
+        UPDATE shares SET "viewCount" = "viewCount" + 1 WHERE id = ${parseInt(targetId)}
       `
     } else if (targetType === 'tool') {
       await prisma.$executeRaw`
-        UPDATE tools SET viewCount = viewCount + 1 WHERE id = ${parseInt(targetId)}
+        UPDATE tools SET "viewCount" = "viewCount" + 1 WHERE id = ${parseInt(targetId)}
       `
     } else if (targetType === 'news') {
       await prisma.$executeRaw`
-        UPDATE news SET viewCount = viewCount + 1 WHERE id = ${parseInt(targetId)}
+        UPDATE news SET "viewCount" = "viewCount" + 1 WHERE id = ${parseInt(targetId)}
       `
     }
 

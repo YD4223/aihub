@@ -74,6 +74,12 @@ export default async function ToolPage({ params }: ToolPageProps) {
     take: 3,
   })
 
+  // 获取该工具的点赞总数
+  const likeCountResult = await prisma.$queryRawUnsafe<Array<{total: number}>>(
+    `SELECT COUNT(*) as total FROM user_like_tools WHERE tool_id = ${tool.id}`
+  )
+  const likeCount = Number(likeCountResult[0]?.total || 0)
+
   // 赛博朋克风格定价标签
   const cyberPricingColors: Record<string, string> = {
     FREE: 'bg-neon-green/10 text-neon-green border-neon-green/30',
@@ -157,7 +163,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
                     </span>
                     <span className="flex items-center gap-1 whitespace-nowrap">
                       <Heart className="w-4 h-4 text-neon-magenta flex-shrink-0" />
-                      {formatNumber(tool.upvotes)} 推荐
+                      {formatNumber(likeCount)} 点赞
                     </span>
                     <span className="whitespace-nowrap">{formatNumber(tool.viewCount)} 次浏览</span>
                   </div>

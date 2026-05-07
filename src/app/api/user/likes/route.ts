@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 // POST /api/user/likes - 添加/取消点赞
 export async function POST(request: NextRequest) {
   try {
-    const { userId, toolId, toolData } = await request.json()
+    const { userId, toolId, toolData, shareId } = await request.json()
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
     const existing = await prisma.$queryRawUnsafe<Array<any>>(
@@ -38,6 +38,10 @@ export async function POST(request: NextRequest) {
 
     if (Array.isArray(existing) && existing.length > 0) {
       await prisma.$executeRawUnsafe(`DELETE FROM user_like_tools WHERE id = $1`, existing[0].id)
+      // 同步更新 shares 表的点赞数
+      if (shareId) {
+        await prisma.$executeRawUnsafe(`UPDATE shares SET likes = GREATEST(0, likes - 1) WHERE id = $1`, shareId)
+      }
       return NextResponse.json({ liked: false })
     }
 
@@ -45,6 +49,10 @@ export async function POST(request: NextRequest) {
       `INSERT INTO user_like_tools (user_id, tool_id, tool_data) VALUES ($1, $2, $3)`,
       userId, toolId, JSON.stringify(toolData)
     )
+    // 同步更新 shares 表的点赞数
+    if (shareId) {
+      await prisma.$executeRawUnsafe(`UPDATE shares SET likes = likes + 1 WHERE id = $1`, shareId)
+    }
     return NextResponse.json({ liked: true })
   } catch (error: any) {
     console.error('[Likes] POST错误:', error)

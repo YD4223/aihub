@@ -305,7 +305,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
     fetch('/api/user/likes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id, toolId: share.tool.id, toolData })
+      body: JSON.stringify({ userId: user.id, toolId: share.tool.id, toolData, shareId: share.id })
     }).catch(() => {})
 
     if (isLiked) {
