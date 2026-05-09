@@ -650,12 +650,12 @@ export default function UserShareCard({ share }: UserShareCardProps) {
   
   return (
     <div 
-      className={`group relative bg-[#12121a] border overflow-hidden transition-all duration-300 ${
+      className={`group relative bg-[#12121a] overflow-hidden transition-all duration-300 ${
         isPinned 
-          ? 'border-[#ffd700] hover:shadow-[0_0_25px_#ffd70040]' 
-          : 'border-[#2a2a3a] hover:border-[#00ff88] hover:shadow-[0_0_20px_#00ff8820]'
+          ? 'border border-[#ffd700] hover:shadow-[0_0_25px_#ffd70040]' 
+          : 'border border-[#2a2a3a] hover:border-[#00ff88] hover:shadow-[0_0_20px_#00ff8820]'
       }`}
-      style={{ clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))' }}
+      style={{ borderRadius: '10px' }}
     >
       {/* 站长置顶标签 */}
       {isPinned && (
