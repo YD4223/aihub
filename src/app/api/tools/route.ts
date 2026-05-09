@@ -89,12 +89,16 @@ export async function POST(request: NextRequest) {
       categoryName = category?.name || null
     }
 
-    // 检查用户是否站长（ADMIN），站长自动通过审核
+    // 检查用户是否站长（ADMIN），站长自动通过审核+置顶24小时
     const submitterId = userId ? parseInt(userId) : null
     let toolStatus = 'pending'
+    let isAdmin = false
     if (submitterId) {
       const user = await prisma.user.findUnique({ where: { id: submitterId }, select: { role: true } })
-      if (user?.role === 'ADMIN') toolStatus = 'approved'
+      if (user?.role === 'ADMIN') {
+        toolStatus = 'approved'
+        isAdmin = true
+      }
     }
 
     // 创建 shares 记录（用户提交的工具显示在工具圈）
@@ -105,6 +109,7 @@ export async function POST(request: NextRequest) {
         images: images?.length > 0 ? JSON.stringify(images) : null,
         userId: submitterId!,
         status: toolStatus,
+        ...(isAdmin ? { pinnedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) } : {}),
         // 存储用户提交的工具信息
         submitToolName: name.trim(),
         submitToolWebsite: websiteUrl.trim(),

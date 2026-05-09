@@ -85,40 +85,49 @@ async function getToolShares(sort?: string, search?: string) {
   })
 
   // 转换格式以兼容原有代码
-  return shares.map((s: any) => ({
-    id: s.id,
-    content: s.content,
-    images: s.images,
-    video: s.video,
-    likes: s.likes,
-    viewCount: s.viewCount || 0,
-    status: s.status,
-    type: s.type,
-    createdAt: s.createdAt,
-    userId: s.userId,
-    toolId: s.toolId,
-    submitToolName: s.submitToolName,
-    submitToolWebsite: s.submitToolWebsite,
-    submitToolDesc: s.submitToolDesc,
-    submitToolCategory: s.submitToolCategory,
-    submitToolPricing: s.submitToolPricing,
-    submitToolGithub: s.submitToolGithub,
-    submitToolLogo: s.submitToolLogo,
-    userName: s.user?.username,
-    userAvatarUrl: s.user?.avatarUrl,
-    userRole: s.user?.role,
-    toolName: s.tool?.name,
-    toolSlug: s.tool?.slug,
-    toolShortDesc: s.tool?.shortDesc,
-    toolDescription: s.tool?.description,
-    toolWebsiteUrl: s.tool?.websiteUrl,
-    toolLogoUrl: s.tool?.logoUrl,
-    toolTags: s.tool?.tags,
-    toolViewCount: s.tool?.viewCount || 0,
-    categoryName: s.tool?.category?.name,
-    categorySlug: s.tool?.category?.slug,
-    commentsCount: s.comments?.length || 0
-  }))
+  const now = new Date()
+  return shares
+    .map((s: any) => ({
+      id: s.id,
+      content: s.content,
+      images: s.images,
+      video: s.video,
+      likes: s.likes,
+      viewCount: s.viewCount || 0,
+      status: s.status,
+      type: s.type,
+      createdAt: s.createdAt,
+      userId: s.userId,
+      toolId: s.toolId,
+      pinnedUntil: s.pinnedUntil,
+      submitToolName: s.submitToolName,
+      submitToolWebsite: s.submitToolWebsite,
+      submitToolDesc: s.submitToolDesc,
+      submitToolCategory: s.submitToolCategory,
+      submitToolPricing: s.submitToolPricing,
+      submitToolGithub: s.submitToolGithub,
+      submitToolLogo: s.submitToolLogo,
+      userName: s.user?.username,
+      userAvatarUrl: s.user?.avatarUrl,
+      userRole: s.user?.role,
+      toolName: s.tool?.name,
+      toolSlug: s.tool?.slug,
+      toolShortDesc: s.tool?.shortDesc,
+      toolDescription: s.tool?.description,
+      toolWebsiteUrl: s.tool?.websiteUrl,
+      toolLogoUrl: s.tool?.logoUrl,
+      toolTags: s.tool?.tags,
+      toolViewCount: s.tool?.viewCount || 0,
+      categoryName: s.tool?.category?.name,
+      categorySlug: s.tool?.category?.slug,
+      commentsCount: s.comments?.length || 0
+    }))
+    .sort((a, b) => {
+      // 置顶中（未过期）的排最前
+      const aPinned = a.pinnedUntil && new Date(a.pinnedUntil) > now ? 1 : 0
+      const bPinned = b.pinnedUntil && new Date(b.pinnedUntil) > now ? 1 : 0
+      return bPinned - aPinned
+    })
 }
 
 async function getLifeShares(sort?: string, search?: string) {
@@ -168,22 +177,30 @@ async function getLifeShares(sort?: string, search?: string) {
   })
 
   // 转换格式以兼容原有代码
-  return shares.map((s: any) => ({
-    id: s.id,
-    content: s.content,
-    images: s.images,
-    video: s.video,
-    likes: s.likes,
-    viewCount: s.viewCount || 0,
-    status: s.status,
-    type: s.type,
-    createdAt: s.createdAt,
-    userId: s.userId,
-    userName: s.user?.username,
-    userAvatarUrl: s.user?.avatarUrl,
-    userRole: s.user?.role,
-    commentsCount: s.comments?.length || 0
-  }))
+  const now = new Date()
+  return shares
+    .map((s: any) => ({
+      id: s.id,
+      content: s.content,
+      images: s.images,
+      video: s.video,
+      likes: s.likes,
+      viewCount: s.viewCount || 0,
+      status: s.status,
+      type: s.type,
+      createdAt: s.createdAt,
+      userId: s.userId,
+      pinnedUntil: s.pinnedUntil,
+      userName: s.user?.username,
+      userAvatarUrl: s.user?.avatarUrl,
+      userRole: s.user?.role,
+      commentsCount: s.comments?.length || 0
+    }))
+    .sort((a, b) => {
+      const aPinned = a.pinnedUntil && new Date(a.pinnedUntil) > now ? 1 : 0
+      const bPinned = b.pinnedUntil && new Date(b.pinnedUntil) > now ? 1 : 0
+      return bPinned - aPinned
+    })
 }
 
 async function getStats() {

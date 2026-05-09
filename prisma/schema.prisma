@@ -162,6 +162,7 @@ model Share {
   suspendedReason    String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
+  pinnedUntil        DateTime?
   submitToolName     String?
   submitToolWebsite  String?
   submitToolDesc     String?

@@ -177,20 +177,32 @@ export async function POST(request: NextRequest) {
     }
 
     // 使用原始 SQL 创建分享
+    // 站长发布自动通过，并自动置顶24小时
+    let shareStatus = 'pending'
+    const poster = await prisma.user.findUnique({ where: { id: parseInt(userId) }, select: { role: true } })
+    const isAdmin = poster?.role === 'ADMIN'
+    if (isAdmin) shareStatus = 'approved'
+    
     const imagesJson = images ? JSON.stringify(images) : null
     const shareType = type || 'tool'
     const toolIdValue = toolId ? parseInt(toolId) : null
+    const userIdInt = parseInt(userId)
     
-    // 站长发布自动通过
-    let shareStatus = 'pending'
-    const poster = await prisma.user.findUnique({ where: { id: parseInt(userId) }, select: { role: true } })
-    if (poster?.role === 'ADMIN') shareStatus = 'approved'
-    
-    const result = await prisma.$queryRaw`
-      INSERT INTO shares (type, content, "toolId", "userId", images, video, status, likes, "createdAt", "updatedAt")
-      VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, ${shareStatus}, 0, NOW(), NOW())
-      RETURNING *
-    `
+    let result
+    if (isAdmin) {
+      result = await prisma.$queryRawUnsafe(
+        `INSERT INTO shares (type, content, "toolId", "userId", images, video, status, "pinnedUntil", likes, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + INTERVAL '24 hours', 0, NOW(), NOW())
+         RETURNING *`,
+        shareType, content.trim(), toolIdValue, userIdInt, imagesJson, video, shareStatus
+      )
+    } else {
+      result = await prisma.$queryRaw`
+        INSERT INTO shares (type, content, "toolId", "userId", images, video, status, likes, "createdAt", "updatedAt")
+        VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, ${shareStatus}, 0, NOW(), NOW())
+        RETURNING *
+      `
+    }
     const share = (result as any[])[0]
 
     // 获取关联数据

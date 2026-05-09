@@ -45,6 +45,7 @@ interface UserShareCardProps {
     _count: {
       comments: number
     }
+    pinnedUntil?: string | null
   }
 }
 
@@ -77,6 +78,7 @@ function isAIUser(name: string): boolean {
 
 export default function UserShareCard({ share }: UserShareCardProps) {
   const { tool, user } = share
+  const isPinned = share.pinnedUntil && new Date(share.pinnedUntil) > new Date()
   const isAdmin = user.role === 'ADMIN'
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
@@ -649,14 +651,14 @@ export default function UserShareCard({ share }: UserShareCardProps) {
   return (
     <div 
       className={`group relative bg-[#12121a] border overflow-hidden transition-all duration-300 ${
-        isAdmin 
+        isPinned 
           ? 'border-[#ffd700] hover:shadow-[0_0_25px_#ffd70040]' 
           : 'border-[#2a2a3a] hover:border-[#00ff88]/50 hover:shadow-[0_0_20px_#00ff8820]'
       }`}
       style={{ clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))' }}
     >
       {/* 站长置顶标签 */}
-      {isAdmin && (
+      {isPinned && (
         <div className="absolute -top-[1px] -right-[1px] z-10">
           <div 
             className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold font-orbitron text-black"
@@ -687,7 +689,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className={`font-bold font-orbitron ${isAdmin ? 'text-[#ffd700]' : 'text-[#e0e0e0]'}`}>{user.username}</span>
-              {isAdmin && (
+              {isPinned && (
                 <span 
                   className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold"
                   style={{ 
