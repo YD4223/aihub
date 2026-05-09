@@ -454,6 +454,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                         status: share.status,
                         type: share.type,
                         createdAt: share.createdAt,
+                        pinnedUntil: share.pinnedUntil,
                         user: { id: share.userId, username: share.userName, avatarUrl: share.userAvatarUrl, role: share.userRole },
                         tool: toolData,
                         _count: { comments: Number(share.commentsCount || 0) }

@@ -653,7 +653,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
       className={`group relative bg-[#12121a] border overflow-hidden transition-all duration-300 ${
         isPinned 
           ? 'border-[#ffd700] hover:shadow-[0_0_25px_#ffd70040]' 
-          : 'border-[#2a2a3a] hover:border-[#00ff88]/50 hover:shadow-[0_0_20px_#00ff8820]'
+          : 'border-[#2a2a3a] hover:border-[#00ff88] hover:shadow-[0_0_20px_#00ff8820]'
       }`}
       style={{ clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))' }}
     >
@@ -864,7 +864,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
         {/* 关联的工具卡片 */}
         {tool && (
           <div 
-            className="mt-5 p-4 bg-[#0a0a0f] border border-[#2a2a3a] hover:border-[#f59e0b]/50 transition-all duration-300 group/tool"
+            className="mt-5 p-4 bg-[#0a0a0f] border border-[#2a2a3a] hover:border-[#f59e0b] transition-all duration-300 group/tool"
             style={{ clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))' }}
           >
             <div className="flex items-start gap-4">
