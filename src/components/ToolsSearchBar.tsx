@@ -83,7 +83,7 @@ export default function ToolsSearchBar() {
       <select
         defaultValue={searchParams.get('sort') || ''}
         onChange={handleSort}
-        className="flex items-center gap-2 px-4 py-3 bg-cyber-card border border-cyber-border clip-chamfer-sm hover:border-neon-green text-sm font-mono text-cyber-foreground focus:outline-none focus:border-neon-green transition-colors cursor-pointer"
+        className="flex items-center gap-2 px-4 py-3 bg-cyber-card border border-cyber-border rounded-lg hover:border-neon-green text-sm font-mono text-cyber-foreground focus:outline-none focus:border-neon-green transition-colors cursor-pointer"
       >
         <option value="" className="bg-cyber-card">默认排序</option>
         <option value="stars" className="bg-cyber-card">热度最高</option>

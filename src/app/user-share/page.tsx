@@ -332,7 +332,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                 <div className="flex items-center gap-2">
                   <Link 
                     href={`/user-share?tab=${tab}${search ? `&search=${encodeURIComponent(search)}` : ''}`} 
-                    className={`flex items-center gap-2 px-4 py-3 clip-chamfer-sm text-sm font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase tracking-wider transition-all rounded-lg ${
                       !sort 
                         ? 'bg-neon-green/20 text-neon-green border border-neon-green/50' 
                         : 'text-cyber-muted-foreground hover:text-neon-green hover:bg-neon-green/10 border border-cyber-border'
@@ -343,7 +343,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                   </Link>
                   <Link 
                     href={`/user-share?tab=${tab}&sort=hot${search ? `&search=${encodeURIComponent(search)}` : ''}`} 
-                    className={`flex items-center gap-2 px-4 py-3 clip-chamfer-sm text-sm font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase tracking-wider transition-all rounded-lg ${
                       sort === 'hot' 
                         ? 'bg-neon-green/20 text-neon-green border border-neon-green/50' 
                         : 'text-cyber-muted-foreground hover:text-neon-green hover:bg-neon-green/10 border border-cyber-border'
@@ -354,7 +354,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                   </Link>
                   <Link 
                     href={`/user-share?tab=${tab}&sort=mostLiked${search ? `&search=${encodeURIComponent(search)}` : ''}`} 
-                    className={`flex items-center gap-2 px-4 py-3 clip-chamfer-sm text-sm font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-2 px-4 py-3 text-sm font-mono uppercase tracking-wider transition-all rounded-lg ${
                       sort === 'mostLiked' 
                         ? 'bg-neon-green/20 text-neon-green border border-neon-green/50' 
                         : 'text-cyber-muted-foreground hover:text-neon-green hover:bg-neon-green/10 border border-cyber-border'
