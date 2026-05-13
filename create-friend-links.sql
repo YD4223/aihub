@@ -1,4 +1,7 @@
--- 创建友情链接表
+-- 删除旧表重建（如果需要重置的话）
+-- DROP TABLE IF EXISTS friend_links CASCADE;
+
+-- 创建友情链接表（蛇形命名，与 Prisma @map 一致）
 CREATE TABLE IF NOT EXISTS friend_links (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,

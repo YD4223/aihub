@@ -432,14 +432,14 @@ model VerificationCode {
 }
 
 model FriendLink {
-  id        Int      @id @default(autoincrement())
-  name      String
-  url       String
-  description String?
-  sortOrder Int      @default(0)
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String
+  description String?  @map("description")
+  sortOrder   Int      @default(0) @map("sort_order")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("friend_links")
 }
