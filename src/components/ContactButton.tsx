@@ -10,7 +10,7 @@ export default function ContactButton() {
         navigator.clipboard.writeText(qq)
         alert('QQ号 ' + qq + ' 已复制到剪贴板，打开QQ搜索即可添加')
       }}
-      className="inline-flex items-center gap-2 px-6 py-2.5 border border-cyber-border clip-chamfer text-cyber-muted-foreground font-orbitron text-sm uppercase tracking-wider hover:border-neon-green hover:text-neon-green transition-colors"
+      className="inline-flex items-center gap-2 px-6 py-2.5 border border-cyber-border rounded-lg text-cyber-muted-foreground font-orbitron text-sm uppercase tracking-wider hover:border-neon-green hover:text-neon-green transition-colors"
     >
       <Cpu className="w-4 h-4" />
       联系我们
