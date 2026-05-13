@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// 强制动态渲染，不缓存
+export const dynamic = 'force-dynamic'
+
+export const dynamic = 'force-dynamic'
+
 // GET /api/friend-links - 获取启用的友情链接（公开）
 export async function GET() {
   try {
