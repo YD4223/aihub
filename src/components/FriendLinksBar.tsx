@@ -24,13 +24,13 @@ export default function FriendLinksBar() {
   if (links.length === 0) return null
 
   return (
-    <div className="border-t border-cyber-border pt-6 pb-4">
-      <div className="flex items-center gap-3 mb-4">
+    <div className="border-t border-cyber-border pt-3 pb-2">
+      <div className="flex items-center gap-3 mb-2">
         <span className="text-xs font-orbitron font-bold text-cyber-muted-foreground uppercase tracking-wider">
           <span className="text-neon-cyan">{'>'}</span> 友情链接
         </span>
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-2">
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
         {links.map(link => (
           <a
             key={link.id}
