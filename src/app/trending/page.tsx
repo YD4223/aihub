@@ -116,7 +116,7 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
                       : 'border border-cyber-border text-cyber-muted-foreground hover:border-cyber-muted-foreground hover:text-cyber-foreground'
                   }`}
                   style={{
-                    clipPath: 'polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))'
+                    borderRadius: '8px'
                   }}
                 >
                   <Icon className="w-4 h-4" />
@@ -144,9 +144,7 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
         {tools.length === 0 ? (
           <div 
             className="text-center py-12 text-cyber-muted-foreground font-mono bg-cyber-card border border-cyber-border"
-            style={{
-              clipPath: 'polygon(0 12px, 12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px))'
-            }}
+            style={{ borderRadius: '10px' }}
           >
             暂无数据
           </div>
