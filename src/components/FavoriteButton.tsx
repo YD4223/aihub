@@ -69,7 +69,7 @@ export default function FavoriteButton({ toolId, toolData }: FavoriteButtonProps
           ? 'bg-neon-magenta/20 text-neon-magenta border border-neon-magenta hover:bg-neon-magenta/30'
           : 'bg-cyber-muted/30 text-cyber-foreground border border-cyber-border hover:border-neon-magenta hover:text-neon-magenta'
       }`}
-      style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+      style={{ borderRadius: '8px' }}
     >
       <Bookmark className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
       {isFavorited ? '已收藏' : '收藏'}

@@ -70,7 +70,7 @@ export default function LikeButton({ toolId, toolData }: LikeButtonProps) {
           ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan hover:bg-neon-cyan/30'
           : 'bg-cyber-muted/30 text-cyber-foreground border border-cyber-border hover:border-neon-cyan hover:text-neon-cyan'
       }`}
-      style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+      style={{ borderRadius: '8px' }}
     >
       <ThumbsUp className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
       {isLiked ? '已点赞' : '点赞'}
