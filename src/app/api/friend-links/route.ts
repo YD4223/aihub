@@ -4,8 +4,6 @@ import { prisma } from '@/lib/prisma'
 // 强制动态渲染，不缓存
 export const dynamic = 'force-dynamic'
 
-export const dynamic = 'force-dynamic'
-
 // GET /api/friend-links - 获取启用的友情链接（公开）
 export async function GET() {
   try {
@@ -20,7 +18,13 @@ export async function GET() {
         sortOrder: true,
       },
     })
-    return NextResponse.json({ links })
+    return NextResponse.json({ links }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    })
   } catch (error: any) {
     console.error('[Public FriendLinks] GET错误:', error)
     return NextResponse.json({ links: [] })
