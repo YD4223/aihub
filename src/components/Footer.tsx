@@ -109,7 +109,7 @@ export default function Footer() {
 
         <FriendLinksBar />
 
-        <div className="border-t border-cyber-border mt-8 pt-8">
+        <div className="border-t border-cyber-border pt-6">
           {/* 免责声明 */}
           <p className="text-xs text-cyber-muted-foreground/60 text-center mb-4 px-4 font-mono">
             免责声明：本站所有工具和资源均来源于网络收集和网友分享，仅供学习交流使用。如有侵权或不妥之处，请联系我们及时处理。使用本站工具产生的任何风险和后果由用户自行承担，本站不承担任何责任。
