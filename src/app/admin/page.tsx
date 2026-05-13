@@ -9,10 +9,11 @@ import {
   Loader2, AlertCircle, Search, Filter,
   ChevronLeft, ChevronRight, RefreshCw,
   ExternalLink, User, Users, Ban, RotateCcw,
-  Flag, Shield, Unlock, Info, Mail, Megaphone
+  Flag, Shield, Unlock, Info, Mail, Megaphone, Link2
 } from 'lucide-react'
 import { getAvatarInitial } from '@/lib/utils'
 import AnnouncementManager from '@/components/AnnouncementManager'
+import FriendLinkManager from '@/components/FriendLinkManager'
 
 interface Tool {
   id: number
@@ -53,7 +54,7 @@ interface Comment {
   createdAt: string
 }
 
-type TabType = 'tools' | 'comments' | 'shares' | 'reports' | 'users' | 'verifyLogs' | 'announcements'
+type TabType = 'tools' | 'comments' | 'shares' | 'reports' | 'users' | 'verifyLogs' | 'announcements' | 'friendLinks'
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'suspended'
 type SourceFilter = 'all' | 'crawler' | 'user'
 
@@ -600,6 +601,17 @@ export default function AdminPage() {
           >
             <Megaphone className="w-5 h-5" />
             公告管理
+          </button>
+          <button
+            onClick={() => setActiveTab('friendLinks')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
+              activeTab === 'friendLinks' 
+                ? 'bg-primary-600 text-white' 
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Link2 className="w-5 h-5" />
+            友情链接
           </button>
         </div>
 
@@ -1926,6 +1938,11 @@ export default function AdminPage() {
         {/* 公告管理 */}
         {activeTab === 'announcements' && (
           <AnnouncementManager />
+        )}
+
+        {/* 友情链接管理 */}
+        {activeTab === 'friendLinks' && (
+          <FriendLinkManager />
         )}
       </div>
       {showReviewModal && (

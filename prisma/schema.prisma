@@ -431,6 +431,19 @@ model VerificationCode {
   @@map("verification_codes")
 }
 
+model FriendLink {
+  id        Int      @id @default(autoincrement())
+  name      String
+  url       String
+  description String?
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("friend_links")
+}
+
 model Announcement {
   id        Int      @id @default(autoincrement())
   text      String   // 公告内容

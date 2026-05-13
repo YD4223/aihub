@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { BrainCircuit, Github, Mail, Radio } from 'lucide-react'
+import FriendLinksBar from './FriendLinksBar'
 
 // B站图标组件
 function BilibiliIcon({ className }: { className?: string }) {
@@ -105,6 +106,8 @@ export default function Footer() {
             </a>
           </div>
         </div>
+
+        <FriendLinksBar />
 
         <div className="border-t border-cyber-border mt-8 pt-8">
           {/* 免责声明 */}
