@@ -29,7 +29,6 @@ export default function FriendLinksBar() {
         <span className="text-xs font-orbitron font-bold text-cyber-muted-foreground uppercase tracking-wider">
           <span className="text-neon-cyan">{'>'}</span> 友情链接
         </span>
-        <div className="flex-1 h-px bg-gradient-to-r from-cyber-border to-transparent" />
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2">
         {links.map(link => (
