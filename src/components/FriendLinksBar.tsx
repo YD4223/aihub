@@ -24,7 +24,7 @@ export default function FriendLinksBar() {
   if (links.length === 0) return null
 
   return (
-    <div className="border-t border-cyber-border mt-6 pt-3 pb-2">
+    <div className="border-t border-cyber-border mt-6 pt-3 pb-3">
       <div className="flex items-center gap-3 mb-2">
         <span className="text-xs font-orbitron font-bold text-cyber-muted-foreground uppercase tracking-wider">
           <span className="text-neon-cyan">{'>'}</span> 友情链接
