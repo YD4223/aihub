@@ -318,6 +318,11 @@
       rgba(0, 0, 0, 0.3) 4px
     );
   }
+
+  /* 在管理后台页面隐藏扫描线，避免干扰亮色背景的可读性 */
+  body:has(.admin-page-root) .scanlines {
+    display: none;
+  }
   
   /* Grid Background Pattern */
   .grid-pattern {
