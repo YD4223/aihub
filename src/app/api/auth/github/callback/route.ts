@@ -93,29 +93,17 @@ export async function GET(request: NextRequest) {
         )
       }
     } else {
-      // 尝试通过邮箱匹配已有账号
-      if (email) {
-        user = await prisma.user.findUnique({ where: { email } })
-      }
+      // ⚠️ 绝对不能按邮箱匹配已有账号！别人 GitHub 同邮箱会登录到站长号
+      // 直接创建独立新账号
+      const username = await generateUniqueUsername(githubUser.login)
 
-      if (user) {
-        // 已有邮箱账号 -> 绑定 GitHub
-        await prisma.$executeRawUnsafe(
-          `UPDATE users SET "githubId" = $1, "githubUsername" = $2 WHERE id = $3`,
-          githubId, githubUser.login, user.id
-        )
-      } else {
-        // 全新用户 -> 创建账号（无需密码）
-        const username = await generateUniqueUsername(githubUser.login)
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO users (username, email, "githubId", "githubUsername", "avatarUrl", password, role, status)
+         VALUES ($1, $2, $3, $4, $5, '', 'USER', 'active')`,
+        username, email || `gh_${githubId}@github.local`, githubId, githubUser.login, githubUser.avatar_url
+      )
 
-        await prisma.$executeRawUnsafe(
-          `INSERT INTO users (username, email, "githubId", "githubUsername", "avatarUrl", password, role, status)
-           VALUES ($1, $2, $3, $4, $5, '', 'USER', 'active')`,
-          username, email || `gh_${githubId}@github.local`, githubId, githubUser.login, githubUser.avatar_url
-        )
-
-        user = await prisma.user.findUnique({ where: { githubId } })
-      }
+      user = await prisma.user.findUnique({ where: { githubId } })
     }
 
     if (!user) {
