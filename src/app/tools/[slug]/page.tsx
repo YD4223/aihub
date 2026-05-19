@@ -75,7 +75,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
     include: { category: true },
   })
 
-  if (!tool) {
+  if (!tool || !tool.isActive) {
     notFound()
   }
 

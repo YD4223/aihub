@@ -70,7 +70,7 @@ export default async function ToolsPage({
     const countResult = await prisma.$queryRawUnsafe<{count: bigint}[]>(`
       SELECT COUNT(*) as count FROM tools t
       LEFT JOIN categories c ON t."categoryId" = c.id
-      WHERE t.status = 'approved'
+      WHERE t.status = 'approved' AND t."isActive" = true
         AND (${keywordConditions})
         ${categoryCondition}
         ${sourceCondition}
@@ -100,7 +100,7 @@ export default async function ToolsPage({
         (${keywordScore}) as "relevanceScore"
       FROM tools t
       LEFT JOIN categories c ON t."categoryId" = c.id
-      WHERE t.status = 'approved'
+      WHERE t.status = 'approved' AND t."isActive" = true
         AND (${keywordConditions})
         ${categoryCondition}
         ${sourceCondition}
@@ -127,7 +127,7 @@ export default async function ToolsPage({
     }))
   } else {
     // 无搜索词时，使用原有的 Prisma 查询
-    const where: any = { status: 'approved' }
+    const where: any = { status: 'approved', isActive: true }
 
     if (category && category !== 'all') {
       where.category = { slug: category }
