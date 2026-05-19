@@ -19,14 +19,16 @@ function NeonStatCard({ value, label, icon: Icon, color }: { value: string | num
   }
   const colors = colorMap[color]
   return (
-    <div className={`relative p-4 border ${colors.border} ${colors.bg} clip-chamfer backdrop-blur-sm group hover:-translate-y-1 transition-transform duration-300`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 flex items-center justify-center border ${colors.border} clip-chamfer-sm ${colors.bg}`}>
-          <Icon className={`w-5 h-5 ${colors.text}`} />
-        </div>
-        <div>
-          <div className={`text-2xl font-orbitron font-black text-cyber-foreground`}>{value}</div>
-          <div className="text-xs text-cyber-muted-foreground font-mono uppercase tracking-wider">{label}</div>
+    <div className={`relative ${colors.shadow} group`}>
+      <div className={`p-4 border ${colors.border} ${colors.bg} clip-chamfer backdrop-blur-sm group-hover:-translate-y-1 transition-all duration-300`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 flex items-center justify-center border ${colors.border} clip-chamfer-sm ${colors.bg}`}>
+            <Icon className={`w-5 h-5 ${colors.text}`} />
+          </div>
+          <div>
+            <div className={`text-2xl font-orbitron font-black text-cyber-foreground`}>{value}</div>
+            <div className="text-xs text-cyber-muted-foreground font-mono uppercase tracking-wider">{label}</div>
+          </div>
         </div>
       </div>
     </div>
