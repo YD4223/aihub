@@ -197,7 +197,7 @@ export default function LoginPage() {
               <input type="text" required
                 value={isLogin ? formData.account : formData.email}
                 onChange={(e) => isLogin ? setFormData({ ...formData, account: e.target.value }) : setFormData({ ...formData, email: e.target.value })}
-                placeholder={isLogin ? "输入邮箱或用户名" : "your@email.com"}
+                placeholder={isLogin ? "输入邮箱或用户名" : "your@qq.com"}
                 style={{
                   width: '100%', padding: '14px 14px 14px 42px',
                   backgroundColor: inputBg, border: `1px solid ${borderColor}`, borderRadius: '10px',
