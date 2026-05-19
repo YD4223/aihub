@@ -5,6 +5,11 @@ import Footer from '@/components/Footer'
 import TrendingToolCard from '@/components/TrendingToolCard'
 import { TrendingUp, Flame, Clock, Star, Trophy } from 'lucide-react'
 
+export const metadata = {
+  title: 'AI工具趋势榜 | AI Hub',
+  description: '查看最热门的AI工具排名，基于用户互动和热度指数实时更新，发现大家都在用的AI工具。',
+}
+
 // 趋势榜页面 - 支持热度/最新/评分三种排序
 interface TrendingPageProps {
   searchParams: { [key: string]: string | string[] | undefined }

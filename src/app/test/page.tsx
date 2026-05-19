@@ -1,3 +1,8 @@
+export const metadata = {
+  title: '测试页面 | AI Hub',
+  description: 'AI Hub 页面测试',
+}
+
 export default function TestPage() {
   return (
     <div className="p-10">

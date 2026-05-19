@@ -9,6 +9,11 @@ interface OpenSourcePageProps {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
+export const metadata = {
+  title: '开源AI项目 | AI Hub',
+  description: '发现优秀的开源AI项目，涵盖大语言模型、AI绘画、语音识别等热门开源工具，助力你的开发工作。',
+}
+
 // 强制动态渲染，避免缓存
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

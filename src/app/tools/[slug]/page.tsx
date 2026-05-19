@@ -12,9 +12,22 @@ import ViewTracker from './ViewTracker'
 import LiveStats from './LiveStats'
 import { prisma } from '@/lib/prisma'
 import { formatNumber, formatDate } from '@/lib/utils'
+import type { Metadata } from 'next'
 
 interface ToolPageProps {
   params: { slug: string }
+}
+
+export async function generateMetadata({ params }: ToolPageProps): Promise<Metadata> {
+  const tool = await prisma.tool.findUnique({
+    where: { slug: params.slug },
+    select: { name: true, shortDesc: true, description: true }
+  })
+  if (!tool) return { title: '工具未找到 | AI Hub' }
+  return {
+    title: `${tool.name} - AI工具详情 | AI Hub`,
+    description: tool.shortDesc || tool.description || `了解AI工具 ${tool.name} 的详细信息、功能特点和用户评价。`,
+  }
 }
 
 // 根据字符串生成一致的颜色

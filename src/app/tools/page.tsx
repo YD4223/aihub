@@ -10,6 +10,11 @@ import { Terminal, Cpu, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const ITEMS_PER_PAGE = 12
 
+export const metadata = {
+  title: 'AI工具大全 | AI Hub',
+  description: '浏览超过800个AI工具，涵盖聊天对话、图像生成、代码助手等16个分类，找到最适合你的AI工具。',
+}
+
 // 强制动态渲染，避免缓存
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

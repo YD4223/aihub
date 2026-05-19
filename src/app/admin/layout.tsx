@@ -1,36 +1,14 @@
-'use client'
+import type { Metadata } from 'next'
 
-import { useEffect } from 'react'
-import './admin.css'
+export const metadata: Metadata = {
+  title: '管理后台 | AI Hub',
+  description: 'AI Hub 站点管理后台，管理工具、用户、评论、举报等内容。',
+}
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  useEffect(() => {
-    // Hide cyberpunk background patterns
-    const patterns = document.querySelectorAll('.grid-pattern, .circuit-pattern, .scanlines')
-    patterns.forEach(el => {
-      (el as HTMLElement).style.display = 'none'
-    })
-    
-    // Set clean body background
-    document.body.style.backgroundColor = '#f3f4f6'
-    document.body.style.color = '#1f2937'
-    
-    return () => {
-      patterns.forEach(el => {
-        (el as HTMLElement).style.display = ''
-      })
-      document.body.style.backgroundColor = ''
-      document.body.style.color = ''
-    }
-  }, [])
-
-  return (
-    <div className="admin-layout">
-      {children}
-    </div>
-  )
+  return children
 }

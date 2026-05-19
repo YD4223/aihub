@@ -6,11 +6,28 @@ import Footer from '@/components/Footer'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 import SubscribeCard from '@/components/SubscribeCard'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
 interface NewsDetailPageProps {
   params: { id: string }
+}
+
+export async function generateMetadata({ params }: NewsDetailPageProps): Promise<Metadata> {
+  const newsId = parseInt(params.id, 10)
+  if (isNaN(newsId)) return { title: '资讯未找到 | AI Hub' }
+  
+  const news = await prisma.news.findUnique({
+    where: { id: newsId },
+    select: { title: true, titleZh: true, summary: true }
+  })
+  if (!news) return { title: '资讯未找到 | AI Hub' }
+  
+  return {
+    title: `${news.titleZh || news.title} - AI资讯 | AI Hub`,
+    description: news.summary || `了解最新AI资讯：${news.titleZh || news.title}`,
+  }
 }
 
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
