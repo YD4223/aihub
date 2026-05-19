@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest) {
 
     // 获取更新后的用户信息
     const updatedUser = await prisma.$queryRaw`
-      SELECT id, username, email, "avatarUrl", bio, location, website, "createdAt"
+      SELECT id, username, email, "avatarUrl", bio, location, website, "githubId", "createdAt"
       FROM users
       WHERE id = ${parseInt(userId)}
       LIMIT 1

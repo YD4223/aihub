@@ -43,11 +43,13 @@ export default function LoginPage() {
       const token = params.get('token')
       const userId = params.get('userId')
       const username = params.get('username')
+      const githubId = params.get('githubId')
       if (token && userId) {
         localStorage.setItem('sessionToken', token)
         localStorage.setItem('user', JSON.stringify({
           id: parseInt(userId),
           username: decodeURIComponent(username || ''),
+          githubId: githubId || null,
           sessionToken: token,
         }))
         // 清除 hash，然后跳转

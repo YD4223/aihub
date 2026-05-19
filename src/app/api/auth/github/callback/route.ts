@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ai999999.top'
     const redirectUrl = new URL(`${appUrl}/login`)
     redirectUrl.searchParams.set('github_oauth', 'success')
-    redirectUrl.hash = `token=${sessionToken}&userId=${user.id}&username=${encodeURIComponent(user.username)}`
+    redirectUrl.hash = `token=${sessionToken}&userId=${user.id}&username=${encodeURIComponent(user.username)}&githubId=${githubId}`
 
     const res = NextResponse.redirect(redirectUrl.toString())
 

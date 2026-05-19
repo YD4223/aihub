@@ -26,6 +26,7 @@ interface UserData {
   location: string | null
   website: string | null
   createdAt: string
+  githubId: string | null
 }
 
 interface LikedTool {
@@ -2009,24 +2010,33 @@ export default function UserCenterPage() {
 
               {/* 密码验证 */}
               <div className="space-y-2">
-                <label className="block text-sm font-orbitron text-cyber-foreground">请输入密码确认</label>
-                <div className="relative">
-                  <input
-                    type={showDeletePassword ? 'text' : 'password'}
-                    value={deletePassword}
-                    onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
-                    placeholder="输入当前密码确认注销"
-                    className="w-full px-4 py-3 bg-[#12121a] border border-cyber-border text-cyber-foreground font-mono text-sm outline-none focus:border-neon-red/60 transition-colors pr-10"
-                    style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowDeletePassword(!showDeletePassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-cyber-muted-foreground hover:text-neon-green transition-colors"
-                  >
-                    {showDeletePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                {user?.githubId ? (
+                  <div className="bg-neon-green/5 border border-neon-green/20 p-3 text-center"
+                    style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}>
+                    <p className="text-sm text-neon-green font-mono">{'>'} GitHub 用户直接确认即可注销</p>
+                  </div>
+                ) : (
+                  <>
+                    <label className="block text-sm font-orbitron text-cyber-foreground">请输入密码确认</label>
+                    <div className="relative">
+                      <input
+                        type={showDeletePassword ? 'text' : 'password'}
+                        value={deletePassword}
+                        onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
+                        placeholder="输入当前密码确认注销"
+                        className="w-full px-4 py-3 bg-[#12121a] border border-cyber-border text-cyber-foreground font-mono text-sm outline-none focus:border-neon-red/60 transition-colors pr-10"
+                        style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowDeletePassword(!showDeletePassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-cyber-muted-foreground hover:text-neon-green transition-colors"
+                      >
+                        {showDeletePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </>
+                )}
                 {deleteError && (
                   <p className="text-xs text-neon-red font-mono">{deleteError}</p>
                 )}
@@ -2048,7 +2058,7 @@ export default function UserCenterPage() {
                 </button>
                 <button
                   onClick={async () => {
-                    if (!deletePassword) {
+                    if (!user?.githubId && !deletePassword) {
                       setDeleteError('请输入密码')
                       return
                     }

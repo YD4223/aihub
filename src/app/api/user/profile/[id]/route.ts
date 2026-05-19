@@ -15,7 +15,7 @@ export async function GET(
     // 获取用户完整信息（包括隐私设置）
     const user = await prisma.$queryRaw`
       SELECT 
-        id, username, "avatarUrl", bio, location, website, 
+        id, username, "avatarUrl", bio, location, website, "githubId",
         role, status, "createdAt",
         "profilePublic", "showEmail", "showLocation", "showWebsite", "allowComment", "showStats"
       FROM users
@@ -67,6 +67,11 @@ export async function GET(
       showStats: Boolean(userData.showStats),
       shareCount: Number(stats?.shareCount || 0),
       totalLikes: Number(stats?.totalLikes || 0),
+    }
+
+    // 自己看自己的资料才返回敏感字段
+    if (isSelf) {
+      result.githubId = userData.githubId
     }
 
     // 自己查看或设置了公开才显示
