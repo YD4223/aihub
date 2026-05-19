@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
       }
 
       await prisma.$executeRawUnsafe(
-        `INSERT INTO users (username, email, "githubId", "githubUsername", "avatarUrl", password, role, status)
-         VALUES ($1, $2, $3, $4, $5, '', 'USER', 'active')`,
+        `INSERT INTO users (username, email, "githubId", "githubUsername", "avatarUrl", password, role, status, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, '', 'USER', 'active', NOW(), NOW())`,
         username, finalEmail, githubId, githubUser.login, githubUser.avatar_url
       )
 
