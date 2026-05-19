@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       whereClause += ` AND source = '${source}'`
     }
     if (search) {
-      whereClause += ` AND (name ILIKE '%${search}%' OR "shortDesc" ILIKE '%${search}%' OR description ILIKE '%${search}%' OR tags ILIKE '%${search}%')`
+      whereClause += ` AND (LOWER(t.name) LIKE LOWER('%${search}%') OR LOWER(t."shortDesc") LIKE LOWER('%${search}%') OR LOWER(t.description) LIKE LOWER('%${search}%') OR LOWER(t.tags) LIKE LOWER('%${search}%'))`
     }
 
     // 获取工具列表
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     `)
 
     // 获取统计
-    const totalResult = await prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM tools ${whereClause}`)
+    const totalResult = await prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM tools t ${whereClause}`)
     const total = Number((totalResult as any)[0].count)
 
     const pendingResult = await prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM tools WHERE status = 'pending'`)
