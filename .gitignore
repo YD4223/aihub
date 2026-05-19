@@ -36,6 +36,7 @@ logs/
 # Temp / debug files
 tmp-*
 tmp_*
+_tmp_*
 test-*.txt
 test*-*.txt
 rss-*.txt
