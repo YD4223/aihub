@@ -1,13 +1,22 @@
 'use client'
 
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Search, ChevronDown } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+const sortOptions = [
+  { value: '', label: '默认排序' },
+  { value: 'stars', label: '热度最高' },
+  { value: 'newest', label: '最新发布' },
+  { value: 'upvotes', label: '评分最高' },
+]
 
 export default function ToolsSearchBar() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('search') || '')
+  const [sortOpen, setSortOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   // 挂载时拦截：URL 有 search 但未登录 → 跳登录页
   useEffect(() => {
@@ -15,6 +24,17 @@ export default function ToolsSearchBar() {
       alert('请先登录后再使用搜索功能')
       router.replace('/login?redirect=/tools')
     }
+  }, [])
+
+  // 点击外部关闭下拉
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setSortOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const buildUrl = (overrides: Record<string, string | undefined>) => {
@@ -60,9 +80,13 @@ export default function ToolsSearchBar() {
     if (e.key === 'Enter') handleSearch()
   }
 
-  const handleSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(buildUrl({ sort: e.target.value || undefined }))
+  const handleSort = (value: string) => {
+    router.push(buildUrl({ sort: value || undefined }))
+    setSortOpen(false)
   }
+
+  const currentSort = searchParams.get('sort') || ''
+  const currentLabel = sortOptions.find(o => o.value === currentSort)?.label || '排序'
 
   return (
     <div className="flex gap-4 items-center">
@@ -80,16 +104,41 @@ export default function ToolsSearchBar() {
           className="input-cyber w-full"
         />
       </div>
-      <select
-        defaultValue={searchParams.get('sort') || ''}
-        onChange={handleSort}
-        className="flex items-center gap-2 px-4 py-3 bg-cyber-card border border-cyber-border rounded-lg hover:border-neon-green text-sm font-mono text-cyber-foreground focus:outline-none focus:border-neon-green transition-colors cursor-pointer"
-      >
-        <option value="" className="bg-cyber-card">默认排序</option>
-        <option value="stars" className="bg-cyber-card">热度最高</option>
-        <option value="newest" className="bg-cyber-card">最新发布</option>
-        <option value="upvotes" className="bg-cyber-card">评分最高</option>
-      </select>
+
+      {/* 自定义排序下拉 */}
+      <div className="relative flex-shrink-0" ref={dropdownRef}>
+        <button
+          onClick={() => setSortOpen(!sortOpen)}
+          className="flex items-center gap-2 px-4 py-3 bg-cyber-input border border-cyber-border text-neon-green font-mono text-sm hover:border-neon-green hover:shadow-neon focus:border-neon-green focus:shadow-neon focus:outline-none transition-all duration-200 cursor-pointer whitespace-nowrap min-w-[130px]"
+        >
+          <span className={currentSort ? 'text-neon-green' : 'text-cyber-muted-foreground'}>
+            {currentLabel}
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 text-neon-green transition-transform duration-200 ${sortOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {sortOpen && (
+          <div className="absolute right-0 top-full mt-1 z-50 min-w-full bg-cyber-card border border-cyber-border shadow-[0_0_20px_rgba(0,255,136,0.15)]">
+            {sortOptions.map((opt, i) => (
+              <button
+                key={opt.value}
+                onClick={() => handleSort(opt.value)}
+                className={`w-full text-left px-4 py-2.5 font-mono text-sm transition-all duration-150
+                  ${currentSort === opt.value
+                    ? 'text-neon-green bg-neon-green/10 border-l-2 border-neon-green'
+                    : 'text-cyber-foreground hover:bg-cyber-muted/30 hover:text-neon-green hover:pl-5'
+                  }
+                  ${i < sortOptions.length - 1 ? 'border-b border-cyber-border/50' : ''}
+                `}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
