@@ -53,6 +53,7 @@
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
+    "docx": "^9.6.1",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
     "puppeteer": "^21.6.1",
