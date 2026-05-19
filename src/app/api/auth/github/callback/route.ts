@@ -97,10 +97,19 @@ export async function GET(request: NextRequest) {
       // 直接创建独立新账号
       const username = await generateUniqueUsername(githubUser.login)
 
+      // 检查邮箱是否已被占用（避免违反唯一约束）
+      let finalEmail = email || `gh_${githubId}@github.local`
+      if (finalEmail) {
+        const existingEmail = await prisma.user.findUnique({ where: { email: finalEmail } })
+        if (existingEmail) {
+          finalEmail = `gh_${githubId}@github.local`
+        }
+      }
+
       await prisma.$executeRawUnsafe(
         `INSERT INTO users (username, email, "githubId", "githubUsername", "avatarUrl", password, role, status)
          VALUES ($1, $2, $3, $4, $5, '', 'USER', 'active')`,
-        username, email || `gh_${githubId}@github.local`, githubId, githubUser.login, githubUser.avatar_url
+        username, finalEmail, githubId, githubUser.login, githubUser.avatar_url
       )
 
       user = await prisma.user.findUnique({ where: { githubId } })
