@@ -25,6 +25,9 @@ prisma/dev.db-journal
 *.swp
 *.swo
 
+# Build artifacts
+tsconfig.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db
