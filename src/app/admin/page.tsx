@@ -267,6 +267,26 @@ export default function AdminPage() {
     }
   }
 
+  // 彻底删除工具
+  const handleDeleteTool = async (toolId: number, toolName: string) => {
+    if (!confirm(`⚠️ 确定要彻底删除「${toolName}」吗？\n\n此操作不可恢复！将同时删除该工具的所有评论、分享、浏览记录等关联数据。`)) return
+    setProcessingTool(toolId)
+    try {
+      const res = await fetch(`/api/admin/tools/${toolId}`, { method: 'DELETE' })
+      if (res.ok) {
+        loadTools(toolPage)
+      } else {
+        const data = await res.json()
+        alert('删除失败: ' + (data.error || '未知错误'))
+      }
+    } catch (err) {
+      console.error('删除失败:', err)
+      alert('删除失败，请重试')
+    } finally {
+      setProcessingTool(null)
+    }
+  }
+
   // 删除评论
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm('确定要删除这条评论吗？')) return
@@ -865,6 +885,16 @@ export default function AdminPage() {
                             </button>
                           </>
                         )}
+                        {/* 分割线 + 删除按钮（所有状态都显示） */}
+                        <hr className="border-gray-200 my-1" />
+                        <button
+                          onClick={() => handleDeleteTool(tool.id, tool.name)}
+                          disabled={processingTool === tool.id}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-500 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          彻底删除
+                        </button>
                       </div>
                     </div>
                     </div>
