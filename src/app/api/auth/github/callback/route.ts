@@ -148,8 +148,9 @@ export async function GET(request: NextRequest) {
     return res
   } catch (err) {
     console.error('GitHub OAuth callback error:', err)
+    const errMsg = err instanceof Error ? err.message : String(err)
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai999999.top'}/login?error=server_error`
+      `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai999999.top'}/login?error=server_error&err=${encodeURIComponent(errMsg.slice(0, 200))}`
     )
   }
 }

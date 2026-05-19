@@ -29,7 +29,10 @@ export default function LoginPage() {
         server_error: '服务器错误，请稍后重试',
         access_denied: '你取消了 GitHub 授权',
       }
-      setError(errorMap[oauthError] || `GitHub 登录错误：${oauthError}`)
+      // 如果有详细错误信息，追加显示
+      const errDetail = params.get('err')
+      const errText = errorMap[oauthError] || `GitHub 登录错误：${oauthError}`
+      setError(errDetail ? `${errText} (${decodeURIComponent(errDetail)})` : errText)
       // 清除错误参数
       window.history.replaceState({}, '', window.location.pathname)
     }
