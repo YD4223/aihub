@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
     }
 
-    // 1. 验证密码
-    const user = await prisma.$queryRawUnsafe<Array<{ id: number; password: string }>>(
-      'SELECT id, password FROM users WHERE id = $1 LIMIT 1',
+    // 1. 获取用户信息
+    const user = await prisma.$queryRawUnsafe<Array<{ id: number; password: string; githubId: string | null }>>(
+      'SELECT id, password, "githubId" FROM users WHERE id = $1 LIMIT 1',
       parseInt(userId)
     )
 
@@ -23,16 +23,19 @@ export async function POST(request: NextRequest) {
     }
 
     const storedPassword = user[0].password
-    let isValid = false
+    const isGithubOnly = user[0].githubId && storedPassword === ''
 
-    if (storedPassword.startsWith('$2')) {
-      isValid = await bcrypt.compare(password, storedPassword)
-    } else {
-      isValid = storedPassword === password
-    }
-
-    if (!isValid) {
-      return NextResponse.json({ error: '密码错误，无法注销账户' }, { status: 400 })
+    // GitHub 用户无需密码验证，可直接注销
+    if (!isGithubOnly) {
+      let isValid = false
+      if (storedPassword.startsWith('$2')) {
+        isValid = await bcrypt.compare(password, storedPassword)
+      } else {
+        isValid = storedPassword === password
+      }
+      if (!isValid) {
+        return NextResponse.json({ error: '密码错误，无法注销账户' }, { status: 400 })
+      }
     }
 
     // 2. 按顺序删除用户所有关联数据（每个删除单独try-catch，避免某张表不存在时报错）
