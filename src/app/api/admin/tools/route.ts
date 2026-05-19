@@ -21,9 +21,23 @@ export async function GET(request: NextRequest) {
     if (source) {
       whereClause += ` AND source = '${source}'`
     }
+    const hasSearch = !!search
     if (search) {
       whereClause += ` AND (LOWER(t.name) LIKE LOWER('%${search}%') OR LOWER(t."shortDesc") LIKE LOWER('%${search}%') OR LOWER(t.description) LIKE LOWER('%${search}%') OR LOWER(t.tags) LIKE LOWER('%${search}%'))`
     }
+
+    // 构建 ORDER BY：有搜索时按相关性排序，无搜索时按创建时间
+    const orderClause = hasSearch
+      ? `
+      ORDER BY
+        (CASE WHEN LOWER(t.name) = LOWER('${search}') THEN 100 ELSE 0 END +
+         CASE WHEN LOWER(t.name) LIKE LOWER('${search}%') THEN 50 ELSE 0 END +
+         CASE WHEN LOWER(t.name) LIKE LOWER('%${search}%') THEN 30 ELSE 0 END +
+         CASE WHEN LOWER(t.tags) LIKE LOWER('%${search}%') THEN 20 ELSE 0 END +
+         CASE WHEN LOWER(t."shortDesc") LIKE LOWER('%${search}%') THEN 15 ELSE 0 END +
+         CASE WHEN LOWER(t.description) LIKE LOWER('%${search}%') THEN 5 ELSE 0 END) DESC,
+        t."createdAt" DESC`
+      : `ORDER BY t."createdAt" DESC`
 
     // 获取工具列表
     const tools = await prisma.$queryRawUnsafe(`
@@ -31,7 +45,7 @@ export async function GET(request: NextRequest) {
       FROM tools t
       LEFT JOIN categories c ON t."categoryId" = c.id
       ${whereClause}
-      ORDER BY t."createdAt" DESC
+      ${orderClause}
       LIMIT ${limit} OFFSET ${skip}
     `)
 
