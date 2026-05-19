@@ -16,24 +16,24 @@ export async function POST(
     }
 
     let status: string = ''
-    let isActive: number = 0
+    let isActive: boolean = false
 
     switch (action) {
       case 'approve':
         status = 'approved'
-        isActive = 1
+        isActive = true
         break
       case 'reject':
         status = 'rejected'
-        isActive = 0
+        isActive = false
         break
       case 'suspend':
         status = 'suspended'
-        isActive = 0
+        isActive = false
         break
       case 'restore':
         status = 'approved'
-        isActive = 1
+        isActive = true
         break
     }
 
@@ -41,34 +41,34 @@ export async function POST(
     const suspendedReason = action === 'suspend' ? note : null
     const suspendedBy = action === 'suspend' ? adminId : null
 
-    // 使用原始 SQL 更新
+    // PostgreSQL 驼峰列名必须加双引号，否则自动转小写
     if (action === 'suspend') {
       await prisma.$executeRaw`
         UPDATE tools 
         SET status = ${status}, 
-            isActive = ${isActive}, 
-            suspendedAt = NOW(), 
-            suspendedReason = ${suspendedReason},
-            suspendedBy = ${suspendedBy}
+            "isActive" = ${isActive}, 
+            "suspendedAt" = NOW(), 
+            "suspendedReason" = ${suspendedReason},
+            "suspendedBy" = ${suspendedBy}
         WHERE id = ${toolId}
       `
     } else if (action === 'restore') {
       await prisma.$executeRaw`
         UPDATE tools 
         SET status = ${status}, 
-            isActive = ${isActive}, 
-            suspendedAt = NULL, 
-            suspendedReason = NULL,
-            suspendedBy = NULL
+            "isActive" = ${isActive}, 
+            "suspendedAt" = NULL, 
+            "suspendedReason" = NULL,
+            "suspendedBy" = NULL
         WHERE id = ${toolId}
       `
     } else {
       await prisma.$executeRaw`
         UPDATE tools 
         SET status = ${status}, 
-            isActive = ${isActive}, 
-            reviewedAt = NOW(), 
-            reviewNote = ${reviewNote}
+            "isActive" = ${isActive}, 
+            "reviewedAt" = NOW(), 
+            "reviewNote" = ${reviewNote}
         WHERE id = ${toolId}
       `
     }
