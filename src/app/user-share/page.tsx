@@ -252,11 +252,13 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
           {/* 标题区域 */}
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 border border-neon-green/50 bg-neon-green/5 clip-chamfer-sm mb-4">
-              <Radio className="w-4 h-4 text-neon-green animate-pulse" />
-              <span className="text-sm font-mono text-neon-green uppercase tracking-wider">
-                {stats.toolCount + stats.lifeCount} 条分享 · {stats.totalLikes} 次点赞 · {stats.totalComments} 条评论
-              </span>
+            <div className="inline-flex shadow-neon mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 border border-neon-green/50 bg-neon-green/5 clip-chamfer-sm">
+                <Radio className="w-4 h-4 text-neon-green animate-pulse" />
+                <span className="text-sm font-mono text-neon-green uppercase tracking-wider">
+                  {stats.toolCount + stats.lifeCount} 条分享 · {stats.totalLikes} 次点赞 · {stats.totalComments} 条评论
+                </span>
+              </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-orbitron font-black text-cyber-foreground mb-3 tracking-tight uppercase">
               发现与<span className="text-neon-green">分享</span>

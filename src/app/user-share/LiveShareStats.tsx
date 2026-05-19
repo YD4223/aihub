@@ -15,7 +15,7 @@ function NeonStatCard({ value, label, icon: Icon, color }: { value: string | num
     green: { border: 'border-neon-green', text: 'text-neon-green', shadow: 'shadow-neon', bg: 'bg-neon-green/10' },
     cyan: { border: 'border-neon-cyan', text: 'text-neon-cyan', shadow: 'shadow-neon-tertiary', bg: 'bg-neon-cyan/10' },
     magenta: { border: 'border-neon-magenta', text: 'text-neon-magenta', shadow: 'shadow-neon-secondary', bg: 'bg-neon-magenta/10' },
-    yellow: { border: 'border-neon-yellow', text: 'text-neon-yellow', shadow: '', bg: 'bg-neon-yellow/10' },
+    yellow: { border: 'border-neon-yellow', text: 'text-neon-yellow', shadow: 'shadow-neon-yellow', bg: 'bg-neon-yellow/10' },
   }
   const colors = colorMap[color]
   return (
