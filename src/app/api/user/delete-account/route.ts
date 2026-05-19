@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId, password } = body
 
-    if (!userId || !password) {
+    if (!userId) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
     }
 
@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
 
     // GitHub 用户无需密码验证，可直接注销
     if (!isGithubOnly) {
+      if (!password) {
+        return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+      }
       let isValid = false
       if (storedPassword.startsWith('$2')) {
         isValid = await bcrypt.compare(password, storedPassword)
