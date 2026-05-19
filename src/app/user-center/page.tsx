@@ -1199,7 +1199,7 @@ export default function UserCenterPage() {
               label="当前密码"
               value={passwordData.currentPassword}
               onChange={(value) => setPasswordData({ ...passwordData, currentPassword: value })}
-              placeholder="请输入当前密码"
+              placeholder="请输入当前密码（GitHub 用户可留空）"
             />
             <PasswordInputCyber
               label="新密码"

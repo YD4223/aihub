@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest) {
 
     // 获取用户当前密码
     const user = await prisma.$queryRaw`
-      SELECT password FROM users 
+      SELECT password, "githubId" FROM users 
       WHERE id = ${parseInt(userId)}
       LIMIT 1
     `
@@ -24,19 +24,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const storedPassword = user[0].password
-    let isValid = false
+    const githubId = user[0].githubId
 
-    // 检查密码是否是 bcrypt 加密格式（以 $2 开头）
-    if (storedPassword.startsWith('$2')) {
-      // bcrypt 加密密码，使用 bcrypt 比较
-      isValid = await bcrypt.compare(currentPassword, storedPassword)
-    } else {
-      // 明文密码，直接比较
-      isValid = storedPassword === currentPassword
-    }
+    // GitHub 用户（空密码）可以直接设置密码，无需验证旧密码
+    const isGithubOnlyUser = githubId && storedPassword === ''
+    if (!isGithubOnlyUser) {
+      let isValid = false
 
-    if (!isValid) {
-      return NextResponse.json({ error: '当前密码错误' }, { status: 400 })
+      if (storedPassword.startsWith('$2')) {
+        isValid = await bcrypt.compare(currentPassword, storedPassword)
+      } else {
+        isValid = storedPassword === currentPassword
+      }
+
+      if (!isValid) {
+        return NextResponse.json({ error: '当前密码错误' }, { status: 400 })
+      }
     }
 
     // 新密码长度验证

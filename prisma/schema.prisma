@@ -89,6 +89,8 @@ model User {
   email         String         @unique
   emailVerified DateTime?     // 邮箱验证时间
   password      String
+  githubId      String?        @unique // GitHub OAuth ID
+  githubUsername String?              // GitHub 用户名
   avatarUrl     String?
   bio           String?
   location      String?

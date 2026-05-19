@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Sparkles, KeyRound, Zap } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Sparkles, KeyRound, Zap, Github } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,6 +11,49 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  
+  const [githubLoading, setGithubLoading] = useState(false)
+  
+  // GitHub OAuth 回调检测
+  React.useEffect(() => {
+    // 检查 URL 错误参数
+    const params = new URLSearchParams(window.location.search)
+    const oauthError = params.get('error')
+    if (oauthError) {
+      const errorMap: Record<string, string> = {
+        no_code: 'GitHub 授权失败：未获取到授权码',
+        oauth_not_configured: 'GitHub 登录尚未配置',
+        token_exchange_failed: 'GitHub token 换取失败',
+        invalid_user: '获取 GitHub 用户信息失败',
+        create_user_failed: '创建用户失败',
+        server_error: '服务器错误，请稍后重试',
+        access_denied: '你取消了 GitHub 授权',
+      }
+      setError(errorMap[oauthError] || `GitHub 登录错误：${oauthError}`)
+      // 清除错误参数
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    
+    const hash = window.location.hash
+    if (hash && hash.includes('token=')) {
+      const params = new URLSearchParams(hash.replace('#', ''))
+      const token = params.get('token')
+      const userId = params.get('userId')
+      const username = params.get('username')
+      if (token && userId) {
+        localStorage.setItem('sessionToken', token)
+        localStorage.setItem('user', JSON.stringify({
+          id: parseInt(userId),
+          username: decodeURIComponent(username || ''),
+          sessionToken: token,
+        }))
+        // 清除 hash，然后跳转
+        window.location.hash = ''
+        router.push('/user-center')
+        router.refresh()
+      }
+    }
+  }, [router])
   
   // 验证码相关状态
   const [codeSent, setCodeSent] = useState(false)
@@ -353,6 +396,20 @@ export default function LoginPage() {
           <span style={{ color: '#555', fontSize: '11px', fontFamily: 'monospace', letterSpacing: '2px' }}>OR</span>
           <div style={{ flex: 1, height: '1px', background: `${borderColor}` }} />
         </div>
+
+        {/* GitHub 登录 */}
+        <a href="/api/auth/github" onClick={() => setGithubLoading(true)} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          padding: '13px', marginBottom: '14px',
+          border: `1px solid ${borderColor}`, borderRadius: '10px',
+          color: '#ccc', textDecoration: 'none', fontSize: '14px', fontWeight: 500,
+          transition: 'all 0.2s',
+          opacity: githubLoading ? 0.6 : 1,
+          cursor: githubLoading ? 'not-allowed' : 'pointer',
+        }}>
+          <Github style={{ width: '18px', height: '18px' }} />
+          {githubLoading ? '跳转到 GitHub 授权...' : '通过 GitHub 登录'}
+        </a>
 
         {/* 游客访问 */}
         <Link href="/" style={{
