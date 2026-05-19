@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       whereClause += ` AND source = '${source}'`
     }
     if (search) {
-      whereClause += ` AND (name LIKE '%${search}%' OR description LIKE '%${search}%')`
+      whereClause += ` AND (name ILIKE '%${search}%' OR "shortDesc" ILIKE '%${search}%' OR description ILIKE '%${search}%' OR tags ILIKE '%${search}%')`
     }
 
     // 获取工具列表
