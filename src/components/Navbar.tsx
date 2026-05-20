@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, Menu, X, Zap, Plus, User, BrainCircuit, Sun, Moon } from 'lucide-react'
+import { Search, Menu, X, Zap, Plus, User, Bell, BrainCircuit, Sun, Moon } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Avatar from '@/components/Avatar'
@@ -143,6 +143,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [user, setUser] = useState<UserData | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -215,6 +216,20 @@ export default function Navbar() {
     window.addEventListener('pageshow', onPageShow)
     return () => window.removeEventListener('pageshow', onPageShow)
   }, [doVerifySession])
+
+  // 获取未读通知数
+  useEffect(() => {
+    if (!user?.id) return
+    const fetchUnread = () => {
+      fetch(`/api/notifications/unread?userId=${user.id}`)
+        .then(r => r.json())
+        .then(data => setUnreadCount(data.count || 0))
+        .catch(() => {})
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 30000) // 每30秒轮询
+    return () => clearInterval(interval)
+  }, [user?.id])
 
   // 防止滚动穿透
   useEffect(() => {
@@ -364,6 +379,24 @@ export default function Navbar() {
                 <span className="hidden lg:inline">提交</span>
                 <span className="lg:hidden">+</span>
               </Link>
+
+              {/* 通知铃铛 */}
+              {user && (
+                <Link
+                  href="/notifications"
+                  className="relative flex items-center justify-center w-9 h-9 border border-cyber-border hover:border-neon-green text-cyber-foreground hover:text-neon-green transition-all"
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-[#ff3366] text-[#fff] text-[10px] font-bold flex items-center justify-center font-mono"
+                      style={{ clipPath: 'polygon(0 0, calc(100% - 2px) 0, 100% 2px, 100% 100%, 2px 100%, 0 calc(100% - 2px))' }}
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               
               {/* 用户入口 */}
               {user ? (

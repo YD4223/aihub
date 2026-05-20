@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
@@ -10,7 +10,8 @@ import {
   Trash2, Search, Grid, List, ChevronLeft, ChevronRight,
   X, Lock, Bell, Eye, EyeOff, Loader2, Check,
   Mail, Globe, MessageSquare, Shield, UserCircle,
-  Volume2, VolumeX, Users, AlertCircle, AlertTriangle, BarChart3
+  Volume2, VolumeX, Users, AlertCircle, AlertTriangle, BarChart3,
+  UserPlus, Info, Clock, CheckCheck
 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -213,6 +214,13 @@ export default function UserCenterPage() {
       if (shareFavRes.ok) {
         const data = await shareFavRes.json()
         setFavoriteShares(data.shares || [])
+      }
+
+      // 加载未读通知数
+      const unreadRes = await fetch(`/api/notifications/unread?userId=${userId}`)
+      if (unreadRes.ok) {
+        const data = await unreadRes.json()
+        setUnreadCount(data.count || 0)
       }
     } catch (e) {
       console.error('加载收藏数据失败:', e)
@@ -1655,12 +1663,91 @@ export default function UserCenterPage() {
     )
   }
 
+  // 通知未读数
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // 通知列表状态
+  const PAGE_SIZE_NOTIF = 20
+  const [notifList, setNotifList] = useState<any[]>([])
+  const [notifTotal, setNotifTotal] = useState(0)
+  const [notifPage, setNotifPage] = useState(1)
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifMarking, setNotifMarking] = useState<number | null>(null)
+
+  // 获取通知列表
+  const fetchNotifList = useCallback(async (p: number) => {
+    if (!user?.id) return
+    setNotifLoading(true)
+    try {
+      const res = await fetch(`/api/notifications?userId=${user.id}&page=${p}&pageSize=${PAGE_SIZE_NOTIF}`)
+      const data = await res.json()
+      if (data.notifications) {
+        setNotifList(data.notifications)
+        setNotifTotal(data.total || 0)
+      }
+    } catch (e) {
+      console.error('获取通知列表失败:', e)
+    } finally {
+      setNotifLoading(false)
+    }
+  }, [user?.id])
+
+  // 标记单条已读
+  const handleMarkNotifRead = async (id: number) => {
+    if (!user?.id) return
+    setNotifMarking(id)
+    try {
+      await fetch('/api/notifications/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id, userId: user.id }),
+      })
+      setNotifList(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (e) {
+      console.error('标记已读失败:', e)
+    } finally {
+      setNotifMarking(null)
+    }
+  }
+
+  // 全部标记已读
+  const handleMarkAllNotifRead = async () => {
+    if (!user?.id) return
+    try {
+      await fetch('/api/notifications/read-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      setNotifList(prev => prev.map(n => ({ ...n, isRead: true })))
+      setUnreadCount(0)
+    } catch (e) {
+      console.error('全部标记已读失败:', e)
+    }
+  }
+
+  // tab 切换时获取通知
+  useEffect(() => {
+    if (activeTab === 'notifications' && user?.id) {
+      fetchNotifList(notifPage)
+    }
+  }, [activeTab, user?.id])
+
+  // 通知分页切换
+  useEffect(() => {
+    if (activeTab === 'notifications' && user?.id) {
+      fetchNotifList(notifPage)
+    }
+  }, [notifPage, activeTab, user?.id])
+
   // 统计数据
   const stats = [
     { label: '我的提交', value: submittedToolsTotal, icon: Share2, tab: 'shares' },
     { label: '我的点赞', value: likedTools.length, icon: ThumbsUp, tab: 'likedTools' },
     { label: '我的收藏', value: favorites.length, icon: Bookmark, tab: 'favorites' },
     { label: '收藏分享', value: favoriteShares.length, icon: Heart, tab: 'favoriteShares' },
+    { label: '通知', value: unreadCount, icon: Bell, tab: 'notifications' },
   ]
 
   return (
@@ -1782,6 +1869,7 @@ export default function UserCenterPage() {
                     { id: 'likedTools', label: '我的点赞', icon: ThumbsUp },
                     { id: 'favorites', label: '我的收藏', icon: Bookmark },
                     { id: 'favoriteShares', label: '收藏分享', icon: Heart },
+                    { id: 'notifications', label: '通知', icon: Bell },
                     { id: 'settings', label: '设置', icon: Settings },
                   ].map((tab) => (
                     <button
@@ -1795,6 +1883,12 @@ export default function UserCenterPage() {
                     >
                       <tab.icon className="w-4 h-4" />
                       {tab.label}
+                      {tab.id === 'notifications' && unreadCount > 0 && (
+                        <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-neon-green/20 text-neon-green border border-neon-green/30 font-mono"
+                          style={{ clipPath: 'polygon(0 2px, 2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px))' }}>
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -1952,6 +2046,156 @@ export default function UserCenterPage() {
                               </div>
                               <Pagination totalPages={totalPages} totalCount={totalCount} />
                             </>
+                          )
+                        })()}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'notifications' && (
+                  <div>
+                    {/* 通知头部 - 全部已读按钮 */}
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-cyber-muted-foreground font-mono">
+                        <span className="text-neon-green">{unreadCount}</span> 条未读 · 共 {notifTotal} 条
+                      </p>
+                      {notifList.some((n: any) => !n.isRead) && (
+                        <button
+                          onClick={handleMarkAllNotifRead}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono border border-cyber-border text-cyber-foreground hover:text-neon-green hover:border-neon-green transition-all"
+                          style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          全部已读
+                        </button>
+                      )}
+                    </div>
+
+                    {/* 通知列表 */}
+                    {notifLoading ? (
+                      <div className="text-center py-12">
+                        <div className="inline-block w-8 h-8 border-2 border-neon-cyan border-t-transparent animate-spin"
+                          style={{ clipPath: 'polygon(0 2px, 2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px))' }} />
+                        <p className="text-cyber-muted-foreground mt-2 font-mono">{'>'} 加载中...</p>
+                      </div>
+                    ) : notifList.length === 0 ? (
+                      <EmptyState
+                        icon={Bell}
+                        title="暂无通知"
+                        description="当有人与你互动时，通知会出现在这里"
+                      />
+                    ) : (
+                      <>
+                        <div className="space-y-1">
+                          {notifList.map((n: any) => {
+                            const typeConfig: Record<string, { icon: any; color: string; bg: string }> = {
+                              like:    { icon: Heart,        color: '#ff3366',   bg: 'rgba(255,51,102,0.1)' },
+                              comment: { icon: MessageCircle, color: '#00d4ff',   bg: 'rgba(0,212,255,0.1)'  },
+                              follow:  { icon: UserPlus,      color: '#00ff88',   bg: 'rgba(0,255,136,0.1)'  },
+                              system:  { icon: Info,          color: '#f59e0b',   bg: 'rgba(245,158,11,0.1)' },
+                            }
+                            const cfg = typeConfig[n.type] || typeConfig.system
+                            const Icon = cfg.icon
+                            const timeAgo = (dateStr: string) => {
+                              const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+                              if (diff < 60) return '刚刚'
+                              if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
+                              if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
+                              if (diff < 2592000) return `${Math.floor(diff / 86400)} 天前`
+                              return new Date(dateStr).toLocaleDateString('zh-CN')
+                            }
+                            return (
+                              <div
+                                key={n.id}
+                                className={`group relative flex items-start gap-3 p-3 border transition-all duration-200 ${
+                                  n.isRead
+                                    ? 'bg-cyber-card/50 border-cyber-border/50'
+                                    : 'bg-cyber-card border-neon-green/30 shadow-[inset_0_0_15px_rgba(0,255,136,0.05)]'
+                                }`}
+                                style={{ clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))' }}
+                              >
+                                {!n.isRead && (
+                                  <span className="absolute top-3 left-3 w-2 h-2 bg-neon-green rounded-full animate-pulse" style={{ boxShadow: '0 0 6px #00ff88' }} />
+                                )}
+                                <div
+                                  className={`flex-shrink-0 w-9 h-9 flex items-center justify-center ${n.isRead ? 'opacity-50' : ''}`}
+                                  style={{ background: cfg.bg, clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                                >
+                                  <Icon className="w-4 h-4" style={{ color: cfg.color }} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                      <p className={`text-xs font-mono ${n.isRead ? 'text-cyber-muted-foreground' : 'text-cyber-foreground font-bold'}`}>
+                                        {n.title}
+                                      </p>
+                                      {n.content && (
+                                        <p className="text-[11px] text-cyber-muted-foreground mt-0.5 font-mono line-clamp-2">
+                                          {n.content}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {!n.isRead && (
+                                      <button
+                                        onClick={() => handleMarkNotifRead(n.id)}
+                                        disabled={notifMarking === n.id}
+                                        className="p-1 text-cyber-muted-foreground hover:text-neon-green opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                                      >
+                                        {notifMarking === n.id ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Check className="w-3 h-3" />
+                                        )}
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="flex items-center gap-1 text-[10px] text-cyber-muted-foreground font-mono">
+                                      <Clock className="w-2.5 h-2.5" />
+                                      {timeAgo(n.createdAt)}
+                                    </span>
+                                    {n.link && (
+                                      <Link
+                                        href={n.link}
+                                        className="text-[10px] font-mono text-neon-cyan hover:text-neon-green underline-offset-2 hover:underline transition-colors"
+                                        onClick={() => !n.isRead && handleMarkNotifRead(n.id)}
+                                      >
+                                        查看详情 →
+                                      </Link>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {/* 分页 */}
+                        {(() => {
+                          const totalPages = Math.ceil(notifTotal / PAGE_SIZE_NOTIF)
+                          if (totalPages <= 1) return null
+                          return (
+                            <div className="flex items-center justify-center gap-3 mt-6">
+                              <button
+                                onClick={() => setNotifPage(p => Math.max(1, p - 1))}
+                                disabled={notifPage <= 1}
+                                className="p-1.5 border border-cyber-border text-cyber-foreground hover:text-neon-green hover:border-neon-green transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                              >
+                                <ChevronLeft className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-sm font-mono text-cyber-muted-foreground">
+                                <span className="text-neon-green">{notifPage}</span> / {totalPages}
+                              </span>
+                              <button
+                                onClick={() => setNotifPage(p => Math.min(totalPages, p + 1))}
+                                disabled={notifPage >= totalPages}
+                                className="p-1.5 border border-cyber-border text-cyber-foreground hover:text-neon-green hover:border-neon-green transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                              >
+                                <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )
                         })()}
                       </>

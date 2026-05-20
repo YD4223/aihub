@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canLike, incrementLikeCount } from '@/lib/daily-limit'
+import { createNotification } from '@/lib/notification'
 
 // GET /api/shares/[id]/like  获取当前点赞数
 export async function GET(
@@ -51,6 +52,18 @@ export async function POST(
     // 增加用户点赞次数
     if (action === 'like') {
       await incrementLikeCount(userId)
+
+      // 发送点赞通知（不阻塞主流程）
+      if (Number(userId) !== share.userId) {
+        createNotification({
+          userId: share.userId,
+          type: 'like',
+          title: '有人赞了你的分享',
+          content: '',
+          link: `/user-share`,
+          relatedUserId: Number(userId),
+        }).catch(() => {})
+      }
     }
 
     return NextResponse.json({ likes: share.likes })

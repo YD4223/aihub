@@ -21,6 +21,8 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [tagInput, setTagInput] = useState('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -34,6 +36,8 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
       setContent('')
       setImages([])
       setError('')
+      setSelectedTags([])
+      setTagInput('')
     }
   }, [isOpen])
 
@@ -59,6 +63,29 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
 
   function removeImage(idx: number) {
     setImages(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const MAX_TAGS = 5
+
+  function addTag() {
+    const trimmed = tagInput.trim().replace(/^#+/, '')
+    if (!trimmed) return
+    if (selectedTags.length >= MAX_TAGS) {
+      setError(`最多添加 ${MAX_TAGS} 个标签`)
+      return
+    }
+    if (selectedTags.includes(trimmed)) return
+    if (trimmed.length > 20) {
+      setError('每个标签不超过 20 个字')
+      return
+    }
+    setSelectedTags(prev => [...prev, trimmed])
+    setTagInput('')
+    setError('')
+  }
+
+  function removeTag(idx: number) {
+    setSelectedTags(prev => prev.filter((_, i) => i !== idx))
   }
 
   // 拖拽排序相关状态
@@ -125,7 +152,8 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
           type: mode,
           content: content.trim(),
           images: images.length > 0 ? images : null,
-          userId: user.id
+          userId: user.id,
+          tags: selectedTags.length > 0 ? selectedTags.join(',') : null
         })
       })
       const data = await res.json()
@@ -234,6 +262,42 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
             }`}>
               {content.length}/{MAX_CONTENT}
             </div>
+          </div>
+
+          {/* 话题标签输入 */}
+          <div className="mt-3">
+            <div className="flex items-center gap-2 flex-wrap border border-[#2a2a3a] bg-[#0a0a0f] px-3 py-2"
+              style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
+            >
+              <span className="text-[#00d4ff] text-xs font-mono">#</span>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault()
+                    addTag()
+                  }
+                }}
+                placeholder="添加话题标签（按 Enter 添加）"
+                className="flex-1 bg-transparent border-none outline-none text-[#e0e0e0] text-xs font-mono placeholder:text-[#4b5563]"
+              />
+            </div>
+            {selectedTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedTags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono bg-[#00d4ff]/10 border border-[#00d4ff]/30 text-[#00d4ff]"
+                    style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                  >
+                    # {tag}
+                    <button onClick={() => removeTag(i)} className="text-[#6b7280] hover:text-[#ff3366] transition-colors ml-0.5">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 规则提示 */}

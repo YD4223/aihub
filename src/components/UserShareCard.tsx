@@ -22,6 +22,7 @@ interface UserShareCardProps {
     viewCount: number
     status: string
     type: string
+    tags: string | null
     createdAt: Date
     tool: {
       id: number | null
@@ -800,6 +801,26 @@ export default function UserShareCard({ share }: UserShareCardProps) {
             {share.content}
           </p>
         </div>
+
+        {/* 分享话题标签 */}
+        {share.tags && parseTags(share.tags).length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {parseTags(share.tags).map((tag, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono bg-[#00d4ff]/8 border border-[#00d4ff]/20 text-[#00d4ff]/80 hover:bg-[#00d4ff]/15 hover:text-[#00d4ff] transition-all cursor-pointer"
+                style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // 跳转到标签搜索结果页
+                  window.location.href = `/user-share?search=${encodeURIComponent(tag)}`
+                }}
+              >
+                # {tag}
+              </span>
+            ))}
+          </div>
+        )}
         
         {/* 分享图片 */}
         {shareImages.length > 0 && (

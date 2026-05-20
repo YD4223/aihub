@@ -175,6 +175,7 @@ model Share {
   comments           ShareComment[]
   user               User           @relation(fields: [userId], references: [id])
   tool               Tool?          @relation(fields: [toolId], references: [id])
+  tags               String?        // 逗号分隔的话题标签
 
   @@map("shares")
 }
@@ -431,6 +432,22 @@ model VerificationCode {
 
   @@index([email, code])
   @@map("verification_codes")
+}
+
+// 通知系统
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int                        // 接收通知的用户
+  type      String                     // like | comment | follow | system
+  title     String                     // 通知标题
+  content   String?                    // 通知正文（可选）
+  link      String?                    // 相关链接
+  relatedUserId Int?                   // 触发通知的用户ID
+  isRead    Boolean  @default(false)   // 是否已读
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
 }
 
 model FriendLink {

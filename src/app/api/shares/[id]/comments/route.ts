@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canComment, incrementCommentCount } from '@/lib/daily-limit'
+import { createNotification } from '@/lib/notification'
 
 // GET /api/shares/[id]/comments - 获取分享的评论列表
 export async function GET(
@@ -100,6 +101,29 @@ export async function POST(
 
     // 增加用户评论次数
     await incrementCommentCount(userId)
+
+    // 发送通知给分享作者
+    if (Number(userId) !== comment.userId) {
+      try {
+        const shareOwner = await prisma.$queryRaw<Array<{ userId: number }>>`
+          SELECT "userId" FROM shares WHERE id = ${shareId}
+        `
+        const ownerId = (shareOwner as any[])[0]?.userId
+        if (ownerId && Number(ownerId) !== Number(userId)) {
+          const notifyTitle = parentId ? '有人回复了你的评论' : '有人评论了你的分享'
+          createNotification({
+            userId: ownerId,
+            type: 'comment',
+            title: notifyTitle,
+            content: content.trim().substring(0, 100),
+            link: `/user-share`,
+            relatedUserId: Number(userId),
+          }).catch(() => {})
+        }
+      } catch (e) {
+        console.error('评论通知失败:', e)
+      }
+    }
 
     // 触发 AI 自动互动（异步，不阻塞响应）
     try {

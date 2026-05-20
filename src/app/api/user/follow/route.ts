@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { createNotification } from '@/lib/notification'
 
 // POST /api/user/follow - 关注/取消关注
 export async function POST(request: NextRequest) {
@@ -43,6 +44,17 @@ export async function POST(request: NextRequest) {
         INSERT INTO follows ("followerId", "followingId", "createdAt")
         VALUES (${parseInt(followerId)}, ${parseInt(followingId)}, NOW())
       `
+
+      // 发送关注通知
+      createNotification({
+        userId: parseInt(followingId),
+        type: 'follow',
+        title: '有人关注了你',
+        content: '',
+        link: `/user-center`,
+        relatedUserId: parseInt(followerId),
+      }).catch(() => {})
+
       return NextResponse.json({ following: true, message: '关注成功' })
     }
   } catch (error: any) {

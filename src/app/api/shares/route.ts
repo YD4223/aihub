@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // 获取分享列表 - 使用子查询避免GROUP BY问题
     const shares = await prisma.$queryRawUnsafe(`
       SELECT 
-        s.id, s.content, s.images, s.video, s.likes, s.status, s.type, s."createdAt", s."userId",
+        s.id, s.content, s.images, s.video, s.likes, s.status, s.type, s."createdAt", s."userId", s.tags,
         s."toolId", s."submitToolName", s."submitToolWebsite", s."submitToolDesc",
         s."submitToolCategory", s."submitToolPricing", s."submitToolGithub", s."submitToolLogo",
         u.username as "userName",
@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
       likes: s.likes,
       status: s.status,
       type: s.type,
+      tags: s.tags,
       createdAt: s.createdAt,
       user: {
         id: s.userId,
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || ''
-    let type: string, content: string, toolId: string | null, images: string[] | null, userId: string, video: string | null = null
+    let type: string, content: string, toolId: string | null, images: string[] | null, userId: string, video: string | null = null, tags: string | null = null
     
     if (contentType.includes('multipart/form-data')) {
       // 处理视频上传
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
       content = formData.get('content') as string
       toolId = formData.get('toolId') as string
       userId = formData.get('userId') as string
+      tags = formData.get('tags') as string || null
       const videoFile = formData.get('video') as File
       
       if (videoFile) {
@@ -163,6 +165,7 @@ export async function POST(request: NextRequest) {
       images = body.images
       userId = body.userId
       video = null
+      tags = body.tags || null
     }
 
     if (!content?.trim()) {
@@ -191,15 +194,15 @@ export async function POST(request: NextRequest) {
     let result
     if (isAdmin) {
       result = await prisma.$queryRawUnsafe(
-        `INSERT INTO shares (type, content, "toolId", "userId", images, video, status, "pinnedUntil", likes, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + INTERVAL '24 hours', 0, NOW(), NOW())
+        `INSERT INTO shares (type, content, "toolId", "userId", images, video, tags, status, "pinnedUntil", likes, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '24 hours', 0, NOW(), NOW())
          RETURNING *`,
-        shareType, content.trim(), toolIdValue, userIdInt, imagesJson, video, shareStatus
+        shareType, content.trim(), toolIdValue, userIdInt, imagesJson, video, tags, shareStatus
       )
     } else {
       result = await prisma.$queryRaw`
-        INSERT INTO shares (type, content, "toolId", "userId", images, video, status, likes, "createdAt", "updatedAt")
-        VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, ${shareStatus}, 0, NOW(), NOW())
+        INSERT INTO shares (type, content, "toolId", "userId", images, video, tags, status, likes, "createdAt", "updatedAt")
+        VALUES (${shareType}, ${content.trim()}, ${toolIdValue}, ${parseInt(userId)}, ${imagesJson}, ${video}, ${tags}, ${shareStatus}, 0, NOW(), NOW())
         RETURNING *
       `
     }

@@ -50,7 +50,8 @@ async function getToolShares(sort?: string, search?: string) {
       { content: { contains: searchLower, mode: 'insensitive' } },
       { user: { username: { contains: searchLower, mode: 'insensitive' } } },
       { submitToolName: { contains: searchLower, mode: 'insensitive' } },
-      { tool: { name: { contains: searchLower, mode: 'insensitive' } } }
+      { tool: { name: { contains: searchLower, mode: 'insensitive' } } },
+      { tags: { contains: searchLower, mode: 'insensitive' } }
     ]
   }
 
@@ -102,6 +103,7 @@ async function getToolShares(sort?: string, search?: string) {
       viewCount: s.viewCount || 0,
       status: s.status,
       type: s.type,
+      tags: s.tags,
       createdAt: s.createdAt,
       userId: s.userId,
       toolId: s.toolId,
@@ -152,7 +154,8 @@ async function getLifeShares(sort?: string, search?: string) {
     const searchLower = search.toLowerCase()
     whereConditions.OR = [
       { content: { contains: searchLower, mode: 'insensitive' } },
-      { user: { username: { contains: searchLower, mode: 'insensitive' } } }
+      { user: { username: { contains: searchLower, mode: 'insensitive' } } },
+      { tags: { contains: searchLower, mode: 'insensitive' } }
     ]
   }
 
@@ -194,6 +197,7 @@ async function getLifeShares(sort?: string, search?: string) {
       viewCount: s.viewCount || 0,
       status: s.status,
       type: s.type,
+      tags: s.tags,
       createdAt: s.createdAt,
       userId: s.userId,
       pinnedUntil: s.pinnedUntil,
@@ -225,15 +229,46 @@ async function getStats() {
   }
 }
 
+// 获取热门话题标签
+async function getPopularTags() {
+  try {
+    const tags = await prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+      SELECT 
+        TRIM(unnest(string_to_array(s.tags, ','))) as tag,
+        COUNT(*) as count
+      FROM shares s
+      WHERE s.tags IS NOT NULL AND s.tags != '' AND s.status = 'approved'
+      GROUP BY tag
+      ORDER BY count DESC
+      LIMIT 10
+    `
+    return tags.map(t => ({ name: t.tag, count: Number(t.count) }))
+  } catch (error) {
+    console.error('获取热门标签失败:', error)
+    // 返回默认话题作为降级方案
+    return [
+      { name: 'AI工具推荐', count: 0 },
+      { name: '使用心得', count: 0 },
+      { name: '效率提升', count: 0 },
+      { name: 'ChatGPT', count: 0 },
+      { name: 'Midjourney', count: 0 },
+      { name: 'Claude', count: 0 },
+      { name: '编程助手', count: 0 },
+      { name: '设计工具', count: 0 },
+    ]
+  }
+}
+
 export default async function UserSharePage({ searchParams }: UserSharePageProps) {
   const sort = searchParams.sort as string | undefined
   const search = searchParams.search as string | undefined
   const tab = searchParams.tab as string | undefined || 'tool'
   
-  const [toolShares, lifeShares, stats] = await Promise.all([
+  const [toolShares, lifeShares, stats, popularTags] = await Promise.all([
     getToolShares(sort, search),
     getLifeShares(sort, search),
-    getStats()
+    getStats(),
+    getPopularTags(),
   ])
 
   const currentShares = tab === 'tool' ? toolShares : lifeShares
@@ -461,6 +496,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                         viewCount: share.viewCount || 0,
                         status: share.status,
                         type: share.type,
+                        tags: share.tags,
                         createdAt: share.createdAt,
                         pinnedUntil: share.pinnedUntil,
                         user: { id: share.userId, username: share.userName, avatarUrl: share.userAvatarUrl, role: share.userRole },
@@ -480,6 +516,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                       viewCount: share.viewCount || 0,
                       status: share.status,
                       type: share.type,
+                      tags: share.tags,
                       createdAt: share.createdAt,
                       user: { id: share.userId, username: share.userName, avatarUrl: share.userAvatarUrl, role: share.userRole },
                       tool: null,
@@ -543,13 +580,13 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                 热门话题
               </h3>
               <div className="flex flex-wrap gap-2">
-                {['#AI工具推荐', '#使用心得', '#效率提升', '#ChatGPT', '#Midjourney', '#Claude', '#编程助手', '#设计工具'].map((tag) => (
+                {popularTags.map((tag) => (
                   <Link
-                    key={tag}
-                    href={`/user-share?tab=${tab}&search=${encodeURIComponent(tag)}`}
+                    key={tag.name}
+                    href={`/user-share?tab=${tab}&search=${encodeURIComponent(tag.name)}`}
                     className="px-3 py-1.5 border border-cyber-border text-sm text-cyber-muted-foreground hover:border-neon-green hover:text-neon-green clip-chamfer-sm transition-colors font-mono"
                   >
-                    {tag}
+                    #{tag.name}
                   </Link>
                 ))}
               </div>
