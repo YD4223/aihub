@@ -155,6 +155,84 @@ export default function UserCenterPage() {
   const [deleteError, setDeleteError] = useState('')
   const [showDeletePassword, setShowDeletePassword] = useState(false)
 
+  // 通知未读数
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // 通知列表状态
+  const PAGE_SIZE_NOTIF = 20
+  const [notifList, setNotifList] = useState<any[]>([])
+  const [notifTotal, setNotifTotal] = useState(0)
+  const [notifPage, setNotifPage] = useState(1)
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifMarking, setNotifMarking] = useState<number | null>(null)
+
+  // 获取通知列表
+  const fetchNotifList = useCallback(async (p: number) => {
+    if (!user?.id) return
+    setNotifLoading(true)
+    try {
+      const res = await fetch(`/api/notifications?userId=${user.id}&page=${p}&pageSize=${PAGE_SIZE_NOTIF}`)
+      const data = await res.json()
+      if (data.notifications) {
+        setNotifList(data.notifications)
+        setNotifTotal(data.total || 0)
+      }
+    } catch (e) {
+      console.error('获取通知列表失败:', e)
+    } finally {
+      setNotifLoading(false)
+    }
+  }, [user?.id])
+
+  // 标记单条已读
+  const handleMarkNotifRead = async (id: number) => {
+    if (!user?.id) return
+    setNotifMarking(id)
+    try {
+      await fetch('/api/notifications/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id, userId: user.id }),
+      })
+      setNotifList(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (e) {
+      console.error('标记已读失败:', e)
+    } finally {
+      setNotifMarking(null)
+    }
+  }
+
+  // 全部标记已读
+  const handleMarkAllNotifRead = async () => {
+    if (!user?.id) return
+    try {
+      await fetch('/api/notifications/read-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      setNotifList(prev => prev.map(n => ({ ...n, isRead: true })))
+      setUnreadCount(0)
+    } catch (e) {
+      console.error('全部标记已读失败:', e)
+    }
+  }
+
+  // tab 切换时获取通知
+  useEffect(() => {
+    if (activeTab === 'notifications' && user?.id) {
+      fetchNotifList(notifPage)
+    }
+  }, [activeTab, user?.id])
+
+  // 通知分页切换
+  useEffect(() => {
+    if (activeTab === 'notifications' && user?.id) {
+      fetchNotifList(notifPage)
+    }
+  }, [notifPage, activeTab, user?.id])
+
   // 从服务器获取最新用户资料（确保头像等信息是最新的）
   const fetchLatestUserProfile = async (userId: number, fallbackUser: UserData) => {
     try {
@@ -1662,84 +1740,6 @@ export default function UserCenterPage() {
       </div>
     )
   }
-
-  // 通知未读数
-  const [unreadCount, setUnreadCount] = useState(0)
-
-  // 通知列表状态
-  const PAGE_SIZE_NOTIF = 20
-  const [notifList, setNotifList] = useState<any[]>([])
-  const [notifTotal, setNotifTotal] = useState(0)
-  const [notifPage, setNotifPage] = useState(1)
-  const [notifLoading, setNotifLoading] = useState(false)
-  const [notifMarking, setNotifMarking] = useState<number | null>(null)
-
-  // 获取通知列表
-  const fetchNotifList = useCallback(async (p: number) => {
-    if (!user?.id) return
-    setNotifLoading(true)
-    try {
-      const res = await fetch(`/api/notifications?userId=${user.id}&page=${p}&pageSize=${PAGE_SIZE_NOTIF}`)
-      const data = await res.json()
-      if (data.notifications) {
-        setNotifList(data.notifications)
-        setNotifTotal(data.total || 0)
-      }
-    } catch (e) {
-      console.error('获取通知列表失败:', e)
-    } finally {
-      setNotifLoading(false)
-    }
-  }, [user?.id])
-
-  // 标记单条已读
-  const handleMarkNotifRead = async (id: number) => {
-    if (!user?.id) return
-    setNotifMarking(id)
-    try {
-      await fetch('/api/notifications/read', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationId: id, userId: user.id }),
-      })
-      setNotifList(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)))
-      setUnreadCount(prev => Math.max(0, prev - 1))
-    } catch (e) {
-      console.error('标记已读失败:', e)
-    } finally {
-      setNotifMarking(null)
-    }
-  }
-
-  // 全部标记已读
-  const handleMarkAllNotifRead = async () => {
-    if (!user?.id) return
-    try {
-      await fetch('/api/notifications/read-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      })
-      setNotifList(prev => prev.map(n => ({ ...n, isRead: true })))
-      setUnreadCount(0)
-    } catch (e) {
-      console.error('全部标记已读失败:', e)
-    }
-  }
-
-  // tab 切换时获取通知
-  useEffect(() => {
-    if (activeTab === 'notifications' && user?.id) {
-      fetchNotifList(notifPage)
-    }
-  }, [activeTab, user?.id])
-
-  // 通知分页切换
-  useEffect(() => {
-    if (activeTab === 'notifications' && user?.id) {
-      fetchNotifList(notifPage)
-    }
-  }, [notifPage, activeTab, user?.id])
 
   // 统计数据
   const stats = [
