@@ -17,6 +17,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Avatar from '@/components/Avatar'
 import { getAvatarInitial } from '@/lib/utils'
+import { getShareImages } from '@/lib/share-image'
 
 interface UserData {
   id: number
@@ -703,7 +704,7 @@ export default function UserCenterPage() {
 
   // 用户分享项组件
   const UserShareItem = ({ share }: { share: UserShare }) => {
-    const shareImages = share.images || []
+    const shareImages = getShareImages(share.id, share.images)
     const statusColors: Record<string, string> = {
       approved: 'bg-neon-green/20 text-neon-green border-neon-green/30',
       pending: 'bg-neon-yellow/20 text-neon-yellow border-neon-yellow/30',

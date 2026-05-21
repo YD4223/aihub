@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { getAvatarInitial } from '@/lib/utils'
 import AnnouncementManager from '@/components/AnnouncementManager'
+import { getShareImages } from '@/lib/share-image'
 import FriendLinkManager from '@/components/FriendLinkManager'
 
 interface Tool {
@@ -1336,19 +1337,7 @@ export default function AdminPage() {
                           )}
                           
                           {(() => {
-                            let imageList: string[] = [];
-                            if (share.images) {
-                              if (Array.isArray(share.images)) {
-                                imageList = share.images;
-                              } else if (typeof share.images === 'string') {
-                                try {
-                                  const parsed = JSON.parse(share.images);
-                                  imageList = Array.isArray(parsed) ? parsed : [share.images];
-                                } catch {
-                                  imageList = [share.images];
-                                }
-                              }
-                            }
+                            const imageList = getShareImages(share.id, share.images);
                             return imageList.length > 0 ? (
                               <div className="flex gap-2 mb-3">
                                 {imageList.map((img: string, idx: number) => (

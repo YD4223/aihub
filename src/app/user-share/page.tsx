@@ -490,7 +490,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                       <UserShareCard key={share.id} share={{
                         id: share.id,
                         content: share.content,
-                        images: share.images ? JSON.parse(share.images) : null,
+                        images: share.images,
                         video: share.video,
                         likes: share.likes,
                         viewCount: share.viewCount || 0,
@@ -510,7 +510,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                     <UserShareCard key={share.id} share={{
                       id: share.id,
                       content: share.content,
-                      images: share.images ? JSON.parse(share.images) : null,
+                      images: share.images,
                       video: share.video,
                       likes: share.likes,
                       viewCount: share.viewCount || 0,

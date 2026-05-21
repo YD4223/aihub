@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import ReportModal from './ReportModal'
 import Avatar from './Avatar'
+import { getShareImages } from '@/lib/share-image'
 
 interface UserShareCardProps {
   share: {
@@ -106,17 +107,8 @@ export default function UserShareCard({ share }: UserShareCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const statusLoadedRef = useRef(false)
   
-  // 解析分享图片
-  const shareImages = (() => {
-    if (!share.images) return []
-    if (Array.isArray(share.images)) return share.images
-    try {
-      const parsed = JSON.parse(share.images)
-      return Array.isArray(parsed) ? parsed : []
-    } catch {
-      return []
-    }
-  })()
+  // 解析分享图片（base64 自动转为代理 URL）
+  const shareImages = getShareImages(share.id, share.images)
 
   // 格式化时间
   const [timeText, setTimeText] = useState('')

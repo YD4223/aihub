@@ -1,27 +1,19 @@
 import Link from 'next/link'
 import { ArrowRight, Zap, Globe, MessageCircle, Heart, Terminal, Cpu, Radio } from 'lucide-react'
+import { prisma } from '@/lib/prisma'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ToolCard from '@/components/ToolCard'
-import {
-  getFeaturedTools,
-  getLatestTools,
-  getTotalTools,
-  getTotalOpensource,
-  getTotalCategories,
-  getCategoryCounts,
-  getCategories,
-  getLatestNews,
-  getLatestShares,
-} from '@/lib/data'
+import { getShareImages } from '@/lib/share-image'
 
-// 页面动态渲染（数据层通过 unstable_cache 独立缓存）
-export const dynamic = 'force-dynamic'
+// ISR: 每5分钟在后台重新生成一次静态页面
+// 访客始终访问 CDN 上的静态 HTML，无需跑 Serverless 函数
+export const revalidate = 300
 
 export async function generateMetadata() {
   const [totalTools, totalOpensource] = await Promise.all([
-    getTotalTools(),
-    getTotalOpensource(),
+    prisma.tool.count({ where: { isActive: true } }),
+    prisma.tool.count({ where: { isActive: true, isOpenSource: true } }),
   ])
   return {
     title: `AI Hub - 全球AI工具聚合平台 | 发现${totalTools}+实用AI工具`,
@@ -111,19 +103,39 @@ function CategoryCard({ name, icon, count, href, color }: { name: string; icon: 
 }
 
 export default async function HomePage() {
-  // 从缓存获取首页数据
-  const [featuredTools, latestTools, totalTools, totalOpensource, totalCategories, categoryCounts, categories, latestNews, latestShares] = await Promise.all([
-    getFeaturedTools(),
-    getLatestTools(),
-    getTotalTools(),
-    getTotalOpensource(),
-    getTotalCategories(),
-    getCategoryCounts(),
-    getCategories(),
-    getLatestNews(),
-    getLatestShares(),
-  ])
+  // 获取推荐工具
+  const featuredTools = await prisma.tool.findMany({
+    where: { isFeatured: true, isActive: true },
+    include: { category: true },
+    orderBy: { stars: 'desc' },
+    take: 4,
+  })
 
+  // 获取最新工具
+  const latestTools = await prisma.tool.findMany({
+    where: { isActive: true },
+    include: { category: true },
+    orderBy: { createdAt: 'desc' },
+    take: 4,
+  })
+
+  // 统计数据
+  const totalTools = await prisma.tool.count({ where: { isActive: true } })
+  const totalOpensource = await prisma.tool.count({ 
+    where: { isActive: true, isOpenSource: true } 
+  })
+  const totalCategories = await prisma.category.count()
+
+  // 各分类工具数量
+  const categoryCounts = await prisma.tool.groupBy({
+    by: ['categoryId'],
+    where: { isActive: true },
+    _count: { id: true },
+  })
+  // 获取分类信息
+  const categories = await prisma.category.findMany({
+    select: { id: true, slug: true, name: true },
+  })
   const categoryCountMap = Object.fromEntries(
     categoryCounts.map(c => [c.categoryId, c._count.id])
   )
@@ -132,6 +144,34 @@ export default async function HomePage() {
     if (!cat) return 0
     return categoryCountMap[cat.id] || 0
   }
+
+  // 获取最新资讯
+  const latestNews = await prisma.news.findMany({
+    take: 3,
+    orderBy: { publishedAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      summary: true,
+      imageUrl: true,
+      sourceName: true,
+      publishedAt: true,
+      createdAt: true,
+    },
+  })
+
+  // 获取最新用户分享
+  const latestShares = await prisma.share.findMany({
+    where: { status: 'approved' },
+    include: {
+      tool: { include: { category: true } },
+      user: true,
+      _count: { select: { comments: true } }
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 3,
+  })
 
   return (
     <div className="min-h-screen">
@@ -286,14 +326,7 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {latestShares.map((share) => {
-              const shareImages = (() => {
-                if (!share.images) return []
-                if (Array.isArray(share.images)) return share.images
-                try {
-                  const parsed = JSON.parse(share.images)
-                  return Array.isArray(parsed) ? parsed : []
-                } catch { return [] }
-              })()
+              const shareImages = getShareImages(share.id, share.images)
               return (
                 <Link
                   key={share.id}
@@ -331,7 +364,7 @@ export default async function HomePage() {
                     <div className="flex items-center gap-2 mb-2 flex-shrink-0">
                       {share.user?.avatarUrl ? (
                         <div className="w-6 h-6 clip-chamfer-sm overflow-hidden flex-shrink-0">
-                          <img src={share.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={share.user.avatarUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
                         </div>
                       ) : (
                         <div 
@@ -365,7 +398,7 @@ export default async function HomePage() {
                         <div className="flex gap-2">
                           {shareImages.slice(0, 3).map((img, idx) => (
                             <div key={idx} className="w-16 h-16 clip-chamfer-sm overflow-hidden bg-cyber-muted border border-cyber-border flex-shrink-0">
-                              <img src={img} alt="" className="w-full h-full object-cover" />
+                              <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" />
                             </div>
                           ))}
                           {shareImages.length > 3 && (

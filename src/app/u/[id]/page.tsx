@@ -12,6 +12,7 @@ import {
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Avatar from '@/components/Avatar'
+import { getShareImages } from '@/lib/share-image'
 
 interface UserProfileData {
   id: number
@@ -719,11 +720,7 @@ export default function UserProfilePage() {
 
 // ====== 动态卡片子组件（B站风格时间线）======
 function ShareCard({ share, profileUsername, profileAvatarUrl }: { share: ShareItem; profileUsername: string; profileAvatarUrl: string | null }) {
-  const shareImages = (() => {
-    if (!share.images) return []
-    if (Array.isArray(share.images)) return share.images
-    try { return JSON.parse(share.images) } catch { return [] }
-  })()
+  const shareImages = getShareImages(share.id, (share as any).images)
 
   const getRelativeTime = (dateStr: string) => {
     const now = new Date()
