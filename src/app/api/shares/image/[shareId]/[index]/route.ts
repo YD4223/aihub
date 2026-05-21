@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getImageCacheKey, getCachedImage, setCachedImage } from '@/lib/image-cache'
 
 // GET /api/shares/image/{shareId}/{index}
 // 从数据库读取分享图片的 base64 数据，返回 HTTP 图片响应
@@ -16,7 +17,24 @@ export async function GET(
       return new NextResponse('Invalid parameters', { status: 400 })
     }
 
-    // 只查 images 字段，减少数据传输
+    // 1. 查内存缓存
+    const cacheKey = getImageCacheKey(shareId, index)
+    const cached = getCachedImage(cacheKey)
+    if (cached) {
+      return new NextResponse(cached.buffer, {
+        status: 200,
+        headers: {
+          'Content-Type': cached.mimeType,
+          'Content-Length': cached.buffer.length.toString(),
+          'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
+          'Vary': 'Accept-Encoding',
+          'X-Image-Size': `${(cached.buffer.length / 1024).toFixed(0)}KB`,
+          'X-Cache': 'HIT',
+        },
+      })
+    }
+
+    // 2. 只查 images 字段，减少数据传输
     const share = await prisma.share.findUnique({
       where: { id: shareId },
       select: { images: true },
@@ -26,7 +44,7 @@ export async function GET(
       return new NextResponse('Not found', { status: 404 })
     }
 
-    // 解析 JSON 数组
+    // 3. 解析 JSON 数组
     let images: string[]
     try {
       images = JSON.parse(share.images)
@@ -43,7 +61,7 @@ export async function GET(
       return new NextResponse('Invalid image data', { status: 500 })
     }
 
-    // 解析 data URI 格式: "data:image/webp;base64,...."
+    // 4. 解析 data URI 格式: "data:image/webp;base64,...."
     const match = imageData.match(/^data:image\/(\w+);base64,(.+)$/)
     if (!match) {
       return new NextResponse('Invalid image format', { status: 500 })
@@ -52,18 +70,23 @@ export async function GET(
     const mimeType = `image/${match[1]}`
     const base64Data = match[2]
 
-    // 解码 base64 为 Buffer
+    // 5. 解码 base64 为 Buffer
     const buffer = Buffer.from(base64Data, 'base64')
 
-    // 返回图片响应，带缓存头（CDN 可缓存 1 小时，浏览器缓存 10 分钟）
+    // 6. 写入内存缓存
+    setCachedImage(cacheKey, buffer, mimeType)
+
+    // 7. 返回图片响应，带强缓存头
+    // 浏览器缓存 1 天，CDN 缓存 7 天，过期后 30 天内允许 stale
     return new NextResponse(buffer, {
       status: 200,
       headers: {
         'Content-Type': mimeType,
         'Content-Length': buffer.length.toString(),
-        'Cache-Control': 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
         'Vary': 'Accept-Encoding',
         'X-Image-Size': `${(buffer.length / 1024).toFixed(0)}KB`,
+        'X-Cache': 'MISS',
       },
     })
   } catch (error) {
