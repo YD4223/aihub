@@ -1,15 +1,28 @@
 import Link from 'next/link'
 import { ArrowRight, Zap, Globe, MessageCircle, Heart, Terminal, Cpu, Radio } from 'lucide-react'
-import { prisma } from '@/lib/prisma'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ToolCard from '@/components/ToolCard'
+import {
+  getFeaturedTools,
+  getLatestTools,
+  getTotalTools,
+  getTotalOpensource,
+  getTotalCategories,
+  getCategoryCounts,
+  getCategories,
+  getLatestNews,
+  getLatestShares,
+} from '@/lib/data'
 
+// 页面动态渲染（数据层通过 unstable_cache 独立缓存）
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata() {
-  const totalTools = await prisma.tool.count({ where: { isActive: true } })
-  const totalOpensource = await prisma.tool.count({ where: { isActive: true, isOpenSource: true } })
+  const [totalTools, totalOpensource] = await Promise.all([
+    getTotalTools(),
+    getTotalOpensource(),
+  ])
   return {
     title: `AI Hub - 全球AI工具聚合平台 | 发现${totalTools}+实用AI工具`,
     description: `AI Hub收录${totalTools}+个AI工具（含${totalOpensource}+开源），涵盖聊天对话、图像生成、视频生成、代码助手等16个分类。每日更新最新AI资讯和开源项目，一站式发现全球AI工具。`,
@@ -98,39 +111,19 @@ function CategoryCard({ name, icon, count, href, color }: { name: string; icon: 
 }
 
 export default async function HomePage() {
-  // 从数据库获取推荐工具
-  const featuredTools = await prisma.tool.findMany({
-    where: { isFeatured: true, isActive: true },
-    include: { category: true },
-    orderBy: { stars: 'desc' },
-    take: 4,
-  })
+  // 从缓存获取首页数据
+  const [featuredTools, latestTools, totalTools, totalOpensource, totalCategories, categoryCounts, categories, latestNews, latestShares] = await Promise.all([
+    getFeaturedTools(),
+    getLatestTools(),
+    getTotalTools(),
+    getTotalOpensource(),
+    getTotalCategories(),
+    getCategoryCounts(),
+    getCategories(),
+    getLatestNews(),
+    getLatestShares(),
+  ])
 
-  // 获取最新工具
-  const latestTools = await prisma.tool.findMany({
-    where: { isActive: true },
-    include: { category: true },
-    orderBy: { createdAt: 'desc' },
-    take: 4,
-  })
-
-  // 统计数据
-  const totalTools = await prisma.tool.count({ where: { isActive: true } })
-  const totalOpensource = await prisma.tool.count({ 
-    where: { isActive: true, isOpenSource: true } 
-  })
-  const totalCategories = await prisma.category.count()
-
-  // 各分类工具数量
-  const categoryCounts = await prisma.tool.groupBy({
-    by: ['categoryId'],
-    where: { isActive: true },
-    _count: { id: true },
-  })
-  // 获取分类信息
-  const categories = await prisma.category.findMany({
-    select: { id: true, slug: true, name: true },
-  })
   const categoryCountMap = Object.fromEntries(
     categoryCounts.map(c => [c.categoryId, c._count.id])
   )
@@ -139,34 +132,6 @@ export default async function HomePage() {
     if (!cat) return 0
     return categoryCountMap[cat.id] || 0
   }
-
-  // 获取最新资讯
-  const latestNews = await prisma.news.findMany({
-    take: 3,
-    orderBy: { publishedAt: 'desc' },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      summary: true,
-      imageUrl: true,
-      sourceName: true,
-      publishedAt: true,
-      createdAt: true,
-    },
-  })
-
-  // 获取最新用户分享
-  const latestShares = await prisma.share.findMany({
-    where: { status: 'approved' },
-    include: {
-      tool: { include: { category: true } },
-      user: true,
-      _count: { select: { comments: true } }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 3,
-  })
 
   return (
     <div className="min-h-screen">
