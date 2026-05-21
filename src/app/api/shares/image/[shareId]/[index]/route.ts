@@ -1,10 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getImageCacheKey, getCachedImage, setCachedImage } from '@/lib/image-cache'
 
-// Next.js 14 的 Response 不接受 Buffer，转成 Uint8Array 绕过类型检查
-function bufferToBody(buf: Buffer): Uint8Array {
-  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
+// 用原生 Response 替代 NextResponse，避免 Next.js 14 类型定义太死的问题
+function imageResponse(buffer: Buffer, mimeType: string, isHit: boolean): Response {
+  return new Response(buffer, {
+    status: 200,
+    headers: {
+      'Content-Type': mimeType,
+      'Content-Length': buffer.length.toString(),
+      'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
+      'Vary': 'Accept-Encoding',
+      'X-Image-Size': `${(buffer.length / 1024).toFixed(0)}KB`,
+      'X-Cache': isHit ? 'HIT' : 'MISS',
+    },
+  })
 }
 
 // GET /api/shares/image/{shareId}/{index}
@@ -19,24 +29,14 @@ export async function GET(
     const index = parseInt(params.index)
 
     if (isNaN(shareId) || isNaN(index) || index < 0) {
-      return new NextResponse('Invalid parameters', { status: 400 })
+      return new Response('Invalid parameters', { status: 400 })
     }
 
     // 1. 查内存缓存
     const cacheKey = getImageCacheKey(shareId, index)
     const cached = getCachedImage(cacheKey)
     if (cached) {
-      return new NextResponse(bufferToBody(cached.buffer), {
-        status: 200,
-        headers: {
-          'Content-Type': cached.mimeType,
-          'Content-Length': cached.buffer.length.toString(),
-          'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
-          'Vary': 'Accept-Encoding',
-          'X-Image-Size': `${(cached.buffer.length / 1024).toFixed(0)}KB`,
-          'X-Cache': 'HIT',
-        },
-      })
+      return imageResponse(cached.buffer, cached.mimeType, true)
     }
 
     // 2. 只查 images 字段，减少数据传输
@@ -46,7 +46,7 @@ export async function GET(
     })
 
     if (!share?.images) {
-      return new NextResponse('Not found', { status: 404 })
+      return new Response('Not found', { status: 404 })
     }
 
     // 3. 解析 JSON 数组
@@ -54,22 +54,22 @@ export async function GET(
     try {
       images = JSON.parse(share.images)
     } catch {
-      return new NextResponse('Invalid images data', { status: 500 })
+      return new Response('Invalid images data', { status: 500 })
     }
 
     if (!Array.isArray(images) || index >= images.length) {
-      return new NextResponse('Image not found', { status: 404 })
+      return new Response('Image not found', { status: 404 })
     }
 
     const imageData = images[index]
     if (!imageData || typeof imageData !== 'string') {
-      return new NextResponse('Invalid image data', { status: 500 })
+      return new Response('Invalid image data', { status: 500 })
     }
 
     // 4. 解析 data URI 格式: "data:image/webp;base64,...."
     const match = imageData.match(/^data:image\/(\w+);base64,(.+)$/)
     if (!match) {
-      return new NextResponse('Invalid image format', { status: 500 })
+      return new Response('Invalid image format', { status: 500 })
     }
 
     const mimeType = `image/${match[1]}`
@@ -83,19 +83,9 @@ export async function GET(
 
     // 7. 返回图片响应，带强缓存头
     // 浏览器缓存 1 天，CDN 缓存 7 天，过期后 30 天内允许 stale
-    return new NextResponse(bufferToBody(buffer), {
-      status: 200,
-      headers: {
-        'Content-Type': mimeType,
-        'Content-Length': buffer.length.toString(),
-        'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
-        'Vary': 'Accept-Encoding',
-        'X-Image-Size': `${(buffer.length / 1024).toFixed(0)}KB`,
-        'X-Cache': 'MISS',
-      },
-    })
+    return imageResponse(buffer, mimeType, false)
   } catch (error) {
     console.error('图片代理错误:', error)
-    return new NextResponse('Internal server error', { status: 500 })
+    return new Response('Internal server error', { status: 500 })
   }
 }
