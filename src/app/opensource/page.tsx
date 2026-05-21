@@ -232,7 +232,7 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
                             )}
                             {tool.websiteUrl && (
                             <a
-                              href={tool.websiteUrl}
+                              href={tool.websiteUrl.replace(/^http:\/\//i, 'https://')}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 px-3 py-1.5 bg-neon-green/10 text-neon-green border border-neon-green text-sm hover:bg-neon-green hover:text-cyber-background transition-all duration-200 font-mono"

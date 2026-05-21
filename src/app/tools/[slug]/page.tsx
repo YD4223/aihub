@@ -185,7 +185,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
               <div className="flex flex-wrap items-center gap-3 mt-8">
                 {tool.websiteUrl && (
                   <a
-                    href={tool.websiteUrl}
+                    href={tool.websiteUrl.replace(/^http:\/\//i, 'https://')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 bg-neon-cyan text-cyber-background px-6 py-3 font-orbitron font-semibold hover:shadow-neon-cyan transition-all"

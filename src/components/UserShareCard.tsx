@@ -910,7 +910,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
                 </Link>
               ) : (
                 <a 
-                  href={tool.websiteUrl || '#'} 
+                  href={tool.websiteUrl?.replace(/^http:\/\//i, 'https://') || '#'} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex-shrink-0"
@@ -946,7 +946,7 @@ export default function UserShareCard({ share }: UserShareCardProps) {
                     </Link>
                   ) : (
                     <a 
-                      href={tool.websiteUrl || '#'}
+                      href={tool.websiteUrl?.replace(/^http:\/\//i, 'https://') || '#'}
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="group/link"
