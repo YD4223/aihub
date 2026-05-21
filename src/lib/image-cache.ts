@@ -40,13 +40,14 @@ export function getCachedImage(key: string): { buffer: Buffer; mimeType: string 
 
 export function setCachedImage(key: string, buffer: Buffer, mimeType: string): void {
   // 如果缓存快满了，清理过期条目
+  // 用 Array.from + forEach 替代 for...of，兼容 Vercel 较低的 TS target
   if (cache.size >= MAX_CACHE_SIZE) {
     const now = Date.now()
-    for (const [k, v] of cache.entries()) {
+    Array.from(cache.entries()).forEach(([k, v]) => {
       if (now - v.createdAt > CACHE_TTL) {
         cache.delete(k)
       }
-    }
+    })
   }
 
   cache.set(key, {
