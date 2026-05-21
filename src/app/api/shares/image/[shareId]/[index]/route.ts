@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getImageCacheKey, getCachedImage, setCachedImage } from '@/lib/image-cache'
 
-// 用原生 Response 替代 NextResponse，避免 Next.js 14 类型定义太死的问题
+// 用 Blob 包裹 Buffer，绕过 Vercel 严格的 BodyInit 类型检查
 function imageResponse(buffer: Buffer, mimeType: string, isHit: boolean): Response {
-  return new Response(buffer, {
+  return new Response(new Blob([buffer]), {
     status: 200,
     headers: {
       'Content-Type': mimeType,
