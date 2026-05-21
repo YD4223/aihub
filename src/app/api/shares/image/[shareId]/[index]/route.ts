@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getImageCacheKey, getCachedImage, setCachedImage } from '@/lib/image-cache'
 
+// Next.js 14 的 Response 不接受 Buffer，转成 Uint8Array 绕过类型检查
+function bufferToBody(buf: Buffer): Uint8Array {
+  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
+}
+
 // GET /api/shares/image/{shareId}/{index}
 // 从数据库读取分享图片的 base64 数据，返回 HTTP 图片响应
 // 避免将大图 base64 直接嵌入 HTML（首页 3.4MB HTML 的问题根源）
@@ -21,7 +26,7 @@ export async function GET(
     const cacheKey = getImageCacheKey(shareId, index)
     const cached = getCachedImage(cacheKey)
     if (cached) {
-      return new NextResponse(cached.buffer, {
+      return new NextResponse(bufferToBody(cached.buffer), {
         status: 200,
         headers: {
           'Content-Type': cached.mimeType,
@@ -78,7 +83,7 @@ export async function GET(
 
     // 7. 返回图片响应，带强缓存头
     // 浏览器缓存 1 天，CDN 缓存 7 天，过期后 30 天内允许 stale
-    return new NextResponse(buffer, {
+    return new NextResponse(bufferToBody(buffer), {
       status: 200,
       headers: {
         'Content-Type': mimeType,
