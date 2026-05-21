@@ -5,35 +5,6 @@
  */
 
 /**
- * 获取分享的第一张图片的原始 base64 data URI
- * 用于首屏内联展示，避免代理 API 请求延迟（~626ms）
- */
-export function getFirstImageBase64(
-  shareId: number | null | undefined,
-  images: string[] | string | null | undefined
-): string | null {
-  if (!images || !shareId) return null
-  
-  let imgArray: string[]
-  if (Array.isArray(images)) {
-    imgArray = images
-  } else {
-    try {
-      imgArray = JSON.parse(images)
-    } catch {
-      return null
-    }
-  }
-  if (!Array.isArray(imgArray) || imgArray.length === 0) return null
-  
-  const firstImg = imgArray[0]
-  if (firstImg && firstImg.startsWith('data:image/')) {
-    return firstImg
-  }
-  return null
-}
-
-/**
  * 获取分享图片的代理 URL
  */
 export function getShareImageUrl(shareId: number, index: number): string {

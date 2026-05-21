@@ -22,7 +22,7 @@ import {
   Radio,
   Cpu
 } from 'lucide-react'
-import { getShareImages, getFirstImageBase64 } from '@/lib/share-image'
+import { getShareImages } from '@/lib/share-image'
 
 export const metadata: Metadata = {
   title: '社区分享 | AI Hub',
@@ -95,11 +95,10 @@ async function getToolShares(sort?: string, search?: string) {
   // 转换格式以兼容原有代码
   const now = new Date()
   return shares
-    .map((s: any, idx: number) => ({
+    .map((s: any) => ({
       id: s.id,
       content: s.content,
       images: JSON.stringify(getShareImages(s.id, s.images)),
-      firstImageBase64: idx < 6 ? getFirstImageBase64(s.id, s.images) : null,
       video: s.video,
       likes: s.likes,
       viewCount: s.viewCount || 0,
@@ -190,11 +189,10 @@ async function getLifeShares(sort?: string, search?: string) {
   // 转换格式以兼容原有代码
   const now = new Date()
   return shares
-    .map((s: any, idx: number) => ({
+    .map((s: any) => ({
       id: s.id,
       content: s.content,
       images: JSON.stringify(getShareImages(s.id, s.images)),
-      firstImageBase64: idx < 6 ? getFirstImageBase64(s.id, s.images) : null,
       video: s.video,
       likes: s.likes,
       viewCount: s.viewCount || 0,
@@ -504,7 +502,6 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                         pinnedUntil: share.pinnedUntil,
                         user: { id: share.userId, username: share.userName, avatarUrl: share.userAvatarUrl, role: share.userRole },
                         tool: toolData,
-                        firstImageBase64: share.firstImageBase64 || null,
                         _count: { comments: Number(share.commentsCount || 0) }
                       }} />
                     )
@@ -524,7 +521,6 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                       createdAt: share.createdAt,
                       user: { id: share.userId, username: share.userName, avatarUrl: share.userAvatarUrl, role: share.userRole },
                       tool: null,
-                      firstImageBase64: share.firstImageBase64 || null,
                       _count: { comments: Number(share.commentsCount || 0) }
                     }} />
                   ))
