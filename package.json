@@ -19,7 +19,8 @@
     "crawl:github": "tsx src/scripts/github-trending-crawler.ts",
     "update-data": "tsx src/scripts/update-data.ts",
     "vercel-build": "prisma generate && next build",
-    "clean:news": "tsx src/scripts/clean-old-news.ts"
+    "clean:news": "tsx src/scripts/clean-old-news.ts",
+    "indexnow": "tsx src/scripts/submit-indexnow.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
