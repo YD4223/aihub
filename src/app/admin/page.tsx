@@ -353,16 +353,28 @@ export default function AdminPage() {
       // 添加时间戳防止缓存
       params.append('_t', Date.now().toString())
       
-      const res = await fetch(`/api/admin/shares?${params}`, { cache: 'no-store' })
+      // 设置 15 秒超时，避免请求卡死
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      
+      const res = await fetch(`/api/admin/shares?${params}`, { 
+        cache: 'no-store',
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+      
       const data = await res.json()
       if (res.ok) {
         setShares(data.shares || [])
         setShareTotalPages(data.totalPages || 1)
         setShareTotal(data.total || 0)
         setShareStats(data.stats || { pending: 0, approved: 0, rejected: 0, suspended: 0, total: 0, tool: 0, life: 0 })
+      } else {
+        console.error('获取分享列表失败:', data.error || res.statusText)
       }
     } catch (error) {
       console.error('获取分享列表失败:', error)
+      setShares([])
     } finally {
       setSharesLoading(false)
     }
