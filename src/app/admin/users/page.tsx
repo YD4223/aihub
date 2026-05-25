@@ -242,7 +242,7 @@ export default function AdminUsersPage() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder="搜索用户名或邮箱..."
-              className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-gray-900"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ export default function AdminUsersPage() {
             <select
               value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value as any); setPage(1) }}
-              className="h-10 px-3 py-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="h-10 px-3 py-0 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="all">全部</option>
               <option value="active">正常</option>

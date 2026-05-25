@@ -691,7 +691,7 @@ export default function AdminPage() {
                   value={toolSearch}
                   onChange={e => { setToolSearch(e.target.value); setToolPage(1) }}
                   placeholder="搜索工具名称或描述..."
-                  className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                  className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-gray-900"
                 />
               </div>
               {/* 来源筛选 */}
@@ -700,7 +700,7 @@ export default function AdminPage() {
                 <select
                   value={sourceFilter}
                   onChange={e => { setSourceFilter(e.target.value as SourceFilter); setToolPage(1) }}
-                  className="h-10 px-3 py-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="h-10 px-3 py-0 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="all">全部</option>
                   <option value="crawler">我的工具</option>
@@ -1058,7 +1058,7 @@ export default function AdminPage() {
                   value={commentSearch}
                   onChange={e => { setCommentSearch(e.target.value); setCommentPage(1) }}
                   placeholder="搜索评论内容..."
-                  className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                  className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-gray-900"
                 />
               </div>
               <button
@@ -1285,7 +1285,8 @@ export default function AdminPage() {
                       value={shareSearch}
                       onChange={(e) => setShareSearch(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && loadShares()}
-                      className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-gray-900"
+                    />
                     />
                   </div>
                 </div>
@@ -1831,7 +1832,7 @@ export default function AdminPage() {
                 value={verifyLogSearchEmail}
                 onChange={e => setVerifyLogSearchEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && loadVerifyLogs(1)}
-                className="h-10 px-4 py-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-52"
+                className="h-10 px-4 py-0 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 w-52"
               />
               <input
                 type="text"
@@ -1839,12 +1840,12 @@ export default function AdminPage() {
                 value={verifyLogSearchIp}
                 onChange={e => setVerifyLogSearchIp(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && loadVerifyLogs(1)}
-                className="h-10 px-4 py-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-40"
+                className="h-10 px-4 py-0 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 w-40"
               />
               <select
                 value={verifyLogSuccessFilter}
                 onChange={e => setVerifyLogSuccessFilter(e.target.value as any)}
-                className="h-10 px-4 py-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="h-10 px-4 py-0 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="all">全部状态</option>
                 <option value="true">发送成功</option>
