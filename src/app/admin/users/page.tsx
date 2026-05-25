@@ -378,9 +378,9 @@ export default function AdminUsersPage() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"
+                    className="p-2 rounded-lg bg-white border border-gray-400 disabled:opacity-50 hover:bg-gray-100 shadow-sm"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 text-gray-600" />
                   </button>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i
@@ -389,7 +389,7 @@ export default function AdminUsersPage() {
                         key={pageNum}
                         onClick={() => setPage(pageNum)}
                         className={`w-8 h-8 rounded-lg text-sm font-medium ${
-                          page === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50'
+                          page === pageNum ? 'bg-primary-600 text-white shadow-md' : 'bg-white border border-gray-400 text-gray-700 hover:bg-gray-100 shadow-sm'
                         }`}
                       >
                         {pageNum}
@@ -399,9 +399,9 @@ export default function AdminUsersPage() {
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"
+                    className="p-2 rounded-lg bg-white border border-gray-400 disabled:opacity-50 hover:bg-gray-100 shadow-sm"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 text-gray-600" />
                   </button>
                 </div>
               </div>
