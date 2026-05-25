@@ -552,7 +552,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'tools' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <Wrench className="w-5 h-5" />
@@ -568,7 +568,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'comments' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <MessageSquare className="w-5 h-5" />
@@ -579,7 +579,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'shares' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <Share2 className="w-5 h-5" />
@@ -595,7 +595,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'reports' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <Flag className="w-5 h-5" />
@@ -618,7 +618,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'verifyLogs' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <Mail className="w-5 h-5" />
@@ -629,7 +629,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'announcements' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <Megaphone className="w-5 h-5" />
@@ -640,7 +640,7 @@ export default function AdminPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
               activeTab === 'friendLinks' 
                 ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
             }`}
           >
             <Link2 className="w-5 h-5" />
@@ -1028,16 +1028,16 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between pt-4">
                     <span className="text-sm text-gray-500">共 {toolTotal} 条，第 {toolPage}/{toolTotalPages} 页</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setToolPage(p => Math.max(1, p - 1))} disabled={toolPage === 1} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronLeft className="w-4 h-4" /></button>
+                      <button onClick={() => setToolPage(p => Math.max(1, p - 1))} disabled={toolPage === 1} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronLeft className="w-4 h-4" /></button>
                       {Array.from({ length: Math.min(5, toolTotalPages) }, (_, i) => {
                         let pageNum = toolTotalPages <= 5 ? i + 1 : toolPage <= 3 ? i + 1 : toolPage >= toolTotalPages - 2 ? toolTotalPages - 4 + i : toolPage - 2 + i
                         return (
-                          <button key={pageNum} onClick={() => setToolPage(pageNum)} className={`w-8 h-8 rounded-lg text-sm font-medium ${toolPage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                          <button key={pageNum} onClick={() => setToolPage(pageNum)} className={`w-8 h-8 rounded-lg text-sm font-medium ${toolPage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-300 hover:bg-gray-200'}`}>
                             {pageNum}
                           </button>
                         )
                       })}
-                      <button onClick={() => setToolPage(p => Math.min(toolTotalPages, p + 1))} disabled={toolPage === toolTotalPages} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronRight className="w-4 h-4" /></button>
+                      <button onClick={() => setToolPage(p => Math.min(toolTotalPages, p + 1))} disabled={toolPage === toolTotalPages} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                   </div>
                 )}
@@ -1178,16 +1178,16 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between pt-4">
                     <span className="text-sm text-gray-500">共 {commentTotal} 条，第 {commentPage}/{commentTotalPages} 页</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setCommentPage(p => Math.max(1, p - 1))} disabled={commentPage === 1} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronLeft className="w-4 h-4" /></button>
+                      <button onClick={() => setCommentPage(p => Math.max(1, p - 1))} disabled={commentPage === 1} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronLeft className="w-4 h-4" /></button>
                       {Array.from({ length: Math.min(5, commentTotalPages) }, (_, i) => {
                         let pageNum = commentTotalPages <= 5 ? i + 1 : commentPage <= 3 ? i + 1 : commentPage >= commentTotalPages - 2 ? commentTotalPages - 4 + i : commentPage - 2 + i
                         return (
-                          <button key={pageNum} onClick={() => setCommentPage(pageNum)} className={`w-8 h-8 rounded-lg text-sm font-medium ${commentPage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                          <button key={pageNum} onClick={() => setCommentPage(pageNum)} className={`w-8 h-8 rounded-lg text-sm font-medium ${commentPage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-300 hover:bg-gray-200'}`}>
                             {pageNum}
                           </button>
                         )
                       })}
-                      <button onClick={() => setCommentPage(p => Math.min(commentTotalPages, p + 1))} disabled={commentPage === commentTotalPages} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronRight className="w-4 h-4" /></button>
+                      <button onClick={() => setCommentPage(p => Math.min(commentTotalPages, p + 1))} disabled={commentPage === commentTotalPages} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronRight className="w-4 h-4" /></button>
                     </div>
                   </div>
                 )}
@@ -1614,16 +1614,16 @@ export default function AdminPage() {
               <div className="flex items-center justify-between pt-4">
                 <span className="text-sm text-gray-500">共 {shareTotal} 条，第 {sharePage}/{shareTotalPages} 页</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { const next = Math.max(1, sharePage - 1); setSharePage(next); loadShares(next) }} disabled={sharePage === 1} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronLeft className="w-4 h-4" /></button>
+                  <button onClick={() => { const next = Math.max(1, sharePage - 1); setSharePage(next); loadShares(next) }} disabled={sharePage === 1} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronLeft className="w-4 h-4" /></button>
                   {Array.from({ length: Math.min(5, shareTotalPages) }, (_, i) => {
                     let pageNum = shareTotalPages <= 5 ? i + 1 : sharePage <= 3 ? i + 1 : sharePage >= shareTotalPages - 2 ? shareTotalPages - 4 + i : sharePage - 2 + i
                     return (
-                      <button key={pageNum} onClick={() => { setSharePage(pageNum); loadShares(pageNum) }} className={`w-8 h-8 rounded-lg text-sm font-medium ${sharePage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                      <button key={pageNum} onClick={() => { setSharePage(pageNum); loadShares(pageNum) }} className={`w-8 h-8 rounded-lg text-sm font-medium ${sharePage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-300 hover:bg-gray-200'}`}>
                         {pageNum}
                       </button>
                     )
                   })}
-                  <button onClick={() => { const next = Math.min(shareTotalPages, sharePage + 1); setSharePage(next); loadShares(next) }} disabled={sharePage === shareTotalPages} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronRight className="w-4 h-4" /></button>
+                  <button onClick={() => { const next = Math.min(shareTotalPages, sharePage + 1); setSharePage(next); loadShares(next) }} disabled={sharePage === shareTotalPages} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronRight className="w-4 h-4" /></button>
                 </div>
               </div>
             )}
@@ -1780,16 +1780,16 @@ export default function AdminPage() {
               <div className="flex items-center justify-between pt-4">
                 <span className="text-sm text-gray-500">共 {reportTotal} 条，第 {reportPage}/{reportTotalPages} 页</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { const next = Math.max(1, reportPage - 1); setReportPage(next); loadReports(next) }} disabled={reportPage === 1} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronLeft className="w-4 h-4" /></button>
+                  <button onClick={() => { const next = Math.max(1, reportPage - 1); setReportPage(next); loadReports(next) }} disabled={reportPage === 1} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronLeft className="w-4 h-4" /></button>
                   {Array.from({ length: Math.min(5, reportTotalPages) }, (_, i) => {
                     let pageNum = reportTotalPages <= 5 ? i + 1 : reportPage <= 3 ? i + 1 : reportPage >= reportTotalPages - 2 ? reportTotalPages - 4 + i : reportPage - 2 + i
                     return (
-                      <button key={pageNum} onClick={() => { setReportPage(pageNum); loadReports(pageNum) }} className={`w-8 h-8 rounded-lg text-sm font-medium ${reportPage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                      <button key={pageNum} onClick={() => { setReportPage(pageNum); loadReports(pageNum) }} className={`w-8 h-8 rounded-lg text-sm font-medium ${reportPage === pageNum ? 'bg-primary-600 text-white' : 'border border-gray-300 hover:bg-gray-200'}`}>
                         {pageNum}
                       </button>
                     )
                   })}
-                  <button onClick={() => { const next = Math.min(reportTotalPages, reportPage + 1); setReportPage(next); loadReports(next) }} disabled={reportPage === reportTotalPages} className="p-2 rounded-lg border border-gray-200 disabled:opacity-50 hover:bg-gray-50"><ChevronRight className="w-4 h-4" /></button>
+                  <button onClick={() => { const next = Math.min(reportTotalPages, reportPage + 1); setReportPage(next); loadReports(next) }} disabled={reportPage === reportTotalPages} className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 hover:bg-gray-200"><ChevronRight className="w-4 h-4" /></button>
                 </div>
               </div>
             )}

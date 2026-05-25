@@ -1,14 +1,14 @@
 /* Admin page styles - override cyberpunk theme */
 html,
 body {
-  background-color: #f3f4f6 !important;
+  background-color: #e5e7eb !important;
   color: #1f2937 !important;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .admin-layout {
   min-height: 100vh;
-  background-color: #f3f4f6;
+  background-color: #e5e7eb;
 }
 
 /* Override any cyberpunk background patterns */
@@ -19,7 +19,7 @@ body {
 
 /* Override scrollbar for admin */
 .admin-layout ::-webkit-scrollbar-track {
-  background: #f3f4f6 !important;
+  background: #e5e7eb !important;
 }
 
 .admin-layout ::-webkit-scrollbar-thumb {
