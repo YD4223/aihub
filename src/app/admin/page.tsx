@@ -1287,7 +1287,6 @@ export default function AdminPage() {
                       onKeyDown={(e) => e.key === 'Enter' && loadShares()}
                       className="h-10 w-full pl-10 pr-4 py-0 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-gray-900"
                     />
-                    />
                   </div>
                 </div>
                 <button
