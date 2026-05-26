@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     // 构建主查询 SQL（纯文本，所有变量用 $N 代替）
     let listSQL = `
-      SELECT t.*, c.name as "categoryName"
+      SELECT t.*, c.name as "categoryName", COUNT(*) OVER() as "totalCount"
       FROM tools t
       LEFT JOIN categories c ON t."categoryId" = c.id
       ${whereClause}
@@ -87,17 +87,14 @@ export async function GET(request: NextRequest) {
       LIMIT $${limitParamIdx} OFFSET $${offsetParamIdx}
     `
 
-    // 构建总数 SQL
-    let countSQL = `SELECT COUNT(*) as count FROM tools t ${whereClause}`
-
-    // 并行查询
-    const [tools, statsResult, totalResult] = await Promise.all([
+    // 并行 2 次 SQL：列表(含总数窗口) + 状态统计
+    const [tools, statsResult] = await Promise.all([
       prisma.$queryRawUnsafe(listSQL, ...params),
       prisma.$queryRawUnsafe(`SELECT status, COUNT(*) as count FROM tools GROUP BY status`),
-      prisma.$queryRawUnsafe(countSQL, ...params)
-    ]) as [any[], any[], any[]]
+    ]) as [any[], any[]]
 
-    const total = Number(totalResult[0]?.count || 0)
+    const toolsArray = tools as any[]
+    const total = toolsArray.length > 0 ? Number(toolsArray[0]?.totalCount || 0) : 0
     const pending = Number((statsResult as any[]).find(r => r.status === 'pending')?.count || 0)
     const approved = Number((statsResult as any[]).find(r => r.status === 'approved')?.count || 0)
     const rejected = Number((statsResult as any[]).find(r => r.status === 'rejected')?.count || 0)
