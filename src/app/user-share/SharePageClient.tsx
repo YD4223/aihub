@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Plus, Wrench, Sparkles } from 'lucide-react'
 import CreateShareModal from '@/components/CreateShareModalNew'
 
@@ -12,7 +11,6 @@ interface SharePageClientProps {
 export default function SharePageClient({ mode }: SharePageClientProps) {
   const [showModal, setShowModal] = useState(false)
   const [isClient, setIsClient] = useState(false)
-  const router = useRouter()
 
   useEffect(() => {
     setIsClient(true)
@@ -64,7 +62,8 @@ export default function SharePageClient({ mode }: SharePageClientProps) {
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           onSuccess={() => {
-            router.refresh()
+            // 发布成功后跳转到对应圈子页面（全页刷新，保证数据最新）
+            window.location.href = `/user-share?tab=${mode}`
           }}
           mode={mode}
         />
