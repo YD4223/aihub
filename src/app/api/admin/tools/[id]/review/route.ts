@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // POST /api/admin/tools/[id]/review
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const toolId = parseInt(params.id)
     const body = await request.json()

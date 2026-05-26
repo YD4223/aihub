@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // PUT /api/admin/friend-links/[id] - 更新友情链接
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const id = parseInt(params.id)
     const { name, url, description, sortOrder, enabled } = await request.json()
@@ -37,6 +42,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const id = parseInt(params.id)
     await prisma.friendLink.delete({ where: { id } })

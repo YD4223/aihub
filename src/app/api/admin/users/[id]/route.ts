@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // PATCH /api/admin/users/[id] - 封禁/解封用户
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const userId = parseInt(params.id)
     const body = await request.json()
@@ -91,6 +96,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const userId = parseInt(params.id)
 

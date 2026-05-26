@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // PUT /api/admin/announcements/[id] - 更新公告
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const id = parseInt(params.id)
     const { text, type, enabled, sortOrder } = await request.json()
@@ -33,6 +38,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const id = parseInt(params.id)
     await prisma.announcement.delete({ where: { id } })

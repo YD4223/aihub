@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // GET /api/admin/announcements - 获取所有公告（含禁用）
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const announcements = await prisma.announcement.findMany({
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
@@ -16,6 +21,10 @@ export async function GET() {
 
 // POST /api/admin/announcements - 新增公告
 export async function POST(request: NextRequest) {
+  // 鉴权：写操作必须校验身份
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { text, type, enabled, sortOrder } = await request.json()
     if (!text?.trim()) {

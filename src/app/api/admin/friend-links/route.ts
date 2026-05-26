@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // GET /api/admin/friend-links - 获取所有友情链接
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const links = await prisma.friendLink.findMany({
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
@@ -16,6 +21,10 @@ export async function GET() {
 
 // POST /api/admin/friend-links - 新增友情链接
 export async function POST(request: NextRequest) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { name, url, description, sortOrder } = await request.json()
     if (!name?.trim()) {

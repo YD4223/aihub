@@ -1,65 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // GET /api/admin/comments?page=&limit=&search=
 export async function GET(request: NextRequest) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '10')
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')))
   const search = searchParams.get('search') || ''
   const skip = (page - 1) * limit
 
   try {
-    // 构建查询条件
-    let whereClause1 = 'WHERE 1=1'
-    let whereClause2 = 'WHERE 1=1'
+    // 参数化构建查询条件
+    let whereClause = ''
+    let searchParam: string | null = null
+    let searchForCount = false
+
     if (search) {
-      whereClause1 += ` AND c.content LIKE '%${search}%'`
-      whereClause2 += ` AND c.content LIKE '%${search}%'`
+      whereClause = ` AND c.content LIKE $1`
+      searchParam = `%${search}%`
+      searchForCount = true
     }
 
-    // 获取工具/新闻评论（comments表）- 使用 toolId 关联
-    const toolComments = await prisma.$queryRawUnsafe(`
-      SELECT 
-        c.id,
-        c.content,
-        c."userId",
-        c."toolId",
-        c."createdAt",
-        c.status,
-        c."suspendedAt",
-        c."suspendedReason",
-        u.username as "userName",
-        u."avatarUrl" as "userAvatarUrl",
-        t.name as "toolName",
-        'tool' as "sourceType"
-      FROM comments c
-      LEFT JOIN users u ON c."userId" = u.id
-      LEFT JOIN tools t ON c."toolId" = t.id
-      ${whereClause1}
-    `)
+    // 获取工具/新闻评论（comments表）
+    const toolComments = searchParam
+      ? await prisma.$queryRawUnsafe(`
+          SELECT 
+            c.id,
+            c.content,
+            c."userId",
+            c."toolId",
+            c."createdAt",
+            c.status,
+            c."suspendedAt",
+            c."suspendedReason",
+            u.username as "userName",
+            u."avatarUrl" as "userAvatarUrl",
+            t.name as "toolName",
+            'tool' as "sourceType"
+          FROM comments c
+          LEFT JOIN users u ON c."userId" = u.id
+          LEFT JOIN tools t ON c."toolId" = t.id
+          WHERE 1=1 ${whereClause}
+        `, searchParam)
+      : await prisma.$queryRawUnsafe(`
+          SELECT 
+            c.id,
+            c.content,
+            c."userId",
+            c."toolId",
+            c."createdAt",
+            c.status,
+            c."suspendedAt",
+            c."suspendedReason",
+            u.username as "userName",
+            u."avatarUrl" as "userAvatarUrl",
+            t.name as "toolName",
+            'tool' as "sourceType"
+          FROM comments c
+          LEFT JOIN users u ON c."userId" = u.id
+          LEFT JOIN tools t ON c."toolId" = t.id
+        `)
 
-    // 获取分享评论（share_comments表）- 使用 shareId 关联
-    const shareComments = await prisma.$queryRawUnsafe(`
-      SELECT 
-        c.id,
-        c.content,
-        c."userId",
-        c."shareId",
-        c."createdAt",
-        c.status,
-        c."suspendedAt",
-        c."suspendedReason",
-        u.username as "userName",
-        u."avatarUrl" as "userAvatarUrl",
-        t.name as "toolName",
-        'share' as "sourceType"
-      FROM share_comments c
-      LEFT JOIN users u ON c."userId" = u.id
-      LEFT JOIN shares s ON c."shareId" = s.id
-      LEFT JOIN tools t ON s."toolId" = t.id
-      ${whereClause2}
-    `)
+    // 获取分享评论（share_comments表）
+    const shareComments = searchParam
+      ? await prisma.$queryRawUnsafe(`
+          SELECT 
+            c.id,
+            c.content,
+            c."userId",
+            c."shareId",
+            c."createdAt",
+            c.status,
+            c."suspendedAt",
+            c."suspendedReason",
+            u.username as "userName",
+            u."avatarUrl" as "userAvatarUrl",
+            t.name as "toolName",
+            'share' as "sourceType"
+          FROM share_comments c
+          LEFT JOIN users u ON c."userId" = u.id
+          LEFT JOIN shares s ON c."shareId" = s.id
+          LEFT JOIN tools t ON s."toolId" = t.id
+          WHERE 1=1 ${whereClause}
+        `, searchParam)
+      : await prisma.$queryRawUnsafe(`
+          SELECT 
+            c.id,
+            c.content,
+            c."userId",
+            c."shareId",
+            c."createdAt",
+            c.status,
+            c."suspendedAt",
+            c."suspendedReason",
+            u.username as "userName",
+            u."avatarUrl" as "userAvatarUrl",
+            t.name as "toolName",
+            'share' as "sourceType"
+          FROM share_comments c
+          LEFT JOIN users u ON c."userId" = u.id
+          LEFT JOIN shares s ON c."shareId" = s.id
+          LEFT JOIN tools t ON s."toolId" = t.id
+        `)
 
     // 合并所有评论并按时间排序
     const allComments = [
@@ -85,6 +132,10 @@ export async function GET(request: NextRequest) {
 
 // DELETE /api/admin/comments?id=
 export async function DELETE(request: NextRequest) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
 
@@ -93,7 +144,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    // 解析ID格式：tool_123 或 share_123
+    // 解析ID格式：tool_123 或 share_123（已参数化，安全）
     if (id.startsWith('tool_')) {
       const realId = parseInt(id.replace('tool_', ''))
       await prisma.$executeRaw`DELETE FROM comments WHERE id = ${realId}`

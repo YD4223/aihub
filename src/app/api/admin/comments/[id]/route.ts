@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // PATCH /api/admin/comments/:id - 下架/恢复评论
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // 鉴权
+  const auth = await verifyAdmin(request)
+  if (auth instanceof NextResponse) return auth
+
   const { id } = params
   const { action, reason } = await request.json()
 
