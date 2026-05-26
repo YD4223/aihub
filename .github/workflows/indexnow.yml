@@ -60,7 +60,7 @@ jobs:
           echo ""
           echo "═══ 诊断完成 ═══"
 
-      - name: 流式推送 IndexNow（限前 50 条）
-        run: bash src/scripts/indexnow.sh 50
+      - name: 流式推送 IndexNow（限前 200 条）
+        run: bash src/scripts/indexnow.sh 200
         working-directory: .
         shell: bash
