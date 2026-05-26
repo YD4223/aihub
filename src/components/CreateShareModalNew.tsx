@@ -280,7 +280,8 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
                     addTag()
                   }
                 }}
-                placeholder="添加话题标签（按 Enter 添加）"
+                onBlur={addTag}
+                placeholder="添加话题标签（输入后自动添加）"
                 className="flex-1 bg-transparent border-none outline-none text-[#e0e0e0] text-xs font-mono placeholder:text-[#4b5563]"
               />
             </div>
