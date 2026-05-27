@@ -78,11 +78,9 @@ export async function GET(request: NextRequest) {
     `
 
     const statsSQL = `
-      SELECT metric, value, count FROM (
-        SELECT 'status' as metric, status as value, COUNT(*) as count FROM shares GROUP BY status
-        UNION ALL
-        SELECT 'type' as metric, type as value, COUNT(*) as count FROM shares GROUP BY type
-      ) _ GROUP BY metric, value
+      SELECT 'status' as metric, status as value, COUNT(*) as count FROM shares GROUP BY status
+      UNION ALL
+      SELECT 'type' as metric, type as value, COUNT(*) as count FROM shares GROUP BY type
     `
 
     const [shares, statsResult] = await Promise.all([
