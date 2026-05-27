@@ -117,17 +117,23 @@ export async function GET(
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    // 获取用户统计数据
-    const stats = await prisma.$queryRaw`
+    // 获取用户统计数据（转 Number 防止 BigInt 序列化问题）
+    const statsRaw = await prisma.$queryRaw`
       SELECT 
         (SELECT COUNT(*) FROM shares WHERE "userId" = ${userId}) as "sharesCount",
         (SELECT COUNT(*) FROM comments WHERE "userId" = ${userId}) as "commentsCount",
         (SELECT COUNT(*) FROM share_comments WHERE "userId" = ${userId}) as "shareCommentsCount"
     `
+    const statsRow = (statsRaw as any[])[0] || {}
+    const stats = {
+      sharesCount: Number(statsRow.sharesCount || 0),
+      commentsCount: Number(statsRow.commentsCount || 0),
+      shareCommentsCount: Number(statsRow.shareCommentsCount || 0),
+    }
 
     return NextResponse.json({
       user: user[0],
-      stats: (stats as any[])[0]
+      stats
     })
   } catch (error: any) {
     console.error('获取用户详情失败:', error)
