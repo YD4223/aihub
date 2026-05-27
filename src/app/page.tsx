@@ -287,12 +287,18 @@ export default async function HomePage() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-1">
             {[
-              ...categories.filter(c => c.slug !== 'others').map(c => ({
-                name: c.name,
-                icon: (CATEGORY_ICONS as Record<string, string>)[c.slug] || '🤖',
-                slug: c.slug,
-                color: (CATEGORY_COLORS as Record<string, string>)[c.slug] || 'green',
-              })),
+              // 按工具数量从多到少排序
+              ...categories
+                .filter(c => c.slug !== 'others')
+                .map(c => ({
+                  name: c.name,
+                  icon: (CATEGORY_ICONS as Record<string, string>)[c.slug] || '🤖',
+                  slug: c.slug,
+                  color: (CATEGORY_COLORS as Record<string, string>)[c.slug] || 'green',
+                  count: getCategoryCount(c.slug),
+                }))
+                .sort((a, b) => (b.count as number) - (a.count as number))
+                .map(({ count, ...rest }) => rest),
               { name: '其他工具', icon: '📦', slug: 'others', color: 'gray' },
               { name: '开源免费', icon: '🚀', slug: 'opensource', color: 'green', isSource: true },
               { name: '用户分享', icon: '🙋', slug: 'user-share', color: 'magenta', isSpecial: true },
