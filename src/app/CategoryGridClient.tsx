@@ -61,6 +61,18 @@ export default function CategoryGridClient({ categories }: { categories: Categor
           </button>
         </div>
       )}
+      {showAll && (
+        <div className="text-center mt-8">
+          <button
+            onClick={() => setShowAll(false)}
+            className="px-6 py-2.5 border border-neon-cyan/40 text-neon-cyan font-mono text-sm
+                       transition-all duration-300 hover:bg-neon-cyan/10 hover:border-neon-cyan
+                       hover:shadow-[0_0_20px_rgba(0,212,255,0.15)]"
+          >
+            [- 收起分类]
+          </button>
+        </div>
+      )}
     </>
   )
 }
