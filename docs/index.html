@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Hub 工具速查</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.container{max-width:960px;margin:0 auto;padding:2rem 1.5rem}
+.header{text-align:center;padding:2rem 0 1rem}
+.header h1{font-size:2.5rem;font-weight:800;letter-spacing:2px}
+.header h1 .g{color:#00ff88}
+.header .sub{color:#666;font-size:.9rem;margin-top:.3rem}
+.header .sub b{color:#00ff88}
+.search-row{display:flex;gap:.5rem;margin:1.5rem 0}
+.search-row input{flex:1;padding:.8rem 1rem;background:#12121a;border:1px solid #2a2a3a;border-radius:8px;color:#e0e0e0;font-size:.95rem;outline:none}
+.search-row input:focus{border-color:#00ff88}
+.search-row input::placeholder{color:#555}
+.search-row button{padding:.8rem 1.5rem;background:#00ff88;color:#0a0a0f;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem}
+.cats{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.cats button{padding:.3rem .8rem;background:#12121a;border:1px solid #2a2a3a;border-radius:6px;color:#a0a0b0;font-size:.8rem;cursor:pointer;transition:.2s}
+.cats button:hover,.cats button.on{border-color:#00ff88;color:#00ff88;background:#00ff8818}
+.pg{display:flex;justify-content:space-between;padding:.5rem 0;color:#666;font-size:.85rem}
+.pg .pgs{display:flex;gap:.3rem}
+.pg .pgs button{padding:.2rem .6rem;background:#12121a;border:1px solid #2a2a3a;border-radius:4px;color:#a0a0b0;cursor:pointer;font-size:.75rem}
+.pg .pgs button.on{background:#00ff88;color:#0a0a0f;border-color:#00ff88;font-weight:700}
+.card{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:.85rem 1.1rem;margin-bottom:.5rem;transition:.2s;display:flex;justify-content:space-between;align-items:flex-start}
+.card:hover{border-color:#00ff88;transform:translateX(4px)}
+.card .l .n{font-size:1rem;font-weight:600;color:#e0e0e0}
+.card .l .c{margin-left:.4rem;font-size:.7rem;padding:.15rem .5rem;border-radius:4px;background:#00d4ff18;color:#00d4ff;border:1px solid #00d4ff30}
+.card .l .d{margin-top:.35rem;font-size:.82rem;color:#a0a0b0}
+.card .r{text-decoration:none;padding:.3rem .8rem;border-radius:6px;background:#00ff88;color:#0a0a0f;font-size:.8rem;font-weight:600;white-space:nowrap;flex-shrink:0;margin-left:1rem}
+.card .r:hover{box-shadow:0 0 12px #00ff8860}
+.ft{text-align:center;padding:2rem 0 .5rem;border-top:1px solid #1a1a2e;margin-top:2rem}
+.ft a{display:inline-block;padding:.6rem 2rem;border-radius:8px;background:#12121a;border:1px solid #2a2a3a;color:#00ff88;text-decoration:none;font-weight:600}
+.ft a:hover{border-color:#00ff88;box-shadow:0 0 20px #00ff8830}
+.ft .d{margin-top:.8rem;font-size:.75rem;color:#444}
+.loading{text-align:center;padding:3rem;color:#888}
+#status{text-align:center;padding:2rem;color:#888;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><span class="g">AI</span> Hub <span style="font-size:1rem;color:#666;font-weight:400;">· 工具速查</span></h1>
+    <div class="sub">实时同步 · 共 <b id="totalCount">-</b> 个 AI 工具</div>
+  </div>
+
+  <div class="search-row">
+    <input id="searchInput" type="text" placeholder="🔍 搜索工具名称或用途..." onkeydown="if(event.key==='Enter')search()">
+    <button onclick="search()">搜索</button>
+  </div>
+
+  <div id="cats" class="cats"></div>
+  <div id="pg" class="pg"></div>
+  <div id="list"></div>
+  <div id="status">📡 正在加载 900+ 工具数据...</div>
+
+  <div class="ft">
+    <a href="https://ai999999.top" target="_blank">🌐 浏览全部工具 →</a>
+    <div class="d">ai999999.top · AI 工具导航站</div>
+  </div>
+</div>
+
+<script>
+let ALL = [], CATS = [], PAGE = 1, QUERY = '', CAT = '全部', PER = 20;
+
+async function load() {
+  document.getElementById('status').style.display = 'block';
+  document.getElementById('status').textContent = '📡 正在加载工具数据...';
+  
+  // 获取总数
+  let total = 0;
+  try {
+    const res = await fetch('https://ai999999.top/api/tools?limit=1&page=1');
+    const d = await res.json();
+    total = d.total || 0;
+    document.getElementById('totalCount').textContent = total;
+  } catch(e) {
+    document.getElementById('status').textContent = '❌ 加载失败，请刷新重试';
+    return;
+  }
+  
+  // 并行拉取所有页（比串行快3-5倍）
+  const LIMIT = 200;
+  const PAGES = Math.ceil(total / LIMIT);
+  const fetches = [];
+  for (let p = 1; p <= PAGES; p++) {
+    fetches.push(
+      fetch(`https://ai999999.top/api/tools?limit=${LIMIT}&page=${p}&sort=newest`)
+        .then(r => r.json())
+        .catch(() => ({ tools: [] }))
+    );
+  }
+  
+  const results = await Promise.all(fetches);
+  for (const d of results) {
+    for (const t of (d.tools || [])) {
+      ALL.push({
+        name: t.name || '',
+        desc: (t.shortDesc || t.description || '').slice(0,120),
+        slug: t.slug || '',
+        cat: (t.category && t.category.name) || '其他工具'
+      });
+    }
+  }
+  
+  CATS = [...new Set(ALL.map(t => t.cat))].sort();
+  document.getElementById('totalCount').textContent = ALL.length;
+  renderCats();
+  document.getElementById('status').style.display = 'none';
+  render();
+}
+
+function renderCats() {
+  let h = '<button class="on" onclick="setCat(\'全部\')">🔥 全部</button>';
+  for (const c of CATS) {
+    h += `<button onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`;
+  }
+  document.getElementById('cats').innerHTML = h;
+}
+
+function setCat(c) {
+  CAT = c;
+  PAGE = 1;
+  document.querySelectorAll('#cats button').forEach(b => b.className = b.textContent === c ? 'on' : '');
+  render();
+}
+
+function search() {
+  QUERY = document.getElementById('searchInput').value;
+  PAGE = 1;
+  render();
+}
+
+function render() {
+  const q = QUERY.toLowerCase().trim();
+  const hits = ALL.filter(t => 
+    (CAT === '全部' || t.cat === CAT) &&
+    (!q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q))
+  );
+  
+  const TP = Math.max(1, Math.ceil(hits.length / PER));
+  const P = Math.max(1, Math.min(PAGE, TP));
+  const batch = hits.slice((P-1)*PER, P*PER);
+  
+  // 分页
+  let pgh = `<span>共 ${hits.length} 个工具 · 第 ${P}/${TP} 页</span><div class="pgs">`;
+  const start = Math.max(1, P-2);
+  const end = Math.min(TP, P+2);
+  for (let i = start; i <= end; i++) {
+    pgh += `<button class="${i===P?'on':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  pgh += '</div>';
+  document.getElementById('pg').innerHTML = pgh;
+  
+  // 卡片
+  if (!batch.length) {
+    document.getElementById('list').innerHTML = '<div class="loading">🔍 没有匹配的工具</div>';
+    return;
+  }
+  document.getElementById('list').innerHTML = batch.map(t => 
+    `<div class="card">
+      <div class="l">
+        <div><span class="n">${esc(t.name)}</span><span class="c">${esc(t.cat)}</span></div>
+        <div class="d">${esc(t.desc.slice(0,100))}</div>
+      </div>
+      <a class="r" href="https://ai999999.top/tools/${t.slug}" target="_blank">查看 →</a>
+    </div>`
+  ).join('');
+}
+
+function goPage(p) { PAGE = p; render(); }
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+load();
+</script>
+</body>
+</html>
