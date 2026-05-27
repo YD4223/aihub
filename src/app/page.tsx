@@ -176,7 +176,7 @@ export default async function HomePage() {
     },
   })
 
-  // 获取最新用户分享（显示全部）
+  // 获取最新用户分享（首页只显示3条）
   const latestShares = await prisma.share.findMany({
     where: { status: 'approved' },
     include: {
@@ -185,6 +185,7 @@ export default async function HomePage() {
       _count: { select: { comments: true } }
     },
     orderBy: { createdAt: 'desc' },
+    take: 3,
   })
 
   return (
