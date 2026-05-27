@@ -6,6 +6,20 @@ import Footer from '@/components/Footer'
 import ToolCard from '@/components/ToolCard'
 import { getShareImages } from '@/lib/share-image'
 
+// 全部分类的图标和颜色映射（用于首页探索AI工具区域）
+const CATEGORY_ICONS: Record<string, string> = {
+  chat: '💬', image: '🎨', video: '🎬', audio: '🎵',
+  coding: '💻', writing: '✍️', search: '🔍', productivity: '📊',
+  design: '🎯', knowledge: '📚', translate: '🌐', data: '📈',
+  education: '🎓', healthcare: '🏥', finance: '💰', others: '📦',
+}
+const CATEGORY_COLORS: Record<string, string> = {
+  chat: 'green', image: 'magenta', video: 'cyan', audio: 'yellow',
+  coding: 'green', writing: 'magenta', search: 'cyan', productivity: 'yellow',
+  design: 'magenta', knowledge: 'green', translate: 'cyan', data: 'yellow',
+  education: 'green', healthcare: 'magenta', finance: 'yellow', others: 'gray',
+}
+
 // ISR: 每5分钟在后台重新生成一次静态页面
 // 访客始终访问 CDN 上的静态 HTML，无需跑 Serverless 函数
 export const revalidate = 300
@@ -273,17 +287,16 @@ export default async function HomePage() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-1">
             {[
-              { name: 'AI聊天', icon: '💬', slug: 'chat', color: 'green' },
-              { name: 'AI绘画', icon: '🎨', slug: 'image', color: 'magenta' },
-              { name: 'AI视频', icon: '🎬', slug: 'video', color: 'cyan' },
-              { name: 'AI音频', icon: '🎵', slug: 'audio', color: 'yellow' },
-              { name: 'AI编程', icon: '💻', slug: 'coding', color: 'green' },
-              { name: 'AI写作', icon: '✍️', slug: 'writing', color: 'magenta' },
-              { name: 'AI搜索', icon: '🔍', slug: 'search', color: 'cyan' },
-              { name: 'AI办公', icon: '📊', slug: 'productivity', color: 'yellow' },
+              ...categories.filter(c => c.slug !== 'others').map(c => ({
+                name: c.name,
+                icon: (CATEGORY_ICONS as Record<string, string>)[c.slug] || '🤖',
+                slug: c.slug,
+                color: (CATEGORY_COLORS as Record<string, string>)[c.slug] || 'green',
+              })),
+              { name: '其他工具', icon: '📦', slug: 'others', color: 'gray' },
               { name: '开源免费', icon: '🚀', slug: 'opensource', color: 'green', isSource: true },
               { name: '用户分享', icon: '🙋', slug: 'user-share', color: 'magenta', isSpecial: true },
-            ].map((cat) => {
+            ].map((cat: any) => {
               const count = cat.isSource
                 ? (cat.slug === 'opensource' ? totalOpensource : totalTools - totalOpensource)
                 : cat.isSpecial 
