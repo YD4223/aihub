@@ -2,6 +2,8 @@
 
 一个聚合全球AI工具、开源项目和AI资讯的平台，对标AIbase + 知乎模式。
 
+ HF Space:https://huggingface.co/spaces/SharwPeng/aihub-finder(搜索工具网页）
+
 ## 功能特性
 
 - 🤖 **AI工具库** - 按分类浏览、搜索、筛选AI工具
