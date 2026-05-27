@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
       githubUrl,
       logoUrl,
       images,
-      userId 
+      userId,
+      tags 
     } = body
 
     // 验证必填字段
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
         images: images?.length > 0 ? JSON.stringify(images) : null,
         userId: submitterId!,
         status: toolStatus,
+        tags: tags || null,
         ...(isAdmin ? { pinnedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) } : {}),
         // 存储用户提交的工具信息
         submitToolName: name.trim(),

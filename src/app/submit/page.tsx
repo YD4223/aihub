@@ -29,8 +29,12 @@ export default function SubmitToolPage() {
     categoryId: '',
     pricingType: '',
     githubUrl: '',
-    logoUrl: ''
+    logoUrl: '',
+    tags: ''
   })
+  // 标签列表状态（用于 UI 展示）
+  const [tagList, setTagList] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
 
   // 加载分类
   useEffect(() => {
@@ -97,6 +101,7 @@ export default function SubmitToolPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          tags: tagList.length > 0 ? tagList.join(',') : null,
           images: uploadedImages.length > 0 ? uploadedImages : undefined,
           userId: user.id
         })
@@ -114,6 +119,19 @@ export default function SubmitToolPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // 添加标签
+  const addTag = () => {
+    const trimmed = tagInput.trim().replace(/^#+/, '')
+    if (!trimmed || tagList.length >= 5 || tagList.includes(trimmed)) return
+    setTagList(prev => [...prev, trimmed])
+    setTagInput('')
+  }
+
+  // 删除标签
+  const removeTag = (idx: number) => {
+    setTagList(prev => prev.filter((_, i) => i !== idx))
   }
 
   if (submitSuccess) {
@@ -442,6 +460,39 @@ export default function SubmitToolPage() {
                   clipPath: 'polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))'
                 }}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-mono text-cyber-muted-foreground mb-2">
+                话题标签 <span className="text-cyber-muted-foreground/60">（选填，最多5个，按 Enter 添加）</span>
+              </label>
+              <div className="flex items-center gap-2 flex-wrap border border-cyber-border bg-cyber-input px-3 py-2"
+                style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+              >
+                <span className="text-neon-cyan text-xs font-mono">#</span>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() } }}
+                  onBlur={addTag}
+                  placeholder="输入标签后自动添加"
+                  className="flex-1 bg-transparent border-none outline-none text-cyber-foreground text-xs font-mono placeholder:text-cyber-muted-foreground"
+                />
+              </div>
+              {tagList.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {tagList.map((tag, i) => (
+                    <span key={i}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan"
+                      style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                    >
+                      # {tag}
+                      <button onClick={() => removeTag(i)} className="text-cyber-muted-foreground hover:text-neon-magenta transition-colors ml-0.5">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
