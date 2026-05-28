@@ -23,6 +23,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'zh_CN',
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  other: {
+    'language': 'zh-CN',
+    'og:locale:alternate': 'en_US',
+  },
 }
 
 export default function RootLayout({
