@@ -251,15 +251,6 @@ export default async function ToolPage({ params }: ToolPageProps) {
                 <span className="text-neon-cyan">{'>'}</span> 工具介绍
               </h2>
               <p className="text-cyber-muted-foreground leading-relaxed font-mono">{tool.description}</p>
-              
-              {tool.description && (
-                <>
-                  <h3 className="text-lg font-semibold text-cyber-foreground mt-6 mb-3 font-orbitron flex items-center gap-2">
-                    <span className="text-neon-magenta">{'>'}</span> 主要功能
-                  </h3>
-                  <p className="text-cyber-muted-foreground leading-relaxed font-mono">{tool.description}</p>
-                </>
-              )}
             </div>
 
             {/* Tags */}
