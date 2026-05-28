@@ -62,3 +62,14 @@ full-migrate.sql
 # WorkBuddy / CodeBuddy metadata
 .workbuddy/
 .codebuddy/
+
+# Non-functional docs / reports / drafts
+*.docx
+overview.md
+ai999999_top_*.md
+docs/devto-*
+docs/zhihu_article*
+docs/*计划书*.md
+docs/*指南*.md
+docs/*审计*.md
+docs/requirements.txt
