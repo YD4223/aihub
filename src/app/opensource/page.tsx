@@ -54,7 +54,7 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
     take: 50,
   })
 
-  const totalCount = await prisma.tool.count({ where })
+  const totalCount = await prisma.tool.count({ where: { isActive: true, isOpenSource: true } })
 
   // 获取所有有开源工具的分类（不应用当前分类筛选）
   const allOpenSourceWhere = { isActive: true, isOpenSource: true }
