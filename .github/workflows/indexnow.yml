@@ -17,50 +17,19 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 🔍 诊断测试（仅诊断，不阻塞后续步骤）
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装依赖
         run: |
-          echo "═══ 环境诊断 ═══"
-          echo "curl版本: $(curl --version | head -1)"
-          echo "bash版本: $(bash --version | head -1)"
-          echo ""
+          npm ci
+          npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-          echo "═══ DNS 诊断 ═══"
-          echo "api.indexnow.org:"
-          nslookup api.indexnow.org 2>&1 | head -10
-          echo ""
-          echo "ai999999.top:"
-          nslookup ai999999.top 2>&1 | head -10
-          echo ""
-
-          echo "═══ SSL 诊断 ═══"
-          echo "api.indexnow.org:443:"
-          echo | openssl s_client -connect api.indexnow.org:443 -servername api.indexnow.org 2>&1 | head -20 || echo "openssl not available"
-          echo ""
-
-          echo "═══ HTTP 可达性诊断 ═══"
-          echo "sitemap.xml:"
-          curl -sI --max-time 10 "https://ai999999.top/sitemap.xml" 2>&1 | head -10
-          echo ""
-          echo "key.txt:"
-          curl -sI --max-time 10 "https://ai999999.top/25dae7e87ad508621408a0351647d05d19fa4c606d8266bfffa947146a16c4ac.txt" 2>&1 | head -10
-          echo ""
-
-          echo "═══ 单条测试推送 ═══"
-          echo "测试 POST https://api.indexnow.org/indexnow ..."
-          HTTP_CODE=$(curl -s -o /tmp/indexnow_test_response.txt -w "%{http_code}" -X POST "https://api.indexnow.org/indexnow" \
-            -H "Content-Type: application/json" \
-            -d "{\"host\":\"ai999999.top\",\"key\":\"25dae7e87ad508621408a0351647d05d19fa4c606d8266bfffa947146a16c4ac\",\"keyLocation\":\"https://ai999999.top/25dae7e87ad508621408a0351647d05d19fa4c606d8266bfffa947146a16c4ac.txt\",\"urlList\":[\"https://ai999999.top/\"]}" \
-            --max-time 15 2>&1)
-          echo "HTTP $HTTP_CODE"
-          RESP_BODY=$(cat /tmp/indexnow_test_response.txt 2>/dev/null || echo "(empty)")
-          if [ -n "$RESP_BODY" ]; then
-            echo "响应体: $RESP_BODY"
-          fi
-          rm -f /tmp/indexnow_test_response.txt
-          echo ""
-          echo "═══ 诊断完成 ═══"
-
-      - name: 流式推送 IndexNow（限前 200 条）
-        run: bash src/scripts/indexnow.sh 200
-        working-directory: .
-        shell: bash
+      - name: 📤 提交 IndexNow
+        run: npx tsx scripts/submit-indexnow.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

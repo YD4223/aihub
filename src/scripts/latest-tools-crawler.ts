@@ -377,7 +377,7 @@ async function main() {
   // 通知搜索引擎内容已更新
   console.log('\n🔔 通知 IndexNow 搜索引擎内容已更新...')
   try {
-    execSync('bash src/scripts/indexnow.sh 200 2>&1', {
+    execSync('npx tsx scripts/submit-indexnow.ts', {
       cwd: process.cwd(),
       encoding: 'utf-8',
       timeout: 60000,
