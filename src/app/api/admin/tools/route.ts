@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')))
   const search = searchParams.get('search') || ''
+  const timeFilter = searchParams.get('time') as string | null  // '24h' | '7d' | null
   const skip = (page - 1) * limit
 
   try {
@@ -35,6 +36,12 @@ export async function GET(request: NextRequest) {
     if (source && ALLOWED_SOURCE.includes(source)) {
       conditions.push(`t.source = $${paramIdx++}`)
       params.push(source)
+    }
+    // 时间筛选
+    if (timeFilter === '24h') {
+      conditions.push(`t."createdAt" >= NOW() - INTERVAL '24 hours'`)
+    } else if (timeFilter === '7d') {
+      conditions.push(`t."createdAt" >= NOW() - INTERVAL '7 days'`)
     }
 
     const hasSearch = !!search

@@ -106,6 +106,7 @@ export default function AdminPage() {
   const [toolsLoading, setToolsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending')
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
+  const [timeFilter, setTimeFilter] = useState<string>('')  // '' | '24h'
   const [toolSearch, setToolSearch] = useState('')
   const [toolPage, setToolPage] = useState(1)
   const [toolTotal, setToolTotal] = useState(0)
@@ -183,6 +184,7 @@ export default function AdminPage() {
       const params = new URLSearchParams()
       if (statusFilter !== 'all') params.append('status', statusFilter)
       if (sourceFilter !== 'all') params.append('source', sourceFilter)
+      if (timeFilter) params.append('time', timeFilter)
       params.append('page', p.toString())
       params.append('limit', '10')
       if (toolSearch) params.append('search', toolSearch)
@@ -706,6 +708,19 @@ export default function AdminPage() {
                   <option value="crawler">我的工具</option>
                   <option value="user">用户提交</option>
                 </select>
+              </div>
+              {/* 最新发布 */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setTimeFilter(timeFilter ? '' : '24h'); setToolPage(1) }}
+                  className={`h-10 px-4 rounded-lg text-sm font-medium transition-colors ${
+                    timeFilter === '24h'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  📅 最近24小时
+                </button>
               </div>
               <button
                 onClick={() => loadTools(toolPage)}
