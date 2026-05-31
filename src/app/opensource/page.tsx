@@ -196,7 +196,7 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
 
                       <div className="flex-1 min-w-0">
                         {/* Header */}
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
                           <div>
                             <Link
                               href={`/tools/${tool.slug}`}
@@ -226,8 +226,8 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
                                   clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))'
                                 }}
                               >
-                                <Github className="w-4 h-4" />
-                                GitHub
+                                <Github className="w-4 h-4 flex-shrink-0" />
+                                <span className="hidden sm:inline">GitHub</span>
                               </a>
                             )}
                             {tool.websiteUrl && (
