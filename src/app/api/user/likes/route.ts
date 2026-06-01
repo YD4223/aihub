@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canLike, incrementLikeCount } from '@/lib/daily-limit'
+import { createNotification } from '@/lib/notification'
 
 // GET /api/user/likes?userId=xxx
 export async function GET(request: NextRequest) {
@@ -82,6 +83,27 @@ export async function POST(request: NextRequest) {
         shareId
       )
       newLikes = Number(result[0]?.likes || 0)
+
+      // 通知分享作者有人点赞（异步）
+      try {
+        const share = await prisma.$queryRawUnsafe<Array<any>>(
+          `SELECT "userId" FROM shares WHERE id = $1`,
+          shareId
+        )
+        const ownerId = (share as any[])[0]?.userId
+        if (ownerId && Number(ownerId) !== Number(userId)) {
+          createNotification({
+            userId: ownerId,
+            type: 'like',
+            title: '有人赞了你的分享',
+            content: '',
+            link: '/user-share',
+            relatedUserId: Number(userId),
+          }).catch(() => {})
+        }
+      } catch (e) {
+        console.error('点赞通知失败:', e)
+      }
     }
     return NextResponse.json({ liked: true, likes: newLikes })
   } catch (error: any) {
