@@ -2,9 +2,7 @@
 
 一个聚合全球AI工具、开源项目和AI资讯的平台，对标AIbase + 知乎模式。
 
- HF Space:https://huggingface.co/spaces/SharwPeng/aihub-finder
- TG频道：t.me/AT9966s
-
+TG频道：t.me/AT9966s
 
 ## 功能特性
 
