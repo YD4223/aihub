@@ -15,9 +15,8 @@ export const metadata = {
   description: '浏览超过800个AI工具，涵盖聊天对话、图像生成、代码助手等16个分类，找到最适合你的AI工具。',
 }
 
-// 强制动态渲染，避免缓存
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// ISR: 每5分钟重新生成页面（节省数据库带宽）
+export const revalidate = 300
 
 export default async function ToolsPage({
   searchParams,

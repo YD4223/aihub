@@ -14,9 +14,8 @@ export const metadata = {
   description: '发现优秀的开源AI项目，涵盖大语言模型、AI绘画、语音识别等热门开源工具，助力你的开发工作。',
 }
 
-// 强制动态渲染，避免缓存
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// ISR: 每5分钟重新生成页面（节省带宽）
+export const revalidate = 300
 
 // 根据字符串生成一致的颜色
 function stringToColor(str: string): string {
