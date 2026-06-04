@@ -636,6 +636,32 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                 </li>
               </ul>
             </div>
+
+            {/* QQ交流群 */}
+            <div className="bg-cyber-card border border-cyber-border clip-chamfer p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-neon-cyan/5 to-transparent" />
+              <h3 className="font-orbitron font-bold text-cyber-foreground mb-4 uppercase tracking-wider text-sm relative flex items-center gap-2">
+                <Users className="w-4 h-4 text-neon-cyan" />
+                加入交流群
+              </h3>
+              <div className="relative">
+                <a 
+                  href="https://qm.qq.com/q/tCxpzErNXy" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block cursor-pointer"
+                >
+                  <img 
+                    src="/images/qq-group.jpg" 
+                    alt="QQ交流群二维码"
+                    className="w-full rounded-lg border border-cyber-border hover:border-neon-cyan transition-colors duration-300"
+                  />
+                </a>
+                <p className="text-xs text-cyber-muted-foreground font-mono mt-3 text-center">
+                  扫码加入，交流AI工具与开发心得
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
