@@ -135,6 +135,31 @@ export default async function HomePage() {
     return categoryCountMap[cat.id] || 0
   }
 
+  // 获取启用的公告
+  const announcements = await prisma.announcement.findMany({
+    where: { enabled: true },
+    orderBy: { sortOrder: 'asc' },
+    take: 5,
+  })
+
+  // 获取热门话题标签（从最新分享中提取）
+  const recentTags = await prisma.$queryRawUnsafe<Array<{ tags: string }>>(`
+    SELECT tags FROM shares WHERE status = 'approved' AND tags IS NOT NULL AND tags != ''
+    ORDER BY "createdAt" DESC LIMIT 50
+  `)
+  const tagCounts = new Map<string, number>()
+  recentTags.forEach((row: any) => {
+    if (row.tags) {
+      row.tags.split(',').forEach((tag: string) => {
+        const t = tag.trim()
+        if (t) tagCounts.set(t, (tagCounts.get(t) || 0) + 1)
+      })
+    }
+  })
+  const hotTags = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+
   // 获取最新资讯
   const latestNews = await prisma.news.findMany({
     take: 3,
@@ -246,6 +271,29 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* 公告轮播 */}
+      {announcements.length > 0 && (
+        <section className="py-3 bg-gradient-to-r from-neon-magenta/5 via-neon-cyan/5 to-neon-green/5 border-y border-cyber-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
+              <span className="flex-shrink-0 text-xs font-bold font-orbitron text-neon-magenta uppercase tracking-wider border-r border-cyber-border pr-4">
+                📢 公告
+              </span>
+              <div className="flex gap-6">
+                {announcements.map((a) => (
+                  <span key={a.id} className="flex items-center gap-2 text-sm text-cyber-muted-foreground font-mono whitespace-nowrap">
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      a.type === 'update' ? 'bg-neon-green' : a.type === 'event' ? 'bg-neon-magenta' : a.type === 'notice' ? 'bg-neon-yellow' : 'bg-neon-cyan'
+                    }`} />
+                    {a.text}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Featured Tools */}
       <section className="py-16 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -282,6 +330,31 @@ export default async function HomePage() {
           <CategoryGridClient categories={categoryCards} />
         </div>
       </section>
+
+      {/* 热门话题标签 */}
+      {hotTags.length > 0 && (
+        <section className="py-8 relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-xs font-orbitron font-bold text-neon-cyan uppercase tracking-wider">🏷️ 热门话题</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-neon-cyan/50 to-transparent" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {hotTags.map(([tag, count]) => (
+                <Link
+                  key={tag}
+                  href={`/user-share?search=${encodeURIComponent(tag)}`}
+                  className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border border-cyber-border bg-cyber-card hover:border-neon-cyan/50 hover:text-neon-cyan hover:bg-neon-cyan/5 transition-all duration-200"
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                >
+                  <span>#{tag}</span>
+                  <span className="text-[10px] text-cyber-muted-foreground/50 group-hover:text-neon-cyan/50">{count}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* User Shares */}
       <section className="py-16 relative">
