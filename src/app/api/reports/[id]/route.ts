@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { createNotification } from '@/lib/notification'
 
 // PATCH /api/reports/[id] - 处理举报
 export async function PATCH(
@@ -83,6 +84,19 @@ export async function PATCH(
         updatedAt = NOW()
       WHERE id = ${reportId}
     `
+
+    // 通知举报者
+    if (reportData.reporterId) {
+      const actionLabel = action === 'resolved' ? '已处理' : '已驳回'
+      const suspendText = suspendTarget && action === 'resolved' ? '（内容已下架）' : ''
+      createNotification({
+        userId: reportData.reporterId,
+        type: 'system',
+        title: `举报${actionLabel}`,
+        content: `你举报的内容已被${actionLabel}${suspendText}`,
+        link: '/user-center?tab=notifications'
+      }).catch(() => {})
+    }
 
     return NextResponse.json({
       success: true,
