@@ -116,7 +116,7 @@ export async function POST(
             type: 'comment',
             title: notifyTitle,
             content: content.trim().substring(0, 100),
-            link: `/user-share`,
+            link: `/share/${shareId}`,
             relatedUserId: Number(userId),
           }).catch(() => {})
         }

@@ -60,7 +60,7 @@ export async function POST(
           type: 'like',
           title: '有人赞了你的分享',
           content: '',
-          link: `/user-share`,
+          link: `/share/${params.id}`,
           relatedUserId: Number(userId),
         }).catch(() => {})
       }

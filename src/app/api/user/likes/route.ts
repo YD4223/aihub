@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
             type: 'like',
             title: '有人赞了你的分享',
             content: '',
-            link: '/user-share',
+            link: `/share/${shareId}`,
             relatedUserId: Number(userId),
           }).catch(() => {})
         }
