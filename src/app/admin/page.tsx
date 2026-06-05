@@ -331,13 +331,13 @@ export default function AdminPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium"><Clock className="w-3 h-3" />待审核</span>
+        return <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap"><Clock className="w-3 h-3" />待审核</span>
       case 'approved':
-        return <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium"><CheckCircle className="w-3 h-3" />已通过</span>
+        return <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap"><CheckCircle className="w-3 h-3" />已通过</span>
       case 'rejected':
-        return <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium"><XCircle className="w-3 h-3" />已拒绝</span>
+        return <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap"><XCircle className="w-3 h-3" />已拒绝</span>
       case 'suspended':
-        return <span className="flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-1 rounded-full text-xs font-medium"><Ban className="w-3 h-3" />已下架</span>
+        return <span className="flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap"><Ban className="w-3 h-3" />已下架</span>
       default:
         return null
     }
@@ -1115,11 +1115,11 @@ export default function AdminPage() {
                           <span className="font-medium text-gray-900 text-sm">{comment.userName || '匿名用户'}</span>
                           <span className="text-gray-300">|</span>
                           {comment.sourceType === 'share' ? (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs whitespace-nowrap">
                               用户分享
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs whitespace-nowrap">
                               AI工具
                             </span>
                           )}
@@ -1133,11 +1133,11 @@ export default function AdminPage() {
                           <span className="text-xs text-gray-400">{timeAgo(comment.createdAt)}</span>
                           <span className="text-gray-300">|</span>
                           {comment.status === 'suspended' ? (
-                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs flex items-center gap-1 whitespace-nowrap">
                               <Ban className="w-3 h-3" />已下架
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs flex items-center gap-1 whitespace-nowrap">
                               <CheckCircle className="w-3 h-3" />正常
                             </span>
                           )}
@@ -1338,12 +1338,15 @@ export default function AdminPage() {
                             <span className="font-medium text-gray-900">{share.user?.username || '匿名用户'}</span>
                             <span className="text-sm text-gray-500">{timeAgo(share.createdAt)}</span>
                             {/* 类型标签 */}
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${
-                              share.type === 'tool' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                            <span className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                              share.type === 'tool' ? 'bg-orange-100 text-orange-700' :
+                              share.type === 'tech_share' ? 'bg-sky-100 text-sky-700' :
+                              share.type === 'qa_help' ? 'bg-purple-100 text-purple-700' :
+                              'bg-green-100 text-green-700'
                             }`}>
-                              {share.type === 'tool' ? '工具圈' : '生活圈'}
+                              {share.type === 'tool' ? '工具圈' : share.type === 'tech_share' ? '技术分享' : share.type === 'qa_help' ? '问答求助' : '生活圈'}
                             </span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            <span className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
                               share.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                               share.status === 'approved' ? 'bg-green-100 text-green-700' :
                               share.status === 'rejected' ? 'bg-red-100 text-red-700' :
