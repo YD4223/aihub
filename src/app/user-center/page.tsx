@@ -18,6 +18,7 @@ import Footer from '@/components/Footer'
 import Avatar from '@/components/Avatar'
 import { getAvatarInitial } from '@/lib/utils'
 import { getShareImages } from '@/lib/share-image'
+import { useExpToast } from '@/components/ExpToast'
 
 interface UserData {
   id: number
@@ -134,6 +135,7 @@ export default function UserCenterPage() {
   const [user, setUser] = useState<UserData | null>(null)
   const [activeTab, setActiveTab] = useState('shares')
   const [loading, setLoading] = useState(true)
+  const { showExpToast } = useExpToast()
   const [likedTools, setLikedTools] = useState<LikedTool[]>([])
   const [favorites, setFavorites] = useState<FavoriteTool[]>([])
   const [favoriteShares, setFavoriteShares] = useState<FavoriteShare[]>([])
@@ -463,6 +465,7 @@ export default function UserCenterPage() {
         setUserLevel(data.level)
         setSignInResult({ expGain: data.expGain, streak: data.streak })
         setShowSignInPopup(true)
+        showExpToast(data.expGain, `+${data.expGain} EXP 签到奖励`)
         setTimeout(() => setShowSignInPopup(false), 3000)
       }
     } catch (e) {}

@@ -4,6 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* EXP 提示动画 */
+@keyframes expToastIn {
+  0% { opacity: 0; transform: translateX(40px) scale(0.8); }
+  60% { transform: translateX(-5px) scale(1.05); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes expToastOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(40px); }
+}
+.animate-exp-toast {
+  animation: expToastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-exp-toast:nth-last-child(1) {
+  animation: expToastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @layer base {
   :root {
     /* Cyberpunk Design Tokens - Dark Mode (Default) */

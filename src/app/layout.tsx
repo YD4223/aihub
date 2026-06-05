@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import BackToTop from '@/components/BackToTop'
+import { ExpToastProvider } from '@/components/ExpToast'
 
 export const metadata: Metadata = {
   title: 'AI Hub - 全球AI工具聚合平台',
@@ -60,7 +61,9 @@ export default function RootLayout({
         
         {/* Main Content */}
         <div className="relative z-10">
-          {children}
+          <ExpToastProvider>
+            {children}
+          </ExpToastProvider>
         </div>
         
         <BackToTop />

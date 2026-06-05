@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Send, Loader2, Heart, MessageCircle } from 'lucide-react'
+import { Send, Loader2, Heart, MessageCircle, Sparkles } from 'lucide-react'
+import { useExpToast } from '@/components/ExpToast'
 
 interface Comment {
   id: number
@@ -27,6 +28,7 @@ export default function ShareDetailClient({ shareId, shareType }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const { showExpToast } = useExpToast()
 
   // 加载用户信息
   useEffect(() => {
@@ -65,6 +67,7 @@ export default function ShareDetailClient({ shareId, shareType }: Props) {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setNewComment('')
+      showExpToast(10, '+10 EXP 评论奖励')
       await loadComments()
     } catch {
       setError('提交失败，请重试')
