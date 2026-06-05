@@ -32,12 +32,12 @@ export function ExpToastProvider({ children }: { children: ReactNode }) {
   return (
     <ExpToastContext.Provider value={{ showExpToast }}>
       {children}
-      {/* 浮动提示容器 */}
-      <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+      {/* 浮动提示容器 - 居中顶部 */}
+      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none">
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className="animate-exp-toast bg-neon-green/10 border border-neon-green/50 backdrop-blur-md px-4 py-3 rounded-lg shadow-[0_0_20px_rgba(0,255,136,0.3)]"
+            className="animate-exp-toast bg-neon-green/15 border-2 border-neon-green/60 backdrop-blur-md px-5 py-3.5 rounded-xl shadow-[0_0_30px_rgba(0,255,136,0.4)]"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-neon-green animate-pulse" />
