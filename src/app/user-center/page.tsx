@@ -167,6 +167,13 @@ export default function UserCenterPage() {
   const [notifLoading, setNotifLoading] = useState(false)
   const [notifMarking, setNotifMarking] = useState<number | null>(null)
 
+  // 等级/签到
+  const [userLevel, setUserLevel] = useState(1)
+  const [userExp, setUserExp] = useState(0)
+  const [signedIn, setSignedIn] = useState(false)
+  const [signInStreak, setSignInStreak] = useState(0)
+  const [signingIn, setSigningIn] = useState(false)
+
   // 获取通知列表
   const fetchNotifList = useCallback(async (p: number) => {
     if (!user?.id) return
@@ -283,6 +290,8 @@ export default function UserCenterPage() {
           }
           // 从数据库加载收藏/点赞数据
           loadFromServer(parsedUser.id)
+          // 加载等级/签到状态
+          loadLevelAndSignIn(parsedUser.id)
         }
       }
     } catch (error) {
@@ -409,6 +418,41 @@ export default function UserCenterPage() {
     } finally {
       setUserSharesLoading(false)
     }
+  }
+
+  // 加载等级和签到状态
+  const loadLevelAndSignIn = async (userId: number) => {
+    try {
+      const res = await fetch(`/api/user/sign-in?userId=${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setUserLevel(data.level || 1)
+        setUserExp(data.exp || 0)
+        setSignedIn(data.signedIn || false)
+        setSignInStreak(data.streak || 0)
+      }
+    } catch (e) {}
+  }
+
+  // 签到
+  const handleSignIn = async () => {
+    if (!user?.id || signingIn) return
+    setSigningIn(true)
+    try {
+      const res = await fetch('/api/user/sign-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSignedIn(true)
+        setSignInStreak(data.streak)
+        setUserExp(data.totalExp)
+        setUserLevel(data.level)
+      }
+    } catch (e) {}
+    setSigningIn(false)
   }
 
   // 获取用户提交的工具列表
@@ -1806,6 +1850,15 @@ export default function UserCenterPage() {
                 </div>
                 <h1 className="text-lg font-orbitron font-bold text-cyber-foreground">{user.username}</h1>
                 <p className="text-cyber-muted-foreground text-sm font-mono">{user.email}</p>
+                {/* 等级显示 */}
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <span className="px-2 py-0.5 text-xs font-mono font-bold bg-neon-green/20 text-neon-green border border-neon-green/30 clip-chamfer-sm">
+                    Lv.{userLevel}
+                  </span>
+                  <span className="text-xs text-cyber-muted-foreground font-mono">
+                    {userExp} EXP
+                  </span>
+                </div>
               </div>
 
               {user.bio && (
@@ -1841,6 +1894,27 @@ export default function UserCenterPage() {
                 <Edit3 className="w-4 h-4" />
                 编辑资料
               </Link>
+
+              {/* 签到按钮 */}
+              <button
+                onClick={handleSignIn}
+                disabled={signedIn || signingIn}
+                className={`w-full flex items-center justify-center gap-2 py-2 border transition-colors mb-3 font-mono ${
+                  signedIn
+                    ? 'border-neon-green/30 text-neon-green/50 cursor-default'
+                    : 'border-neon-green text-neon-green hover:bg-neon-green/10'
+                }`}
+                style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+              >
+                {signingIn ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : signedIn ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Calendar className="w-4 h-4" />
+                )}
+                {signedIn ? `已签到 (${signInStreak}天)` : '签到'}
+              </button>
 
               <button
                 onClick={handleLogout}
