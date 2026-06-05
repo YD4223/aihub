@@ -160,7 +160,7 @@ export default async function HomePage() {
       _count: { select: { comments: true } }
     },
     orderBy: { createdAt: 'desc' },
-    take: 3,
+    take: 6,
   })
 
   // 准备分类卡片数据（按工具数量从多到少排序）
@@ -291,7 +291,7 @@ export default async function HomePage() {
               <h2 className="text-2xl font-orbitron font-bold text-cyber-foreground uppercase tracking-wider">
                 <span className="text-neon-magenta">{'>'}</span> 用户分享
               </h2>
-              <p className="text-cyber-muted-foreground mt-1 font-mono text-sm">看看大家都在用什么AI工具</p>
+              <p className="text-cyber-muted-foreground mt-1 font-mono text-sm">工具分享、技术交流、社区问答，最新社区动态</p>
             </div>
             <Link
               href="/user-share"
@@ -302,7 +302,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestShares.map((share) => {
+            {latestShares.slice(0, 6).map((share) => {
               const shareImages = getShareImages(share.id, share.images)
               return (
                 <Link
@@ -316,15 +316,24 @@ export default async function HomePage() {
                       <div 
                         className="w-10 h-10 flex items-center justify-center text-lg font-bold text-cyber-background flex-shrink-0 clip-chamfer-sm"
                         style={{ 
-                          background: 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)',
-                          boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)'
+                          background: share.type === 'life' 
+                            ? 'linear-gradient(135deg, #00d4ff 0%, #ff00ff 100%)'
+                            : share.type === 'tech_share'
+                            ? 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)'
+                            : share.type === 'qa_help'
+                            ? 'linear-gradient(135deg, #ff00ff 0%, #ff3366 100%)'
+                            : 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)',
+                          boxShadow: share.type === 'tool' ? '0 0 10px rgba(0, 255, 136, 0.3)' : 'none'
                         }}
                       >
-                        {share.tool?.name 
-                          ? share.tool.name.trim().charAt(0).toUpperCase() 
-                          : share.submitToolName 
-                            ? share.submitToolName.trim().charAt(0).toUpperCase() 
-                            : '💬'}
+                        {share.type === 'life' ? '💬' 
+                          : share.type === 'tech_share' ? '⚡'
+                          : share.type === 'qa_help' ? '❓'
+                          : share.tool?.name 
+                            ? share.tool.name.trim().charAt(0).toUpperCase() 
+                            : share.submitToolName 
+                              ? share.submitToolName.trim().charAt(0).toUpperCase() 
+                              : '🔧'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-orbitron font-bold text-cyber-foreground truncate group-hover:text-neon-green transition-colors">
@@ -359,6 +368,14 @@ export default async function HomePage() {
                           👑 站长
                         </span>
                       )}
+                      <span className={`text-[9px] px-1.5 py-0.5 font-bold clip-chamfer-sm ${
+                        share.type === 'tool' ? 'bg-[#f59e0b]/20 text-[#f59e0b]' 
+                        : share.type === 'tech_share' ? 'bg-[#00d4ff]/20 text-[#00d4ff]'
+                        : share.type === 'qa_help' ? 'bg-[#ff00ff]/20 text-[#ff00ff]'
+                        : 'bg-[#00ff88]/20 text-[#00ff88]'
+                      }`}>
+                        {share.type === 'tool' ? '工具圈' : share.type === 'tech_share' ? '技术' : share.type === 'qa_help' ? '问答' : '生活圈'}
+                      </span>
                       <span className="text-xs text-cyber-muted-foreground font-mono">
                         {new Date(share.createdAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
                       </span>
@@ -386,7 +403,7 @@ export default async function HomePage() {
                         </div>
                       ) : (
                         <div className="w-full h-16 clip-chamfer-sm bg-cyber-muted/50 border border-cyber-border flex items-center justify-center text-xs text-cyber-muted-foreground font-mono">
-                          暂无图片
+                          {share.type === 'tech_share' ? '📝 技术分享' : share.type === 'qa_help' ? '❓ 问答求助' : '📷 暂无图片'}
                         </div>
                       )}
                     </div>
