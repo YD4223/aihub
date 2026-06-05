@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/leaderboard?type=shares|tools|users|trending&limit=20
+// 10分钟缓存（ISR），排行榜不需要实时更新
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
