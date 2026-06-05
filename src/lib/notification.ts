@@ -16,10 +16,11 @@ export async function createNotification(params: CreateNotificationParams) {
   const { userId, type, title, content, link, relatedUserId } = params;
 
   try {
-    await prisma.$executeRaw`
-      INSERT INTO notifications ("userId", "type", "title", "content", "link", "relatedUserId", "isRead", "createdAt")
-      VALUES (${userId}, ${type}, ${title}, ${content || null}, ${link || null}, ${relatedUserId || null}, false, NOW())
-    `;
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO notifications ("userId", "type", "title", "content", "link", "relatedUserId", "isRead", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, $6, false, NOW())`,
+      userId, type, title, content || null, link || null, relatedUserId || null
+    );
   } catch (error) {
     console.error('[Notification] Failed to create notification:', error);
     // 静默失败，不阻塞主流程
@@ -57,9 +58,10 @@ export async function getUnreadCount(userId: number): Promise<number> {
  */
 export async function markAsRead(notificationId: number, userId: number) {
   try {
-    await prisma.$executeRaw`
-      UPDATE notifications SET "isRead" = true WHERE "id" = ${notificationId} AND "userId" = ${userId}
-    `;
+    await prisma.$executeRawUnsafe(
+      `UPDATE notifications SET "isRead" = true WHERE "id" = $1 AND "userId" = $2`,
+      notificationId, userId
+    );
   } catch (error) {
     console.error('[Notification] Failed to mark as read:', error);
   }
@@ -70,9 +72,10 @@ export async function markAsRead(notificationId: number, userId: number) {
  */
 export async function markAllAsRead(userId: number) {
   try {
-    await prisma.$executeRaw`
-      UPDATE notifications SET "isRead" = true WHERE "userId" = ${userId} AND "isRead" = false
-    `;
+    await prisma.$executeRawUnsafe(
+      `UPDATE notifications SET "isRead" = true WHERE "userId" = $1 AND "isRead" = false`,
+      userId
+    );
   } catch (error) {
     console.error('[Notification] Failed to mark all as read:', error);
   }
@@ -83,9 +86,10 @@ export async function markAllAsRead(userId: number) {
  */
 export async function deleteNotification(notificationId: number, userId: number) {
   try {
-    await prisma.$executeRaw`
-      DELETE FROM notifications WHERE "id" = ${notificationId} AND "userId" = ${userId}
-    `;
+    await prisma.$executeRawUnsafe(
+      `DELETE FROM notifications WHERE "id" = $1 AND "userId" = $2`,
+      notificationId, userId
+    );
   } catch (error) {
     console.error('[Notification] Failed to delete notification:', error);
   }
