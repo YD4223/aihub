@@ -173,6 +173,17 @@ export default function UserCenterPage() {
   const [signedIn, setSignedIn] = useState(false)
   const [signInStreak, setSignInStreak] = useState(0)
   const [signingIn, setSigningIn] = useState(false)
+  const [showSignInPopup, setShowSignInPopup] = useState(false)
+  const [signInResult, setSignInResult] = useState<{ expGain: number; streak: number } | null>(null)
+
+  // 等级配置（各等级的最低EXP需求）
+  const levelThresholds: Record<number, number> = { 1:0, 2:100, 3:300, 4:600, 5:1000, 6:1500, 7:2100, 8:2800, 9:3600, 10:5000 }
+  const levelProgress = useMemo(() => {
+    const currentMin = levelThresholds[userLevel] || 0
+    const nextMin = levelThresholds[userLevel + 1]
+    if (!nextMin) return 100
+    return Math.min(100, Math.max(0, ((userExp - currentMin) / (nextMin - currentMin)) * 100))
+  }, [userExp, userLevel])
 
   // 获取通知列表
   const fetchNotifList = useCallback(async (p: number) => {
@@ -450,6 +461,9 @@ export default function UserCenterPage() {
         setSignInStreak(data.streak)
         setUserExp(data.totalExp)
         setUserLevel(data.level)
+        setSignInResult({ expGain: data.expGain, streak: data.streak })
+        setShowSignInPopup(true)
+        setTimeout(() => setShowSignInPopup(false), 3000)
       }
     } catch (e) {}
     setSigningIn(false)
@@ -1851,13 +1865,27 @@ export default function UserCenterPage() {
                 <h1 className="text-lg font-orbitron font-bold text-cyber-foreground">{user.username}</h1>
                 <p className="text-cyber-muted-foreground text-sm font-mono">{user.email}</p>
                 {/* 等级显示 */}
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <span className="px-2 py-0.5 text-xs font-mono font-bold bg-neon-green/20 text-neon-green border border-neon-green/30 clip-chamfer-sm">
-                    Lv.{userLevel}
-                  </span>
-                  <span className="text-xs text-cyber-muted-foreground font-mono">
-                    {userExp} EXP
-                  </span>
+                <div className="mt-3 px-3 py-2.5 bg-neon-green/5 border border-neon-green/20 rounded-lg">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 text-xs font-mono font-bold bg-neon-green/20 text-neon-green border border-neon-green/30 clip-chamfer-sm">
+                        Lv.{userLevel}
+                      </span>
+                      <span className="text-xs text-cyber-muted-foreground font-mono">
+                        {userExp} EXP
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-cyber-muted-foreground font-mono">
+                      Lv.{userLevel + 1} 需 {levelThresholds[userLevel as keyof typeof levelThresholds] || 'MAX'} EXP
+                    </span>
+                  </div>
+                  {/* 经验进度条 */}
+                  <div className="w-full h-1.5 bg-cyber-background rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-neon-green to-neon-cyan rounded-full transition-all duration-500"
+                      style={{ width: `${levelProgress}%` }}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1896,25 +1924,50 @@ export default function UserCenterPage() {
               </Link>
 
               {/* 签到按钮 */}
-              <button
-                onClick={handleSignIn}
-                disabled={signedIn || signingIn}
-                className={`w-full flex items-center justify-center gap-2 py-2 border transition-colors mb-3 font-mono ${
-                  signedIn
-                    ? 'border-neon-green/30 text-neon-green/50 cursor-default'
-                    : 'border-neon-green text-neon-green hover:bg-neon-green/10'
-                }`}
-                style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
-              >
-                {signingIn ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : signedIn ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Calendar className="w-4 h-4" />
+              <div className="relative mb-3">
+                <button
+                  onClick={handleSignIn}
+                  disabled={signedIn || signingIn}
+                  className={`w-full flex items-center justify-center gap-2 py-3 border transition-all duration-300 font-mono ${
+                    signedIn
+                      ? 'border-neon-green/30 text-neon-green/60 cursor-default bg-neon-green/5'
+                      : 'border-neon-green text-neon-green hover:bg-neon-green/10 hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] active:scale-95'
+                  }`}
+                  style={{ clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))' }}
+                >
+                  {signingIn ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : signedIn ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      已签到
+                      {signInStreak > 0 && (
+                        <span className="text-xs text-neon-cyan font-bold">🔥 {signInStreak}天</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      签到领经验
+                    </>
+                  )}
+                </button>
+
+                {/* 签到成功弹窗 */}
+                {showSignInPopup && signInResult && (
+                  <div className="absolute left-0 right-0 mt-2 p-3 bg-cyber-card border border-neon-green/50 rounded-lg shadow-[0_0_30px_rgba(0,255,136,0.3)] z-50 animate-bounce-in">
+                    <div className="text-center">
+                      <p className="text-sm font-mono font-bold text-neon-green">🎉 签到成功</p>
+                      <p className="text-xs font-mono text-cyber-muted-foreground mt-1">
+                        +{signInResult.expGain} EXP
+                        {signInResult.streak > 1 && (
+                          <span className="text-neon-cyan ml-2">🔥 连续 {signInResult.streak} 天</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 )}
-                {signedIn ? `已签到 (${signInStreak}天)` : '签到'}
-              </button>
+              </div>
 
               <button
                 onClick={handleLogout}
