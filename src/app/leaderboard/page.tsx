@@ -255,12 +255,18 @@ export default async function LeaderboardPage({ searchParams }: Props) {
                   {/* 内容 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className="w-6 h-6 flex items-center justify-center text-[10px] font-bold text-cyber-background clip-chamfer-sm flex-shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${stringToColor(item.user?.username || '?')}, #00d4ff)` }}
-                      >
-                        {item.user?.username?.charAt(0).toUpperCase() || '?'}
-                      </div>
+                      {item.user?.avatarUrl ? (
+                        <div className="w-6 h-6 clip-chamfer-sm overflow-hidden flex-shrink-0 border border-cyber-border">
+                          <img src={item.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div
+                          className="w-6 h-6 flex items-center justify-center text-[10px] font-bold text-cyber-background clip-chamfer-sm flex-shrink-0"
+                          style={{ background: `linear-gradient(135deg, ${stringToColor(item.user?.username || '?')}, #00d4ff)` }}
+                        >
+                          {item.user?.username?.charAt(0).toUpperCase() || '?'}
+                        </div>
+                      )}
                       <span className="text-xs text-cyber-muted-foreground font-mono truncate">{item.user?.username}</span>
                       {item.type && (
                         <span className="text-[10px] px-1.5 py-0.5 bg-cyber-muted/50 text-cyber-muted-foreground font-mono whitespace-nowrap flex-shrink-0 clip-chamfer-sm">
@@ -309,12 +315,18 @@ export default async function LeaderboardPage({ searchParams }: Props) {
                   </div>
 
                   {/* 头像 */}
-                  <div
-                    className="w-10 h-10 flex items-center justify-center text-sm font-bold text-cyber-background clip-chamfer-sm flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${stringToColor(item.username || '?')}, #00ff88)` }}
-                  >
-                    {item.username?.charAt(0).toUpperCase() || '?'}
-                  </div>
+                  {item.avatarUrl ? (
+                    <div className="w-10 h-10 clip-chamfer-sm overflow-hidden flex-shrink-0 border border-cyber-border">
+                      <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div
+                      className="w-10 h-10 flex items-center justify-center text-sm font-bold text-cyber-background clip-chamfer-sm flex-shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${stringToColor(item.username || '?')}, #00ff88)` }}
+                    >
+                      {item.username?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                  )}
 
                   {/* 信息 */}
                   <div className="flex-1 min-w-0">
