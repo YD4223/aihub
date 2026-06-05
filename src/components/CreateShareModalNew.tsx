@@ -25,6 +25,7 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
   const [mounted, setMounted] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [reviewNotice, setReviewNotice] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const linkInputRef = useRef<HTMLInputElement>(null)
@@ -109,6 +110,7 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
       setError('')
       setSelectedTags([])
       setTagInput('')
+      setReviewNotice(false)
     }
   }, [isOpen])
 
@@ -230,8 +232,18 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '发布失败')
 
-      onSuccess?.()
-      onClose()
+      // 管理员直接成功，非管理员显示审核提示
+      const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (savedUser.role === 'ADMIN') {
+        onSuccess?.()
+        onClose()
+      } else {
+        setReviewNotice(true)
+        setTimeout(() => {
+          setReviewNotice(false)
+          onClose()
+        }, 3000)
+      }
     } catch (err: any) {
       setError(err.message || '发布失败')
     } finally {
@@ -493,10 +505,29 @@ export default function CreateShareModalNew({ isOpen, onClose, mode = 'life', on
             </div>
           )}
           
+          {/* 审核提示 */}
+          {reviewNotice && (
+            <div className="mt-4 p-3 bg-[#f59e0b]/10 border border-[#f59e0b] text-[#f59e0b] text-sm font-mono animate-in fade-in slide-in-from-bottom-2 duration-300"
+              style={{
+                clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))'
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 flex-shrink-0 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>帖子已提交，等待管理员审核通过后即可显示</span>
+              </div>
+              <div className="mt-2 h-1 bg-[#f59e0b]/20 rounded-full overflow-hidden">
+                <div className="h-full bg-[#f59e0b] rounded-full animate-pulse" style={{ width: '60%' }} />
+              </div>
+            </div>
+          )}
+
           {/* 发布按钮 */}
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || reviewNotice}
             className={`w-full mt-5 py-3 font-bold text-sm flex items-center justify-center gap-2 transition-all uppercase tracking-wider font-orbitron ${
               isSubmitting 
                 ? 'bg-[#1c1c2e] text-[#6b7280] cursor-not-allowed' 
