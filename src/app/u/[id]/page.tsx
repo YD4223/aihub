@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   User, MapPin, Link as LinkIcon, Calendar,
-  Share2, Heart, MessageCircle, Grid,
-  ArrowLeft, Loader2, Settings, ExternalLink,
+  Share2, Heart, MessageCircle,
+  ArrowLeft, Loader2, Settings,
   Edit3, Users, X, ChevronRight, Trophy
 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
@@ -82,7 +82,7 @@ export default function UserProfilePage() {
   // 用户内容
   const [shares, setShares] = useState<ShareItem[]>([])
   const [sharesLoading, setSharesLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'shares' | 'tools' | 'achievements'>('shares')
+  const [activeTab, setActiveTab] = useState<'shares' | 'achievements'>('shares')
   
   // 错误状态
   const [error, setError] = useState<string | null>(null)
@@ -522,21 +522,6 @@ export default function UserProfilePage() {
               )}
             </button>
             <button
-              onClick={() => setActiveTab('tools')}
-              className={`relative px-6 py-3.5 text-sm font-medium transition-colors font-mono ${
-                activeTab === 'tools'
-                  ? 'text-neon-green'
-                  : 'text-cyber-muted-foreground hover:text-cyber-foreground'
-              }`}>
-              <span className="flex items-center gap-2">
-                <Grid className="w-4 h-4" />
-                提交的工具
-              </span>
-              {activeTab === 'tools' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-green" />
-              )}
-            </button>
-            <button
               onClick={() => setActiveTab('achievements')}
               className={`relative px-6 py-3.5 text-sm font-medium transition-colors font-mono ${
                 activeTab === 'achievements'
@@ -575,23 +560,6 @@ export default function UserProfilePage() {
                   ))}
                 </div>
               )
-            )}
-
-            {activeTab === 'tools' && (
-              <div className="space-y-0 divide-y divide-cyber-border/50">
-                {shares.filter(s => s.tool).map((share) => (
-                  <ToolItem key={share.id} share={share} />
-                ))}
-
-                {!sharesLoading && shares.filter(s => s.tool).length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-cyber-muted/20 flex items-center justify-center">
-                      <Grid className="w-8 h-8 text-cyber-muted-foreground/30" />
-                    </div>
-                    <p className="text-cyber-muted-foreground font-mono">还没有提交过工具</p>
-                  </div>
-                )}
-              </div>
             )}
 
             {activeTab === 'achievements' && (
