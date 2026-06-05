@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     // 格式化数据
     const formattedTools = (shares as any[]).map(t => ({
       id: Number(t.id),
-      name: t.name || '未命名',
+      name: t.name || (t.content ? t.content.substring(0, 30) + (t.content.length > 30 ? '...' : '') : '未命名'),
       slug: 'share-' + t.id,
       shortDesc: t.short_desc || null,
       description: t.content || null,
