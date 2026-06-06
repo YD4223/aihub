@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, Menu, X, Zap, Plus, User, Bell, BrainCircuit, Sun, Moon, ChevronDown } from 'lucide-react'
+import { Search, Menu, X, Zap, Plus, User, Bell, BrainCircuit, Sun, Moon } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Avatar from '@/components/Avatar'
@@ -143,7 +143,6 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchMode, setSearchMode] = useState<'site' | 'web'>('site')
-  const [showModeMenu, setShowModeMenu] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
@@ -374,31 +373,30 @@ export default function Navbar() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neon-green cursor-pointer z-10"
                   onClick={handleSearch}
                 />
-                {/* 搜索模式切换 */}
-                <div className="absolute left-8 top-1/2 -translate-y-1/2 z-10">
+                {/* 搜索模式切换 - 霓虹风格 */}
+                <div className="absolute left-9 top-1/2 -translate-y-1/2 z-10 flex items-center gap-0.5 border-r border-cyber-border/40 pr-2">
                   <button
-                    onClick={() => setShowModeMenu(!showModeMenu)}
-                    className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border-r border-cyber-border/50 text-cyber-muted-foreground hover:text-neon-green transition-colors"
+                    onClick={() => setSearchMode('site')}
+                    className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider transition-all duration-200 ${
+                      searchMode === 'site'
+                        ? 'text-cyber-background bg-neon-green shadow-[0_0_6px_rgba(0,255,136,0.4)]'
+                        : 'text-cyber-muted-foreground/60 hover:text-cyber-muted-foreground'
+                    }`}
+                    style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
                   >
-                    {searchMode === 'site' ? '站内' : '全网'}
-                    <ChevronDown className="w-3 h-3" />
+                    站内
                   </button>
-                  {showModeMenu && (
-                    <div className="absolute top-full left-0 mt-1 bg-cyber-card border border-cyber-border shadow-lg z-50 min-w-[80px]">
-                      <button
-                        onClick={() => { setSearchMode('site'); setShowModeMenu(false) }}
-                        className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors ${searchMode === 'site' ? 'text-neon-green bg-neon-green/10' : 'text-cyber-foreground hover:bg-cyber-muted/30'}`}
-                      >
-                        站内
-                      </button>
-                      <button
-                        onClick={() => { setSearchMode('web'); setShowModeMenu(false) }}
-                        className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors ${searchMode === 'web' ? 'text-neon-cyan bg-neon-cyan/10' : 'text-cyber-foreground hover:bg-cyber-muted/30'}`}
-                      >
-                        全网
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => setSearchMode('web')}
+                    className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider transition-all duration-200 ${
+                      searchMode === 'web'
+                        ? 'text-cyber-background bg-neon-cyan shadow-[0_0_6px_rgba(0,212,255,0.4)]'
+                        : 'text-cyber-muted-foreground/60 hover:text-cyber-muted-foreground'
+                    }`}
+                    style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                  >
+                    全网
+                  </button>
                 </div>
                 <input
                   type="text"
@@ -406,7 +404,7 @@ export default function Navbar() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="input-cyber w-12 md:w-16 lg:w-48 xl:w-64 text-xs pl-[72px]"
+                  className="input-cyber w-12 md:w-16 lg:w-48 xl:w-64 text-xs pl-[100px]"
                 />
               </div>
               <Link href="/submit" className="btn-cyber text-xs py-2 px-3 md:px-4">
@@ -523,15 +521,39 @@ export default function Navbar() {
         <div className="fixed inset-0 z-[60] bg-cyber-background md:hidden">
           <div className="flex items-center gap-2 p-4 border-b border-cyber-border">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neon-green" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neon-green z-10" />
+              <div className="absolute left-9 top-1/2 -translate-y-1/2 z-10 flex items-center gap-0.5 border-r border-cyber-border/40 pr-2">
+                <button
+                  onClick={() => setSearchMode('site')}
+                  className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider transition-all duration-200 ${
+                    searchMode === 'site'
+                      ? 'text-cyber-background bg-neon-green shadow-[0_0_6px_rgba(0,255,136,0.4)]'
+                      : 'text-cyber-muted-foreground/60 hover:text-cyber-muted-foreground'
+                  }`}
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                >
+                  站内
+                </button>
+                <button
+                  onClick={() => setSearchMode('web')}
+                  className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider transition-all duration-200 ${
+                    searchMode === 'web'
+                      ? 'text-cyber-background bg-neon-cyan shadow-[0_0_6px_rgba(0,212,255,0.4)]'
+                      : 'text-cyber-muted-foreground/60 hover:text-cyber-muted-foreground'
+                  }`}
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))' }}
+                >
+                  全网
+                </button>
+              </div>
               <input
                 type="text"
-                placeholder="搜索AI工具..."
+                placeholder={searchMode === 'site' ? '搜索AI工具...' : '搜索全网...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 autoFocus
-                className="input-cyber w-full"
+                className="input-cyber w-full pl-[100px]"
               />
             </div>
             <button
