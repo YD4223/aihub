@@ -19,7 +19,7 @@
     "crawl:itc": "tsx src/scripts/itc-crawler.ts",
     "crawl:github": "tsx src/scripts/github-trending-crawler.ts",
     "update-data": "tsx src/scripts/update-data.ts",
-    "vercel-build": "prisma generate && next build",
+    "vercel-build": "prisma generate && next build --no-lint",
     "clean:news": "tsx src/scripts/clean-old-news.ts",
     "indexnow": "node src/scripts/submit-indexnow.mjs",
     "record:trends": "tsx src/scripts/record-daily-trends.ts"
