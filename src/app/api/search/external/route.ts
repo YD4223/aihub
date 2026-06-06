@@ -9,11 +9,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 7000)
+
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(q.trim())}&format=json&no_html=1&skip_disambig=1`
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'AIHub/1.0' },
-      signal: AbortSignal.timeout(5000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AIHub/1.0; +https://ai999999.top)' },
+      signal: controller.signal,
     })
+    clearTimeout(timeout)
 
     if (!res.ok) {
       return NextResponse.json({ error: '搜索失败' }, { status: 502 })
@@ -21,7 +25,6 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json()
 
-    // 提取关键信息
     const result: any = {
       query: q.trim(),
     }
@@ -36,7 +39,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 精选结果
     if (data.Results && data.Results.length > 0) {
       result.results = data.Results.slice(0, 5).map((r: any) => ({
         title: r.Text || r.FirstURL,
@@ -45,7 +47,6 @@ export async function GET(request: NextRequest) {
       }))
     }
 
-    // 相关话题
     if (data.RelatedTopics && data.RelatedTopics.length > 0) {
       result.related = data.RelatedTopics.slice(0, 8).map((r: any) => {
         if (r.Text) return { text: r.Text, url: r.FirstURL }
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' }
     })
   } catch (error: any) {
-    console.error('外部搜索失败:', error)
+    console.error('外部搜索失败:', error.message)
     return NextResponse.json({ error: '搜索服务暂时不可用' }, { status: 500 })
   }
 }
