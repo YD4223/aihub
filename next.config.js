@@ -10,6 +10,7 @@ const nextConfig = {
     return [
       {
         source: '/:path*',
+        headers: [
           // Content Security Policy — 去掉了 'unsafe-eval'（生产不需要），加严 script 来源
           {
             key: 'Content-Security-Policy',
