@@ -249,8 +249,7 @@ export default function Navbar() {
     const q = searchQuery.trim()
     if (q) {
       if (searchMode === 'web') {
-        // 全网搜索 - 打开 DuckDuckGo 搜索结果页
-        window.open(`https://duckduckgo.com/?q=${encodeURIComponent(q)}`, '_blank')
+        window.location.href = `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
       } else {
         router.push(`/tools?search=${encodeURIComponent(q)}`)
       }
