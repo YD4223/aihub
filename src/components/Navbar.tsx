@@ -253,6 +253,13 @@ export default function Navbar() {
   const handleSearch = () => {
     const q = searchQuery.trim()
     if (q) {
+      // 未登录不能搜索（站内和全网都需要登录）
+      if (!user) {
+        router.push('/login?redirect=' + encodeURIComponent(pathname))
+        setIsSearchOpen(false)
+        setSearchQuery('')
+        return
+      }
       if (searchMode === 'web') {
         setExternalQuery(q)
         setShowExternal(true)
