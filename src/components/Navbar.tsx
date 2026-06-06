@@ -1,11 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, Menu, X, Zap, Plus, User, Bell, BrainCircuit, Sun, Moon } from 'lucide-react'
+import { Search, Menu, X, Zap, Plus, User, Bell, BrainCircuit, Sun, Moon, ChevronDown } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
-import dynamic from 'next/dynamic'
-
-const ExternalSearch = dynamic(() => import('@/components/ExternalSearch'), { ssr: false })
 import { useRouter, usePathname } from 'next/navigation'
 import Avatar from '@/components/Avatar'
 
@@ -145,6 +142,8 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchMode, setSearchMode] = useState<'site' | 'web'>('site')
+  const [showModeMenu, setShowModeMenu] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
@@ -249,8 +248,14 @@ export default function Navbar() {
   const handleSearch = () => {
     const q = searchQuery.trim()
     if (q) {
-      router.push(`/tools?search=${encodeURIComponent(q)}`)
+      if (searchMode === 'web') {
+        // 全网搜索 - 打开 DuckDuckGo 搜索结果页
+        window.open(`https://duckduckgo.com/?q=${encodeURIComponent(q)}`, '_blank')
+      } else {
+        router.push(`/tools?search=${encodeURIComponent(q)}`)
+      }
       setIsSearchOpen(false)
+      setSearchQuery('')
     }
   }
 
@@ -366,19 +371,44 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-1 md:gap-2 lg:gap-3 flex-shrink-0">
               <div className="relative flex items-center">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neon-green cursor-pointer"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neon-green cursor-pointer z-10"
                   onClick={handleSearch}
                 />
+                {/* 搜索模式切换 */}
+                <div className="absolute left-8 top-1/2 -translate-y-1/2 z-10">
+                  <button
+                    onClick={() => setShowModeMenu(!showModeMenu)}
+                    className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border-r border-cyber-border/50 text-cyber-muted-foreground hover:text-neon-green transition-colors"
+                  >
+                    {searchMode === 'site' ? '站内' : '全网'}
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  {showModeMenu && (
+                    <div className="absolute top-full left-0 mt-1 bg-cyber-card border border-cyber-border shadow-lg z-50 min-w-[80px]">
+                      <button
+                        onClick={() => { setSearchMode('site'); setShowModeMenu(false) }}
+                        className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors ${searchMode === 'site' ? 'text-neon-green bg-neon-green/10' : 'text-cyber-foreground hover:bg-cyber-muted/30'}`}
+                      >
+                        站内
+                      </button>
+                      <button
+                        onClick={() => { setSearchMode('web'); setShowModeMenu(false) }}
+                        className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors ${searchMode === 'web' ? 'text-neon-cyan bg-neon-cyan/10' : 'text-cyber-foreground hover:bg-cyber-muted/30'}`}
+                      >
+                        全网
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <input
                   type="text"
-                  placeholder="搜索AI工具..."
+                  placeholder={searchMode === 'site' ? '搜索AI工具...' : '搜索全网...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="input-cyber w-12 md:w-16 lg:w-48 xl:w-64 text-xs"
+                  className="input-cyber w-12 md:w-16 lg:w-48 xl:w-64 text-xs pl-[72px]"
                 />
               </div>
-              <ExternalSearch />
               <Link href="/submit" className="btn-cyber text-xs py-2 px-3 md:px-4">
                 <Zap className="w-3 h-3 inline mr-1" />
                 <span className="hidden lg:inline">提交</span>
