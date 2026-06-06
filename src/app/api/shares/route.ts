@@ -197,12 +197,16 @@ export async function POST(request: NextRequest) {
       for (let i = 0; i < images.length; i++) {
         const img = images[i]
         if (typeof img === 'string' && img.startsWith('data:image/')) {
-          const parsed = parseBase64Image(img)
-          if (parsed) {
-            const key = `shares/temp/${Date.now()}-${i}.${parsed.mimeType.split('/')[1]}`
-            const url = await uploadImage(key, parsed.buffer, parsed.mimeType)
-            uploadedUrls.push(url)
-            continue
+          try {
+            const parsed = parseBase64Image(img)
+            if (parsed) {
+              const key = `shares/${Date.now()}-${i}.${parsed.mimeType.split('/')[1]}`
+              const url = await uploadImage(key, parsed.buffer, parsed.mimeType)
+              uploadedUrls.push(url)
+              continue
+            }
+          } catch (e) {
+            console.error('R2上传失败:', e)
           }
         }
         uploadedUrls.push(img)

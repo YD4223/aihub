@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createNotification } from '@/lib/notification'
+import { uploadImage, parseBase64Image, isR2Configured } from '@/lib/r2'
 
 // CORS 头 + 缓存控制（5分钟CDN缓存，降低Supabase带宽消耗）
 const CORS = { 
@@ -121,6 +122,29 @@ export async function POST(request: NextRequest) {
         toolStatus = 'approved'
         isAdmin = true
       }
+    }
+
+    // 将 base64 图片上传到 R2（如果已配置）
+    if (images && Array.isArray(images) && isR2Configured()) {
+      const uploadedUrls: string[] = []
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i]
+        if (typeof img === 'string' && img.startsWith('data:image/')) {
+          try {
+            const parsed = parseBase64Image(img)
+            if (parsed) {
+              const key = `tools/${Date.now()}-${i}.${parsed.mimeType.split('/')[1]}`
+              const url = await uploadImage(key, parsed.buffer, parsed.mimeType)
+              uploadedUrls.push(url)
+              continue
+            }
+          } catch (e) {
+            console.error('R2上传失败:', e)
+          }
+        }
+        uploadedUrls.push(img)
+      }
+      images = uploadedUrls
     }
 
     // 创建 shares 记录（用户提交的工具显示在工具圈）
