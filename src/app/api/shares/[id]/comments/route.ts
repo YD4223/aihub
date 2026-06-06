@@ -55,7 +55,7 @@ export async function POST(
 
   try {
     const body = await request.json()
-    const { content, userId = 1, parentId } = body
+    let { content, userId = 1, parentId } = body
 
     if (!content || content.trim() === '') {
       return NextResponse.json({ error: '评论内容不能为空' }, { status: 400 })
