@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// 缓存控制：5分钟CDN缓存 + 10分钟 stale-while-revalidate
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+}
+
 // 获取工具趋势数据
 export async function GET(request: NextRequest) {
   try {
@@ -66,10 +71,10 @@ export async function GET(request: NextRequest) {
         })
       }
       
-      return NextResponse.json({ data: mockData, isMock: true })
+      return NextResponse.json({ data: mockData, isMock: true }, { headers: CACHE_HEADERS })
     }
     
-    return NextResponse.json({ data: histories, isMock: false })
+    return NextResponse.json({ data: histories, isMock: false }, { headers: CACHE_HEADERS })
   } catch (error) {
     console.error('获取趋势数据失败:', error)
     return NextResponse.json(
@@ -116,7 +121,7 @@ export async function POST(request: NextRequest) {
       }
     })
     
-    return NextResponse.json({ success: true, data: record })
+    return NextResponse.json({ success: true, data: record }, { headers: CACHE_HEADERS })
   } catch (error) {
     console.error('记录趋势数据失败:', error)
     return NextResponse.json(

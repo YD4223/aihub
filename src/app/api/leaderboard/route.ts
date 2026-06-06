@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// 缓存控制：5分钟CDN缓存 + 10分钟 stale-while-revalidate
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+}
+
 // GET /api/leaderboard?type=shares|tools|users|trending&limit=20
 // 10分钟缓存（ISR），排行榜不需要实时更新
 export async function GET(request: NextRequest) {
@@ -22,7 +27,7 @@ export async function GET(request: NextRequest) {
         LIMIT ${limit}
       `)
 
-      return NextResponse.json({ data: tools, type })
+      return NextResponse.json({ data: tools, type }, { headers: CACHE_HEADERS })
     }
 
     if (type === 'users') {
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest) {
         LIMIT ${limit}
       `)
 
-      return NextResponse.json({ data: users, type })
+      return NextResponse.json({ data: users, type }, { headers: CACHE_HEADERS })
     }
 
     if (type === 'trending') {
@@ -79,7 +84,7 @@ export async function GET(request: NextRequest) {
         LIMIT ${limit}
       `, dateStr)
 
-      return NextResponse.json({ data: trending, type })
+      return NextResponse.json({ data: trending, type }, { headers: CACHE_HEADERS })
     }
 
     // 默认：热门分享 - 按 likes 降序
@@ -118,7 +123,7 @@ export async function GET(request: NextRequest) {
       } : null
     }))
 
-    return NextResponse.json({ data: formattedShares, type })
+    return NextResponse.json({ data: formattedShares, type }, { headers: CACHE_HEADERS })
   } catch (error: any) {
     console.error('获取排行榜失败:', error)
     return NextResponse.json({ error: '获取失败: ' + error.message }, { status: 500 })

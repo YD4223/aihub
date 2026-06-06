@@ -227,7 +227,7 @@ export default function Navbar() {
         .catch(() => {})
     }
     fetchUnread()
-    const interval = setInterval(fetchUnread, 30000) // 每30秒轮询
+    const interval = setInterval(fetchUnread, 60000) // 每60秒轮询
     return () => clearInterval(interval)
   }, [user?.id])
 
