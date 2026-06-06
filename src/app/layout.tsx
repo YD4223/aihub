@@ -42,6 +42,20 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning className="bg-[#0a0a0f]">
       <body className="min-h-screen bg-[#0a0a0f] text-cyber-foreground font-mono relative transition-colors duration-300">
+        {/* JS 分块加载失败自动重试（解决中国访问 Vercel 超时） */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function(){
+              window.addEventListener('error', function(e) {
+                var target = e.target;
+                if (target && target.tagName === 'SCRIPT' && target.src && target.src.includes('/_next/static/chunks/')) {
+                  e.preventDefault();
+                  setTimeout(function(){ window.location.reload() }, 2000);
+                }
+              }, true);
+            })();
+          `
+        }} />
         {/* Grid Background Pattern - Hidden in light mode */}
         <div className="fixed inset-0 grid-pattern pointer-events-none dark-only" />
         
