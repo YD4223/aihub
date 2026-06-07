@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
         (SELECT COUNT(*) FROM users WHERE role != 'BANNED') as users,
         (SELECT COUNT(*) FROM tools WHERE status = 'pending') as "pendingTools",
         (SELECT COUNT(*) FROM shares WHERE status = 'pending') as "pendingShares",
-        (SELECT COUNT(*) FROM tools WHERE "createdAt"::date >= CURRENT_DATE) as todayTools,
-        (SELECT COUNT(*) FROM shares WHERE "createdAt"::date >= CURRENT_DATE) as todayShares,
-        (SELECT COUNT(*) FROM users WHERE "createdAt"::date >= CURRENT_DATE) as todayUsers
+        (SELECT COUNT(*) FROM tools WHERE "createdAt"::date >= CURRENT_DATE) as "todayTools",
+        (SELECT COUNT(*) FROM shares WHERE "createdAt"::date >= CURRENT_DATE) as "todayShares",
+        (SELECT COUNT(*) FROM users WHERE "createdAt"::date >= CURRENT_DATE) as "todayUsers"
     `)
 
     const row = result[0] || {}
