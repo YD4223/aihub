@@ -18,9 +18,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/site.webmanifest',
-  other: {
-    'msthumbnail': 'https://ai999999.top/favicon-32x32.png',
-  },
   openGraph: {
     title: 'AI Hub - 全球AI工具聚合平台',
     description: 'AI Hub收录1000+AI工具与最新AI资讯，涵盖聊天对话、图像生成、视频生成、代码助手等16个分类，每日更新，一站式发现全球AI工具。',
@@ -34,6 +31,7 @@ export const metadata: Metadata = {
   other: {
     'language': 'zh-CN',
     'og:locale:alternate': 'en_US',
+    'msthumbnail': 'https://ai999999.top/favicon-32x32.png',
   },
 }
 
