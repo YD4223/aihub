@@ -8,7 +8,7 @@ import UserShareCard from '@/components/UserShareCard'
 import SharePageClient from './SharePageClient'
 import LiveShareStats from './LiveShareStats'
 import SiteAnnouncement from '@/components/SiteAnnouncement'
-import ShareLoadMore from '@/components/ShareLoadMore'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import SignInCard from '@/components/SignInCard'
 import { 
   TrendingUp, 
@@ -40,7 +40,8 @@ interface UserSharePageProps {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
-async function getToolShares(sort?: string, search?: string) {
+async function getToolShares(sort?: string, search?: string, page: number = 1) {
+  const skip = (page - 1) * 24
   // 构建基础查询条件
   const whereConditions: any = {
     status: 'approved',
@@ -92,6 +93,7 @@ async function getToolShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
+    skip,
     take: 24
   })
 
@@ -142,10 +144,8 @@ async function getToolShares(sort?: string, search?: string) {
     })
 }
 
-async function getLifeShares(sort?: string, search?: string) {
-  const orderBy = sort === 'hot' || sort === 'mostLiked' 
-    ? 's.likes DESC, s.createdAt DESC' 
-    : 's.createdAt DESC'
+async function getLifeShares(sort?: string, search?: string, page: number = 1) {
+  const skip = (page - 1) * 24
 
   // 构建基础查询条件
   const whereConditions: any = {
@@ -186,6 +186,7 @@ async function getLifeShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
+    skip,
     take: 24
   })
 
@@ -217,7 +218,8 @@ async function getLifeShares(sort?: string, search?: string) {
     })
 }
 
-async function getTechShares(sort?: string, search?: string) {
+async function getTechShares(sort?: string, search?: string, page: number = 1) {
+  const skip = (page - 1) * 24
   const whereConditions: any = {
     status: 'approved',
     type: 'tech_share'
@@ -246,6 +248,7 @@ async function getTechShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
+    skip,
     take: 24
   })
 
@@ -276,7 +279,8 @@ async function getTechShares(sort?: string, search?: string) {
     })
 }
 
-async function getQaHelpShares(sort?: string, search?: string) {
+async function getQaHelpShares(sort?: string, search?: string, page: number = 1) {
+  const skip = (page - 1) * 24
   const whereConditions: any = {
     status: 'approved',
     type: 'qa_help'
@@ -305,6 +309,7 @@ async function getQaHelpShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
+    skip,
     take: 24
   })
 
@@ -387,14 +392,15 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
   const sort = searchParams.sort as string | undefined
   const search = searchParams.search as string | undefined
   const tab = searchParams.tab as string | undefined || 'tool'
+  const page = Math.max(1, parseInt(searchParams.page as string) || 1)
   
   let toolShares: any[] = [], lifeShares: any[] = [], techShares: any[] = [], qaShares: any[] = [], stats: any = { toolCount: 0, lifeCount: 0, techCount: 0, qaCount: 0, totalLikes: 0, totalComments: 0 }, popularTags: any[] = []
   try {
     const results = await Promise.all([
-      getToolShares(sort, search),
-      getLifeShares(sort, search),
-      getTechShares(sort, search),
-      getQaHelpShares(sort, search),
+      getToolShares(sort, search, page),
+      getLifeShares(sort, search, page),
+      getTechShares(sort, search, page),
+      getQaHelpShares(sort, search, page),
       getStats(),
       getPopularTags(),
     ])
@@ -422,6 +428,17 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
 
   const shareMap: Record<string, any[]> = { tool: toolShares, life: lifeShares, tech: techShares, qa: qaShares }
   const currentShares = shareMap[tab] || toolShares
+  const totalCount = stats[`${tab}Count`] || 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / 24))
+
+  function buildPageUrl(p: number) {
+    const params = new URLSearchParams()
+    if (tab) params.set('tab', tab)
+    if (p > 1) params.set('page', String(p))
+    if (sort) params.set('sort', sort)
+    if (search) params.set('search', search)
+    return `/user-share?${params.toString()}`
+  }
 
   return (
     <div className="min-h-screen bg-cyber-background">
@@ -707,12 +724,68 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
               </div>
             )}
             
-            {currentShares.length > 0 && (
-              <ShareLoadMore 
-                initialTab={tab} 
-                initialSkip={currentShares.length} 
-                totalCount={stats[`${tab}Count`] || 0} 
-              />
+            {currentShares.length > 0 && totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-6 pb-8">
+                {/* 上一页 */}
+                {page > 1 ? (
+                  <Link
+                    href={buildPageUrl(page - 1)}
+                    className="inline-flex items-center gap-1 px-3 py-2 bg-cyber-card border border-cyber-border hover:border-neon-cyan text-cyber-foreground font-mono text-sm clip-chamfer-sm hover:bg-neon-cyan/5 transition-all duration-200"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    上一页
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-3 py-2 bg-cyber-card/50 border border-cyber-border/30 text-cyber-muted-foreground/50 font-mono text-sm clip-chamfer-sm cursor-not-allowed">
+                    <ChevronLeft className="w-4 h-4" />
+                    上一页
+                  </span>
+                )}
+
+                {/* 页码 */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => {
+                    // 显示第一页、最后一页、当前页附近
+                    if (p === 1 || p === totalPages) return true
+                    if (Math.abs(p - page) <= 1) return true
+                    return false
+                  })
+                  .map((p, idx, arr) => (
+                    <span key={p} className="inline-flex items-center">
+                      {idx > 0 && arr[idx - 1] !== p - 1 && (
+                        <span className="px-2 text-cyber-muted-foreground font-mono text-sm">...</span>
+                      )}
+                      {p === page ? (
+                        <span className="inline-flex items-center justify-center w-9 h-9 bg-neon-cyan/20 border border-neon-cyan text-neon-cyan font-mono text-sm clip-chamfer-sm font-bold">
+                          {p}
+                        </span>
+                      ) : (
+                        <Link
+                          href={buildPageUrl(p)}
+                          className="inline-flex items-center justify-center w-9 h-9 bg-cyber-card border border-cyber-border hover:border-neon-cyan text-cyber-foreground font-mono text-sm clip-chamfer-sm hover:bg-neon-cyan/5 transition-all duration-200"
+                        >
+                          {p}
+                        </Link>
+                      )}
+                    </span>
+                  ))}
+
+                {/* 下一页 */}
+                {page < totalPages ? (
+                  <Link
+                    href={buildPageUrl(page + 1)}
+                    className="inline-flex items-center gap-1 px-3 py-2 bg-cyber-card border border-cyber-border hover:border-neon-cyan text-cyber-foreground font-mono text-sm clip-chamfer-sm hover:bg-neon-cyan/5 transition-all duration-200"
+                  >
+                    下一页
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-3 py-2 bg-cyber-card/50 border border-cyber-border/30 text-cyber-muted-foreground/50 font-mono text-sm clip-chamfer-sm cursor-not-allowed">
+                    下一页
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
