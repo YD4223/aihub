@@ -91,7 +91,7 @@ async function getToolShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
-    take: 24
+    take: 999
   })
 
   // 转换格式以兼容原有代码
@@ -185,7 +185,7 @@ async function getLifeShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
-    take: 24
+    take: 999
   })
 
   // 转换格式以兼容原有代码
@@ -245,7 +245,7 @@ async function getTechShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
-    take: 24
+    take: 999
   })
 
   const now = new Date()
@@ -304,7 +304,7 @@ async function getQaHelpShares(sort?: string, search?: string) {
     orderBy: [{ user: { role: 'desc' } }, sort === 'hot' || sort === 'mostLiked'
       ? { likes: 'desc' }
       : { createdAt: 'desc' }],
-    take: 24
+    take: 999
   })
 
   const now = new Date()
@@ -706,7 +706,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
               </div>
             )}
             
-            {currentShares.length >= 24 && (
+            {currentShares.length > 0 && currentShares.length >= (stats[`${tab}Count`] || 999) && (
               <div className="text-center py-8">
                 <div className="inline-flex items-center gap-2 px-6 py-3 bg-cyber-card border border-cyber-border clip-chamfer text-cyber-muted-foreground text-sm font-mono">
                   <span>已经到底了</span>
