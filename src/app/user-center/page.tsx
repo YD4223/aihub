@@ -1185,9 +1185,12 @@ export default function UserCenterPage() {
         if (res.ok) {
           setMessage({ type: 'success', text: '通知设置已保存' })
           setTimeout(() => setMessage({ type: '', text: '' }), 2000)
+        } else {
+          const err = await res.json().catch(() => ({ error: '请求失败' }))
+          setMessage({ type: 'error', text: '保存失败: ' + (err.error || res.statusText) })
         }
       } catch (err) {
-        setMessage({ type: 'error', text: '保存失败' })
+        setMessage({ type: 'error', text: '保存失败: 网络异常' })
       } finally {
         setSaving(false)
       }
@@ -1208,9 +1211,12 @@ export default function UserCenterPage() {
         if (res.ok) {
           setMessage({ type: 'success', text: '隐私设置已保存' })
           setTimeout(() => setMessage({ type: '', text: '' }), 2000)
+        } else {
+          const err = await res.json().catch(() => ({ error: '请求失败' }))
+          setMessage({ type: 'error', text: '保存失败: ' + (err.error || res.statusText) })
         }
       } catch (err) {
-        setMessage({ type: 'error', text: '保存失败' })
+        setMessage({ type: 'error', text: '保存失败: 网络异常' })
       } finally {
         setSaving(false)
       }
