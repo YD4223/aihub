@@ -4,10 +4,9 @@
  * 使用 Puppeteer 抓取 Nuxt.js 渲染的页面
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
+import { autoCategorize } from '@/lib/categorize'
 import puppeteer from 'puppeteer'
-
-const prisma = new PrismaClient()
 
 interface AwesomeTool {
   name: string
@@ -152,45 +151,6 @@ async function saveTool(tool: AwesomeTool) {
   } catch (error) {
     console.error(`   ❌ 保存失败 ${tool.name}:`, error)
   }
-}
-
-/**
- * 自动分类
- */
-async function autoCategorize(tool: AwesomeTool): Promise<number | null> {
-  const text = `${tool.name} ${tool.description || ''} ${tool.tags?.join(' ') || ''}`.toLowerCase()
-  
-  const categoryMap: Record<string, string[]> = {
-    '代码助手': ['code', '编程', 'developer', 'ide', 'editor', 'git', 'debug', 'copilot'],
-    '聊天对话': ['chat', '对话', '聊天', 'assistant', 'bot', 'llm', 'gpt', 'claude'],
-    '图像生成': ['image', '图片', '绘画', 'draw', 'art', 'stable-diffusion', 'midjourney', 'dall-e'],
-    '视频生成': ['video', '视频', 'animation', 'sora', 'runway'],
-    '音频处理': ['audio', '语音', 'music', 'sound', 'tts', 'voice', 'whisper'],
-    '写作助手': ['write', '写作', 'markdown', 'note', 'doc', 'copywriting'],
-    '搜索引擎': ['search', '搜索', 'rag', 'retrieval', 'perplexity'],
-    '办公效率': ['productivity', '办公', 'excel', 'pdf', 'tool', 'automation'],
-    '设计工具': ['design', '设计', 'ui', 'figma', 'icon', 'prototype'],
-    '知识管理': ['knowledge', '笔记', 'wiki', 'bookmark', 'notion'],
-    '数据分析': ['data', '数据', 'analytics', 'chart', 'visualization', 'bi'],
-    '教育学习': ['education', '学习', 'course', 'tutorial', 'learn'],
-    '健康医疗': ['health', '医疗', 'medical', 'fitness'],
-    '金融理财': ['finance', '金融', 'trading', 'crypto', 'investment'],
-  }
-  
-  for (const [categoryName, keywords] of Object.entries(categoryMap)) {
-    if (keywords.some(kw => text.includes(kw))) {
-      const category = await prisma.category.findFirst({
-        where: { name: categoryName }
-      })
-      if (category) return category.id
-    }
-  }
-  
-  // 默认其他工具
-  const other = await prisma.category.findFirst({
-    where: { name: '其他工具' }
-  })
-  return other?.id || null
 }
 
 /**

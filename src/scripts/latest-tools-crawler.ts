@@ -8,6 +8,7 @@ import { resolve } from 'path'
 import { execSync } from 'child_process'
 import Parser from 'rss-parser'
 import { prisma } from '@/lib/prisma'
+import { autoCategorize } from '@/lib/categorize'
 
 // 加载 .env 文件（tsx 不会自动加载）
 try {
@@ -146,29 +147,6 @@ async function saveTools(tools: any[]) {
   let saved = 0
   let skipped = 0
   
-  const tagToCategory: Record<string, string> = {
-    '聊天对话': '聊天对话', 'chatbot': '聊天对话', 'chat': '聊天对话', 'conversation': '聊天对话',
-    '图像生成': '图像生成', 'image': '图像生成', '绘画': '图像生成', 'image-generation': '图像生成',
-    '视频生成': '视频生成', 'video': '视频生成', 'video-generation': '视频生成',
-    '音频处理': '音频处理', 'audio': '音频处理', 'music': '音频处理', 'speech': '音频处理',
-    '写作助手': '写作助手', 'writing': '写作助手', 'content': '写作助手',
-    '代码助手': '代码助手', 'code': '代码助手', 'coding': '代码助手', 'developer-tools': '代码助手',
-    'framework': '代码助手', '开发': '代码助手', 'deployment': '代码助手', 'deploy': '代码助手',
-    'llm': '代码助手', 'machine-learning': '代码助手', 'model': '代码助手',
-    'ai-agent': '代码助手', 'agent': '代码助手', 'rag': '代码助手', 'embedding': '代码助手',
-    'openai': '代码助手', 'api': '代码助手',
-    '搜索引擎': '搜索引擎', 'search': '搜索引擎',
-    '翻译工具': '翻译工具', 'translation': '翻译工具',
-    '设计工具': '设计工具', 'design': '设计工具', 'ui': '设计工具',
-    '办公效率': '办公效率', 'productivity': '办公效率',
-    'automation': '办公效率', 'workflow': '办公效率',
-    '知识管理': '知识管理', 'knowledge': '知识管理',
-    '数据分析': '数据分析', 'data': '数据分析', 'analytics': '数据分析',
-    '教育学习': '教育学习', 'education': '教育学习', 'tutorial': '教育学习',
-    '健康医疗': '健康医疗', 'health': '健康医疗',
-    '金融理财': '金融理财', 'finance': '金融理财',
-  }
-  
   for (const tool of tools) {
     try {
       const slug = generateSlug(tool.name)
@@ -189,22 +167,23 @@ async function saveTools(tools: any[]) {
       }
       
       let categoryId = null
-      if (tool.tags) {
-        const tagList = tool.tags.split(',')
-        for (const tag of tagList) {
-          const normalizedTag = tag.trim().toLowerCase()
-          const categoryName = tagToCategory[normalizedTag] || tagToCategory[tag.trim()]
-          if (categoryName) {
-            const category = await prisma.category.findFirst({ where: { name: categoryName } })
-            if (category) { categoryId = category.id; break }
-          }
-        }
-        if (!categoryId) {
-          const otherCategory = await prisma.category.findFirst({ where: { name: '其他工具' } })
-          if (otherCategory) categoryId = otherCategory.id
-        }
+      try {
+        categoryId = await autoCategorize({
+          name: tool.name,
+          description: tool.shortDesc || tool.description,
+          tags: tool.tags,
+        })
+      } catch {
+        // 分类失败时使用默认
       }
-      const desc = cleanText(tool.description)
+      
+      if (!categoryId) {
+        const otherCategory = await prisma.category.findFirst({ where: { name: '其他工具' } })
+        if (otherCategory) categoryId = otherCategory.id
+      }
+      
+      // 保留原有的 description 处理逻辑
+      const desc = tool.shortDesc || tool.description || ''
       
       await prisma.tool.create({
         data: {
