@@ -209,7 +209,9 @@ async function fetchRSS(source: typeof rssSources[0]): Promise<number> {
     for (const item of recentItems) {
       try {
         const title = item.title?.trim() || ''
-        const content = item['content:encoded'] || item.content || item.summary || ''
+        // 优先取完整 HTML 内容，再取纯文本内容
+        const rawContent = item['content:encoded'] || item.content || item.summary || ''
+        const plainContent = item.contentSnippet || item.summary || ''
         const link = item.link || ''
         const pubDate = item.pubDate ? new Date(item.pubDate) : new Date()
         
@@ -231,8 +233,8 @@ async function fetchRSS(source: typeof rssSources[0]): Promise<number> {
           continue
         }
         
-        // 生成摘要
-        const summary = generateSummary(content, 200)
+        // 摘要取较长版本（优先用 content:encoded 的纯文本，最长 800 字）
+        const summary = generateSummary(rawContent || plainContent, 800)
         
         // 英文内容生成中文翻译（标题+摘要）
         let titleZh = null
@@ -251,6 +253,9 @@ async function fetchRSS(source: typeof rssSources[0]): Promise<number> {
         }
         
         // 创建新闻
+        // 原文内容存纯文本版本，展示用 summary 和 summaryZh
+        const cleanContent = stripHtml(rawContent || plainContent) || title
+        
         await prisma.news.create({
           data: {
             title,
@@ -258,7 +263,7 @@ async function fetchRSS(source: typeof rssSources[0]): Promise<number> {
             slug,
             summary,
             summaryZh,
-            content: stripHtml(content) || title,
+            content: cleanContent.length > 100 ? cleanContent.slice(0, 2000) : cleanContent,
             sourceName: source.name,
             sourceUrl: link,
             publishedAt: pubDate,
