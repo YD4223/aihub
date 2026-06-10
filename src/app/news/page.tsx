@@ -379,14 +379,16 @@ export default function NewsPage() {
               <div className="p-5 space-y-3">
                 {[
                   { name: '量子位', status: '正常' },
-                  { name: 'MIT Technology Review', status: '正常' },
-                  { name: 'TechCrunch AI', status: '正常' },
                   { name: 'MarkTechPost', status: '正常' },
-                  { name: 'IEEE Spectrum', status: '正常' },
-                  { name: 'Nature Machine Intelligence', status: '正常' },
+                  { name: 'TechCrunch AI', status: '正常' },
+                  { name: 'Ars Technica AI', status: '正常' },
+                  { name: 'The Verge AI', status: '正常' },
                   { name: 'OpenAI Blog', status: '正常' },
-                  { name: 'AI News', status: '正常' },
-                  { name: 'Ars Technica', status: '正常' },
+                  { name: 'Google AI Blog', status: '正常' },
+                  { name: 'Hugging Face Blog', status: '正常' },
+                  { name: 'The Gradient', status: '正常' },
+                  { name: 'Ahead of AI', status: '正常' },
+                  { name: 'Last Week in AI', status: '正常' },
                 ].map((source) => (
                   <div key={source.name} className="flex items-center justify-between">
                     <span className="text-cyber-muted-foreground text-sm">{source.name}</span>
