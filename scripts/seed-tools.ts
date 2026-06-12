@@ -246,6 +246,15 @@ const tools = [
     pricing: 'FREEMIUM',
     source: 'crawler',
   },
+  {
+    name: 'Remio',
+    slug: 'remio',
+    description: '本地优先 AI 记忆与知识库客户端，解析文件、网页、录音、邮件、消息和图片，并通过本地索引与向量帮助用户和 agent 快速检索个人上下文',
+    url: 'https://remio.ai/',
+    categoryId: 'productivity',
+    pricing: 'FREEMIUM',
+    source: 'crawler',
+  },
 ];
 
 async function main() {
