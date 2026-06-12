@@ -15,7 +15,7 @@ interface TrendingPageProps {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export const revalidate = 3600
+export const revalidate = 7200
 
 export default async function TrendingPage({ searchParams }: TrendingPageProps) {
   const tab = (searchParams.tab as string) || 'trending'

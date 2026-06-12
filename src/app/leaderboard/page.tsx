@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: '查看AI Hub社区的热门分享、热门工具、活跃用户排行榜，发现最新最热的内容。',
 }
 
-export const revalidate = 3600
+export const revalidate = 7200
 
 interface Props {
   searchParams: { tab?: string }

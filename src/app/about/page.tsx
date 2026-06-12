@@ -5,7 +5,7 @@ import Footer from '@/components/Footer'
 import ContactButton from '@/components/ContactButton'
 import { prisma } from '@/lib/prisma'
 
-export const revalidate = 3600
+export const revalidate = 7200
 
 export const metadata = {
   title: '关于我们 | AI Hub',

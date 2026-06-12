@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { prisma } from '@/lib/prisma'
 
-export const revalidate = 3600
+export const revalidate = 7200
 
 export const metadata = {
   title: 'RSS 订阅 | AI Hub',

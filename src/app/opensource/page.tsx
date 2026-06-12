@@ -15,7 +15,7 @@ export const metadata = {
 }
 
 // ISR: 每5分钟重新生成页面（节省带宽）
-export const revalidate = 3600
+export const revalidate = 7200
 
 // 根据字符串生成一致的颜色
 function stringToColor(str: string): string {
