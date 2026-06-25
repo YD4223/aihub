@@ -5,6 +5,18 @@ import { Clock, Github, MessageSquare, ArrowUpRight, Sparkles, Shield, Zap, Bug,
 
 const updates = [
   {
+    date: '2026-06-25',
+    title: '验证码防封 & 邮箱优化',
+    icon: Shield,
+    color: 'text-neon-green',
+    items: [
+      '📧 修复 QQ 邮箱发信被风控封禁（全局限流）',
+      '🔒 新增每小时 20 封邮件上限，保护发信邮箱',
+      '📋 四层防护：全局限流 → IP限流 → 邮箱冷却 → 已注册检测',
+      '⚡ 更新授权码后验证码已恢复正常发送',
+    ]
+  },
+  {
     date: '2026-06-07',
     title: '用户分享分页 & 社区体验优化',
     icon: Sparkles,
