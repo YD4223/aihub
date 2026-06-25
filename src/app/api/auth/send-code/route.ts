@@ -10,6 +10,10 @@ const COOLDOWN_MS = 60 * 1000 // 60秒冷却
 const ipLimits = new Map<string, { count: number; resetAt: number }>()
 const IP_MAX_PER_MINUTE = 5
 
+// 全局发送量限制：每小时最多发20封，保护QQ邮箱不被封
+const globalRateLimit: { count: number; hourStart: number } = { count: 0, hourStart: Date.now() }
+const GLOBAL_MAX_PER_HOUR = 20
+
 // 写入验证码发送日志（静默失败，不影响主流程）
 async function logVerification(params: {
   email: string
@@ -48,6 +52,23 @@ export async function POST(request: NextRequest) {
       || request.headers.get('x-real-ip')
       || 'unknown'
     const userAgent = request.headers.get('user-agent') || null
+
+    // 防线0：全局发送量限制（保护发信邮箱不被QQ风控）
+    const hourMs = 3600 * 1000
+    if (Date.now() - globalRateLimit.hourStart > hourMs) {
+      globalRateLimit.count = 0
+      globalRateLimit.hourStart = Date.now()
+    }
+    if (globalRateLimit.count >= GLOBAL_MAX_PER_HOUR) {
+      await logVerification({
+        email, ipAddress: clientIp, userAgent,
+        success: false, reason: '全局发送量已达上限'
+      })
+      return NextResponse.json(
+        { error: '发送过于频繁，请稍后再试' },
+        { status: 429 }
+      )
+    }
 
     // 防线1：IP 频率限制（防刷接口）
     const now = Date.now()
@@ -123,6 +144,9 @@ export async function POST(request: NextRequest) {
       email, ipAddress: clientIp, userAgent,
       success: true, reason: '验证码发送成功'
     })
+
+    // 全局计数+1
+    globalRateLimit.count++
 
     // 安全返回：不暴露具体邮箱是否发送成功
     return NextResponse.json({ message: '如果该邮箱未注册，验证码已发送' })
