@@ -75,3 +75,4 @@ docs/*计划*.md
 docs/*指南*.md
 docs/*审计*.md
 docs/requirements.txt
+build.log
