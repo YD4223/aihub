@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   keywords: 'AI工具, AI导航, 人工智能工具, AI工具导航站, 免费AI工具, AI集合, AI汇总',
   icons: {
     icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' },
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/favicon.ico', sizes: '16x16 32x32 48x48' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180' },
