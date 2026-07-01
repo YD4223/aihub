@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Activity, Users, Zap } from 'lucide-react'
 
-// 网站首次部署时间
-const DEPLOY_DATE = new Date('2026-06-11T12:17:18+08:00')
+// 网站首次部署时间（2026年5月5日）
+const DEPLOY_DATE = new Date('2026-05-05T00:00:00+08:00')
 
 function pad(n: number): string {
   return n.toString().padStart(2, '0')
