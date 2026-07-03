@@ -59,8 +59,23 @@ async function fetchFromRSS(itemLimit: number = 10): Promise<any[]> {
       const content = item.content || item['content:encoded'] || item.summary || ''
       const link = item.link || ''
       
-      const aiKeywords = ['AI', '人工智能', '大模型', 'LLM', 'ChatGPT', '发布', '新品', '推出', '上线']
-      const isAITool = aiKeywords.some(kw => title.includes(kw) || content.includes(kw))
+      // 区分工具关键词和泛AI关键词
+      const toolKeywords = ['发布', '新品', '推出', '上线', 'launch', 'release', 'announces', 'introduces']
+      const aiKeywords = ['AI', 'LLM', 'ChatGPT']
+      
+      const lowerTitle = title.toLowerCase()
+      const lowerContent = content.toLowerCase()
+      
+      const hasToolKeyword = toolKeywords.some(kw => lowerTitle.includes(kw) || lowerContent.includes(kw))
+      const hasGitHub = !!extractGitHubUrl(content)
+      const isShortTitle = title.length < 35  // 短标题更像工具名
+      const hasAIKeyword = aiKeywords.some(kw => lowerTitle.includes(kw) || lowerContent.includes(kw))
+      
+      // 满足任一条件才算工具：
+      // 1. 有明确发布/推出等关键词
+      // 2. 有 GitHub 链接（开源工具）
+      // 3. 提到AI且标题很短（像工具名而非新闻标题）
+      const isAITool = hasToolKeyword || hasGitHub || (hasAIKeyword && isShortTitle)
       
       if (isAITool) {
         items.push({
