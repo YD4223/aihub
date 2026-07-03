@@ -132,10 +132,16 @@ const rssSources = [
     category: '技术博客'
   },
   {
-    name: 'Hugging Face Blog',
-    url: 'https://huggingface.co/blog/feed.xml',
+    name: 'Hacker News',
+    url: 'https://news.ycombinator.com/rss',
     language: 'en',
-    category: '技术博客'
+    category: '科技新闻'
+  },
+  {
+    name: 'Product Hunt',
+    url: 'https://www.producthunt.com/feed',
+    language: 'en',
+    category: '产品动态'
   },
   {
     name: 'The Gradient',
