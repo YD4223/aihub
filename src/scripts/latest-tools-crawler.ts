@@ -33,61 +33,68 @@ const rssParser = new Parser()
 
 // RSS 源配置
 const rssSources = [
-  {
-    name: 'Product Hunt - AI',
-    url: 'https://www.producthunt.com/feed?category=ai',
-    type: 'product_hunt'
-  },
-  {
-    name: '量子位',
-    url: 'https://www.qbitai.com/rss',
-    type: 'news'
-  },
+  { name: '量子位', url: 'https://www.qbitai.com/rss', type: 'news' },
+  { name: 'MarkTechPost', url: 'https://www.marktechpost.com/feed/', type: 'news' },
+  { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/', type: 'news' },
+  { name: 'The Verge AI', url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml', type: 'news' },
 ]
 
 const DAYS_LIMIT = 30
 
 // 从 RSS 源获取最新 AI 工具
 async function fetchFromRSS(itemLimit: number = 10): Promise<any[]> {
-  const tools: any[] = []
+  const thirtyDaysAgo = new Date(Date.now() - DAYS_LIMIT * 24 * 60 * 60 * 1000)
+    { name: '量子位', url: 'https://www.qbitai.com/rss' },
+    { name: 'MarkTechPost', url: 'https://www.marktechpost.com/feed/' },
+    { name: 'TechCrunch AI', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
+    { name: 'The Verge AI', url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml' },
+  ]
   
-  for (const source of rssSources) {
-    try {
-      console.log(`📡 正在抓取: ${source.name}`)
+  const thirtyDaysAgo = new Date(Date.now() - DAYS_LIMIT * 24 * 60 * 60 * 1000)
+  
+  // 并行抓取所有 RSS 源
+  const results = await Promise.allSettled(rssSources.map(async (source) => {
+    console.log(`📡 正在抓取: ${source.name}`)
+    const feed = await rssParser.parseURL(source.url)
+    const items: any[] = []
+    
+    for (const item of feed.items?.slice(0, itemLimit) || []) {
+      const pubDate = item.pubDate ? new Date(item.pubDate) : new Date()
+      if (pubDate < thirtyDaysAgo) continue
       
-      const feed = await rssParser.parseURL(source.url)
-      const thirtyDaysAgo = new Date(Date.now() - DAYS_LIMIT * 24 * 60 * 60 * 1000)
+      const title = item.title || ''
+      const content = item.content || item['content:encoded'] || item.summary || ''
+      const link = item.link || ''
       
-      for (const item of feed.items?.slice(0, itemLimit) || []) {
-        const pubDate = item.pubDate ? new Date(item.pubDate) : new Date()
-        if (pubDate < thirtyDaysAgo) continue
-        
-        const title = item.title || ''
-        const content = item.content || item['content:encoded'] || item.summary || ''
-        const link = item.link || ''
-        
-        const aiKeywords = ['AI', '人工智能', '大模型', 'LLM', 'ChatGPT', '发布', '新品', '推出', '上线']
-        const isAITool = aiKeywords.some(kw => title.includes(kw) || content.includes(kw))
-        
-        if (isAITool) {
-          tools.push({
-            name: title.split('：')[0].split('|')[0].slice(0, 50),
-            description: content.replace(/<[^>]*>/g, '').slice(0, 200),
-            websiteUrl: link,
-            githubUrl: extractGitHubUrl(content) || '',
-            stars: 0,
-            publishedAt: pubDate.toISOString(),
-            source: source.name,
-            sourceUrl: link,
-            tags: extractTags(title + ' ' + content),
-            isOpenSource: !!extractGitHubUrl(content)
-          })
-        }
+      const aiKeywords = ['AI', '人工智能', '大模型', 'LLM', 'ChatGPT', '发布', '新品', '推出', '上线']
+      const isAITool = aiKeywords.some(kw => title.includes(kw) || content.includes(kw))
+      
+      if (isAITool) {
+        items.push({
+          name: title.split('：')[0].split('|')[0].slice(0, 50),
+          description: content.replace(/<[^>]*>/g, '').slice(0, 200),
+          websiteUrl: link,
+          githubUrl: extractGitHubUrl(content) || '',
+          stars: 0,
+          publishedAt: pubDate.toISOString(),
+          source: source.name,
+          sourceUrl: link,
+          tags: extractTags(title + ' ' + content),
+          isOpenSource: !!extractGitHubUrl(content)
+        })
       }
-      
-      console.log(`✅ ${source.name}: 获取 ${tools.length} 条`)
-    } catch (error) {
-      console.error(`❌ ${source.name} 抓取失败:`, error)
+    }
+    
+    console.log(`✅ ${source.name}: 获取 ${items.length} 条`)
+    return items
+  }))
+  
+  const tools: any[] = []
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      tools.push(...result.value)
+    } else {
+      console.error(`❌ RSS源抓取失败:`, result.reason?.message || result.reason)
     }
   }
   
@@ -147,67 +154,85 @@ async function saveTools(tools: any[]) {
   let saved = 0
   let skipped = 0
   
-  for (const tool of tools) {
+  if (tools.length === 0) return { saved, skipped }
+  
+  // 第一步：批量预查所有 slug（1次查询代替 N 次逐条查询）
+  const slugs = tools.map(t => generateSlug(t.name))
+  const existingTools = await prisma.tool.findMany({
+    where: { slug: { in: slugs } },
+    select: { id: true, slug: true }
+  })
+  const existingSlugs = new Set(existingTools.map(t => t.slug))
+  const existingMap = new Map(existingTools.map(t => [t.slug, t]))
+  
+  // 缓存"其他工具"分类
+  let otherCategoryId: number | null = null
+  const getOther = async () => {
+    if (!otherCategoryId) {
+      const other = await prisma.category.findFirst({ where: { name: '其他工具' } })
+      otherCategoryId = other?.id || null
+    }
+    return otherCategoryId
+  }
+  
+  // 第二步：并行处理所有工具（已有 slug 匹配的跳过，不存在的创建）
+  const tasks = tools.map(async (tool) => {
+    const slug = generateSlug(tool.name)
+    
+    // 跳过已存在的
+    if (existingSlugs.has(slug)) {
+      const existing = existingMap.get(slug)!
+      await prisma.tool.update({
+        where: { id: existing.id },
+        data: { publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : undefined }
+      })
+      return { status: 'skipped', name: tool.name }
+    }
+    
+    // 自动分类（纯本地关键词匹配，很快）
+    let categoryId = null
     try {
-      const slug = generateSlug(tool.name)
-      
-      const existing = await prisma.tool.findFirst({
-        where: {
-          OR: [{ slug }, { websiteUrl: tool.websiteUrl }, { githubUrl: tool.githubUrl }]
-        }
+      categoryId = await autoCategorize({
+        name: tool.name,
+        description: tool.shortDesc || tool.description,
+        tags: tool.tags,
       })
-      
-      if (existing) {
-        await prisma.tool.update({
-          where: { id: existing.id },
-          data: { publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : undefined }
-        })
-        skipped++
-        continue
+    } catch {}
+    
+    if (!categoryId) {
+      categoryId = await getOther()
+    }
+    
+    const desc = tool.shortDesc || tool.description || ''
+    
+    await prisma.tool.create({
+      data: {
+        name: cleanText(tool.name),
+        slug,
+        ...(desc.length > 110 ? { description: desc } : {}),
+        shortDesc: desc.slice(0, 100),
+        websiteUrl: tool.websiteUrl || '',
+        githubUrl: tool.githubUrl || '',
+        stars: tool.stars || 0, upvotes: 0,
+        isOpenSource: tool.isOpenSource,
+        tags: cleanText(tool.tags), source: cleanText(tool.source),
+        sourceUrl: cleanText(tool.sourceUrl),
+        publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : new Date(),
+        categoryId, status: 'approved', isActive: true
       }
-      
-      let categoryId = null
-      try {
-        categoryId = await autoCategorize({
-          name: tool.name,
-          description: tool.shortDesc || tool.description,
-          tags: tool.tags,
-        })
-      } catch {
-        // 分类失败时使用默认
-      }
-      
-      if (!categoryId) {
-        const otherCategory = await prisma.category.findFirst({ where: { name: '其他工具' } })
-        if (otherCategory) categoryId = otherCategory.id
-      }
-      
-      // 保留原有的 description 处理逻辑
-      const desc = tool.shortDesc || tool.description || ''
-      
-      await prisma.tool.create({
-        data: {
-          name: cleanText(tool.name),
-          slug,
-          // 如果 description 比 shortDesc 长很多才存，否则只存 shortDesc 避免重复
-          ...(desc.length > 110 ? { description: desc } : {}),
-          shortDesc: desc.slice(0, 100),
-          websiteUrl: tool.websiteUrl || '',
-          githubUrl: tool.githubUrl || '',
-          stars: tool.stars || 0, upvotes: 0,
-          isOpenSource: tool.isOpenSource,
-          tags: cleanText(tool.tags), source: cleanText(tool.source),
-          sourceUrl: cleanText(tool.sourceUrl),
-          publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : new Date(),
-          categoryId, status: 'approved', isActive: true
-        }
-      })
+    })
+    return { status: 'saved', name: tool.name }
+  })
+  
+  // 并行执行所有写入
+  const results = await Promise.all(tasks)
+  
+  for (const r of results) {
+    if (r.status === 'saved') {
       saved++
-      console.log(`✅ 已保存: ${tool.name}`)
-    } catch (error) {
-      console.error(`❌ 保存失败 ${tool.name}:`, (error as Error).message)
-      console.error('   name:', JSON.stringify(tool.name))
-      console.error('   desc:', JSON.stringify(tool.description?.slice(0, 100)))
+      console.log(`✅ 已保存: ${r.name}`)
+    } else {
+      skipped++
     }
   }
   
