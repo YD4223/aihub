@@ -66,10 +66,10 @@ async function fetchFromRSS(itemLimit: number = 10): Promise<any[]> {
       const lowerTitle = title.toLowerCase()
       const lowerContent = content.toLowerCase()
       
-      const hasToolKeyword = toolKeywords.some(kw => lowerTitle.includes(kw) || lowerContent.includes(kw))
+      const hasToolKeyword = toolKeywords.some(kw => lowerTitle.includes(kw))
       const hasGitHub = !!extractGitHubUrl(content)
       const isShortTitle = title.length < 35  // 短标题更像工具名
-      const hasAIKeyword = aiKeywords.some(kw => lowerTitle.includes(kw) || lowerContent.includes(kw))
+      const hasAIKeyword = aiKeywords.some(kw => lowerTitle.includes(kw.toLowerCase()) || lowerContent.includes(kw.toLowerCase()))
       
       // 满足任一条件才算工具：
       // 1. 有明确发布/推出等关键词
