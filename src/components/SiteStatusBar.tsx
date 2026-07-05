@@ -50,7 +50,7 @@ export default function SiteStatusBar() {
       localStorage.setItem('ah_session_id', sessionId)
     }
 
-    // 心跳 ping + 获取在线人数（每 60 秒一次）
+    // 心跳 ping + 获取在线人数（每 120 秒一次）
     const ping = async () => {
       try {
         const res = await fetch('/api/online', {
@@ -69,7 +69,7 @@ export default function SiteStatusBar() {
 
     // 立即执行一次
     ping()
-    const pingTimer = setInterval(ping, 60000)
+    const pingTimer = setInterval(ping, 120000)
 
     return () => {
       clearInterval(durationTimer)

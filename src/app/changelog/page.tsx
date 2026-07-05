@@ -3,6 +3,8 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Clock, Github, MessageSquare, ArrowUpRight, Sparkles, Shield, Zap, Bug, Wrench, Star } from 'lucide-react'
 
+export const revalidate = 14400
+
 const updates = [
   {
     date: '2026-06-25',

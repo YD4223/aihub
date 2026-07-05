@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
+export const revalidate = 14400
+
 export const metadata: Metadata = {
   title: '社区公约 | AI Hub',
   description: 'AI Hub 社区公约、发帖规范与举报处理流程。',
