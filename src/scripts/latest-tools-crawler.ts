@@ -356,14 +356,9 @@ async function main() {
   console.log(`\n📦 近期项目: 共获取 ${githubTools.length}，新增 ${recentNew.length}\n`)
 
   // =========================================================
-  // 阶段 4: RSS 抓取
+  // 阶段 4: 去重合并并保存
   // =========================================================
-  console.log('📡 === 阶段 3: RSS 抓取 ===')
-  const rssLimit = recentNew.length === 0 ? 20 : 10
-  const rssTools = await fetchFromRSS(rssLimit)
-
-  // 合并近期 + RSS，去重
-  const allNewTools = [...recentNew, ...rssTools]
+  const allNewTools = [...recentNew]
   const uniqueTools = allNewTools.filter((tool, index, self) =>
     index === self.findIndex(t => t.name === tool.name || (t.websiteUrl && tool.websiteUrl && t.websiteUrl === tool.websiteUrl))
   )
