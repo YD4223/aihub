@@ -492,7 +492,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
                 <div className="text-xs text-neon-cyan/70 font-mono mb-2">推广</div>
                 <div className="text-sm font-bold text-cyber-foreground mb-1">DNSHE 免费域名</div>
                 <div className="text-xs text-cyber-muted-foreground font-mono leading-relaxed mb-3">
-                  注册免费领3个域名 · 送3元余额
+                  注册免费领3个免费域名
                 </div>
                 <div className="flex items-center gap-1 text-xs text-neon-cyan font-mono">
                   立即注册 <span className="inline-block">→</span>
