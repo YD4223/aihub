@@ -483,6 +483,23 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
           <div className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-24 space-y-3">
               <a
+                href="https://sim.pst1.top"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block bg-[#12121a] border border-[#2a2a3a] hover:border-neon-cyan/50 transition-colors p-4"
+                style={{clipPath: 'polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))'}}
+              >
+                <div className="text-xs text-neon-cyan/70 font-mono mb-2">推广</div>
+                <div className="text-sm font-bold text-cyber-foreground mb-1">Sim帕沙特商城</div>
+                <div className="text-xs text-cyber-muted-foreground font-mono leading-relaxed mb-3">
+                  gg卡 · haha卡 · Lucky2 Sim
+                </div>
+                <div className="flex items-center gap-1 text-xs text-neon-cyan font-mono">
+                  前往选购 <span className="inline-block">→</span>
+                </div>
+              </a>
+
+              <a
                 href="https://my.dnshe.com/go.php?code=mnieBD6dxF"
                 target="_blank"
                 rel="noopener noreferrer"
