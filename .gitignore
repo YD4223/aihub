@@ -54,6 +54,7 @@ node-*.err
 # Audit / analysis reports
 AUDIT_REPORT_*.md
 full-audit.js
+enhanced-audit.js
 
 # Migration helper scripts
 fix-*.py
