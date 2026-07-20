@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -393,6 +394,24 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
   const search = searchParams.search as string | undefined
   const tab = searchParams.tab as string | undefined || 'tool'
   const page = Math.max(1, parseInt(searchParams.page as string) || 1)
+  
+  // 鉴权：验证是否已登录（未登录则显示登录提示）
+  const cookieStore = cookies()
+  const token = cookieStore.get('auth_token')?.value
+  let isLoggedIn = false
+  if (token) {
+    try {
+      const userResult = await prisma.$queryRawUnsafe<Array<any>>(
+        `SELECT id FROM users WHERE "sessionToken" = $1`,
+        token
+      )
+      isLoggedIn = Array.isArray(userResult) && userResult.length > 0
+    } catch {}
+  }
+  
+  if (!isLoggedIn) {
+    return <LoginPrompt />
+  }
   
   let toolShares: any[] = [], lifeShares: any[] = [], techShares: any[] = [], qaShares: any[] = [], stats: any = { toolCount: 0, lifeCount: 0, techCount: 0, qaCount: 0, totalLikes: 0, totalComments: 0 }, popularTags: any[] = []
   try {
@@ -971,6 +990,50 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
         </div>
       </div>
 
+      <Footer />
+    </div>
+  )
+}
+
+// 未登录时显示的登录提示页
+function LoginPrompt() {
+  return (
+    <div className="min-h-screen bg-cyber-background flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-cyber-card border border-cyber-border clip-chamfer p-8 text-center">
+          {/* 锁图标 */}
+          <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center border-2 border-neon-cyan clip-chamfer bg-neon-cyan/5">
+            <svg className="w-10 h-10 text-neon-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </div>
+          
+          <h1 className="text-2xl font-orbitron font-bold text-cyber-foreground mb-3">
+            登录后查看社区分享
+          </h1>
+          <p className="text-cyber-muted-foreground font-mono text-sm mb-8 leading-relaxed">
+            社区分享内容仅对登录用户开放。
+            <br />
+            注册账号即可解锁全部内容。
+          </p>
+          
+          <div className="space-y-3">
+            <Link
+              href="/login?redirect=/user-share"
+              className="block w-full py-3 bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50 clip-chamfer-sm font-mono uppercase tracking-wider text-sm hover:bg-neon-cyan hover:text-cyber-background hover:border-neon-cyan transition-all duration-200"
+            >
+              登录 / 注册
+            </Link>
+            <Link
+              href="/"
+              className="block w-full py-3 text-cyber-muted-foreground border border-cyber-border clip-chamfer-sm font-mono text-sm hover:text-neon-green hover:border-neon-green transition-all duration-200"
+            >
+              返回首页
+            </Link>
+          </div>
+        </div>
+      </div>
       <Footer />
     </div>
   )
