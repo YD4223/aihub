@@ -488,8 +488,11 @@ export default function Navbar() {
                       onClick={() => { 
                         localStorage.removeItem('user'); 
                         localStorage.removeItem('sessionToken'); 
-                        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-                        window.location.href = '/' 
+                        fetch('/api/auth/logout', { method: 'POST' }).then(() => {
+                          window.location.href = '/'
+                        }).catch(() => {
+                          window.location.href = '/'
+                        })
                       }}
                       style={{display:'block', width:'100%', textAlign:'left', padding:'8px 16px', fontSize:'12px', color:'#ff3366', fontFamily:'monospace', border:'none', background:'transparent', cursor:'pointer'}}
                       onMouseOver={e => e.currentTarget.style.background='#1c1c2e'} onMouseOut={e => e.currentTarget.style.background='transparent'}
