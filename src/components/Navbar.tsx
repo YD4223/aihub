@@ -174,7 +174,7 @@ export default function Navbar() {
           if (!data?.valid) {
             localStorage.removeItem('user')
             localStorage.removeItem('sessionToken')
-            document.cookie = 'auth_token=; Max-Age=0; path=/;'
+            fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
             setUser(null)
             alert('账号已在其他设备登录，已自动登出')
           }
@@ -488,8 +488,7 @@ export default function Navbar() {
                       onClick={() => { 
                         localStorage.removeItem('user'); 
                         localStorage.removeItem('sessionToken'); 
-                        // 清除登录cookie
-                        document.cookie = 'auth_token=; Max-Age=0; path=/;';
+                        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
                         window.location.href = '/' 
                       }}
                       style={{display:'block', width:'100%', textAlign:'left', padding:'8px 16px', fontSize:'12px', color:'#ff3366', fontFamily:'monospace', border:'none', background:'transparent', cursor:'pointer'}}
