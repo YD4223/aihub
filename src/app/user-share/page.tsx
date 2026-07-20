@@ -995,7 +995,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
   )
 }
 
-// 未登录时显示的登录提示页（高级版）
+// 未登录时显示的登录提示页（高级版 v2）
 function LoginPrompt() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
@@ -1003,120 +1003,103 @@ function LoginPrompt() {
       <div className="absolute inset-0 pointer-events-none">
         {/* 网格线 */}
         <div 
-          className="absolute inset-0 opacity-[0.04]"
+          className="absolute inset-0 opacity-[0.05]"
           style={{
             backgroundImage: [
-              'linear-gradient(rgba(0,212,255,0.4) 1px, transparent 1px)',
-              'linear-gradient(90deg, rgba(0,212,255,0.4) 1px, transparent 1px)'
+              'linear-gradient(rgba(0,212,255,0.5) 1px, transparent 1px)',
+              'linear-gradient(90deg, rgba(0,212,255,0.5) 1px, transparent 1px)'
             ].join(', '),
-            backgroundSize: '60px 60px'
+            backgroundSize: '80px 80px',
+            maskImage: 'radial-gradient(circle at center, black 30%, transparent 70%)',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 30%, transparent 70%)'
           }}
         />
-        {/* 青色光晕 */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%)' }}
+        {/* 中心光晕 - 更柔和 */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.1) 0%, transparent 60%)' }}
         />
-        {/* 洋红光晕 */}
-        <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(255,0,255,0.05) 0%, transparent 70%)' }}
-        />
-        {/* 顶部斜切装饰线 */}
-        <div className="absolute top-0 right-0 w-72 h-72 border-r-2 border-t-2 border-neon-cyan/15"
-          style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 0)' }}
-        />
-        {/* 底部斜切装饰线 */}
-        <div className="absolute bottom-0 left-0 w-56 h-56 border-l-2 border-b-2 border-neon-magenta/15"
-          style={{ clipPath: 'polygon(0 100%, 0 0, 100% 100%)' }}
-        />
-        {/* 浮动粒子点 */}
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              background: i % 2 === 0 ? 'rgba(0,212,255,0.4)' : 'rgba(255,0,255,0.3)',
-              top: `${15 + (i * 7) % 70}%`,
-              left: `${10 + (i * 11) % 80}%`,
-              animation: `ping ${2 + (i % 3) * 1.5}s ease-in-out infinite`,
-              animationDelay: `${i * 0.3}s`
-            }}
-          />
-        ))}
+        {/* 角落装饰 */}
+        <div className="absolute top-0 left-0 w-32 h-32 border-l border-t border-neon-cyan/20" />
+        <div className="absolute top-0 right-0 w-32 h-32 border-r border-t border-neon-cyan/20" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 border-l border-b border-neon-magenta/20" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 border-r border-b border-neon-magenta/20" />
+        
+        {/* 细线装饰 */}
+        <div className="absolute top-1/2 left-8 w-px h-24 bg-gradient-to-b from-transparent via-neon-cyan/30 to-transparent" />
+        <div className="absolute top-1/2 right-8 w-px h-24 bg-gradient-to-b from-transparent via-neon-cyan/30 to-transparent" />
       </div>
 
       <Navbar />
       
-      <div className="flex-1 flex items-center justify-center px-4 relative z-10">
-        <div className="max-w-md w-full">
-          {/* ===== 锁图标区域 ===== */}
-          <div className="relative w-32 h-32 mx-auto mb-8">
-            {/* 脉冲环 1 */}
-            <div className="absolute inset-0 rounded-full border-2 border-neon-cyan/20 animate-ping" style={{ animationDuration: '3s' }} />
-            {/* 脉冲环 2 */}
-            <div className="absolute inset-3 rounded-full border border-neon-cyan/15" />
-            {/* 核心图标容器 */}
-            <div className="absolute inset-4 flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, rgba(0,212,255,0.12), rgba(0,212,255,0.03))',
-                border: '1px solid rgba(0,212,255,0.3)',
-                clipPath: 'polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))'
-              }}
+      <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
+        <div className="w-full max-w-sm text-center">
+          
+          {/* ===== 小型锁图标 + 徽章组合 ===== */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-12 flex items-center justify-center border border-neon-cyan/40 bg-neon-cyan/5"
+              style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}
             >
-              <svg className="w-14 h-14 text-neon-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <svg className="w-5 h-5 text-neon-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
             </div>
-          </div>
-          
-          {/* ===== 文字内容 ===== */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-5 border border-neon-cyan/30 bg-neon-cyan/5"
-              style={{ clipPath: 'polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))' }}
+            <div className="h-px w-8 bg-gradient-to-r from-neon-cyan/50 to-transparent" />
+            <div className="px-3 py-1 border border-neon-cyan/30 bg-neon-cyan/5"
+              style={{ clipPath: 'polygon(0 3px, 3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px))' }}
             >
-              <span className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse" />
-              <span className="text-xs font-mono text-neon-cyan/80 uppercase tracking-widest">会员专属</span>
+              <span className="text-[10px] font-mono text-neon-cyan/70 tracking-[0.2em] uppercase">Members</span>
             </div>
-            
-            <h1 className="text-3xl md:text-4xl font-orbitron font-black text-[#e0e0e0] mb-4 tracking-tight">
-              登录后<span className="text-neon-cyan">解锁</span>
-            </h1>
-            <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-neon-cyan to-transparent mx-auto mb-5" />
-            <p className="text-[#6b7280] font-mono text-sm leading-relaxed max-w-xs mx-auto">
-              社区分享内容仅对登录用户开放。
-              <br />
-              立即注册，发现更多精彩。
-            </p>
           </div>
 
+          {/* ===== 主标题 ===== */}
+          <h1 className="text-2xl font-light text-[#e0e0e0] mb-1 tracking-wide">
+            登录后<span className="font-semibold text-neon-cyan">解锁</span>社区分享
+          </h1>
+          
+          {/* 分隔线 */}
+          <div className="flex items-center justify-center gap-2 my-5">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-neon-cyan/40" />
+            <div className="w-1 h-1 rounded-full bg-neon-cyan/50" />
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-neon-cyan/40" />
+          </div>
+
+          {/* ===== 描述 ===== */}
+          <p className="text-[#6b7280] text-xs leading-relaxed mb-10 max-w-[260px] mx-auto">
+            社区分享内容仅对注册用户开放
+            <br />
+            <span className="text-[#4b5563]">解锁更多精彩 · 发现志同道合</span>
+          </p>
+
           {/* ===== 按钮组 ===== */}
-          <div className="space-y-3 max-w-xs mx-auto">
+          <div className="space-y-2.5">
             <Link
               href="/login?redirect=/user-share"
-              className="group relative block w-full py-3.5 overflow-hidden"
+              className="group relative block py-3 transition-all duration-300 hover:scale-[1.02]"
               style={{
-                clipPath: 'polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))',
-                background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,212,255,0.05))',
+                clipPath: 'polygon(0 5px, 5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px))',
+                background: 'linear-gradient(135deg, rgba(0,212,255,0.25), rgba(0,212,255,0.08))',
                 border: '1px solid rgba(0,212,255,0.4)'
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-neon-cyan/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span className="relative font-mono text-sm uppercase tracking-[0.2em] text-neon-cyan group-hover:text-white transition-colors duration-300">
-                登录 / 注册
+              <div className="absolute inset-0 bg-gradient-to-r from-neon-cyan/30 via-neon-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="relative font-mono text-[13px] uppercase tracking-[0.25em] text-neon-cyan group-hover:text-white transition-colors duration-300">
+                立即登录
               </span>
             </Link>
             
             <Link
               href="/"
-              className="group block w-full py-3 text-center font-mono text-xs uppercase tracking-[0.15em] text-[#4b5563] hover:text-neon-green transition-colors duration-200"
+              className="group block py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-[#4b5563] hover:text-neon-green transition-colors duration-200"
             >
-              <span className="inline-flex items-center gap-2">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              <span className="inline-flex items-center gap-1.5">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
                 返回首页
               </span>
             </Link>
           </div>
+
         </div>
       </div>
       <Footer />
