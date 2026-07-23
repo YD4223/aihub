@@ -3,8 +3,57 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 
+// 登录频率限制：每 IP 最多连续失败 5 次，锁定 5 分钟
+const loginAttempts = new Map<string, { count: number; lockedUntil: number }>()
+const MAX_ATTEMPTS = 5
+const LOCKOUT_MINUTES = 5
+
+function getRateLimitInfo(ip: string): { allowed: boolean; remaining: number; lockedUntil: number | null } {
+  const now = Date.now()
+  const entry = loginAttempts.get(ip)
+  
+  if (entry && entry.lockedUntil > now) {
+    return { allowed: false, remaining: 0, lockedUntil: entry.lockedUntil }
+  }
+  
+  if (entry && entry.lockedUntil <= now) {
+    loginAttempts.delete(ip)
+    return { allowed: true, remaining: MAX_ATTEMPTS, lockedUntil: null }
+  }
+  
+  return { allowed: true, remaining: MAX_ATTEMPTS - (entry?.count || 0), lockedUntil: null }
+}
+
+function recordFailedAttempt(ip: string) {
+  const now = Date.now()
+  const entry = loginAttempts.get(ip) || { count: 0, lockedUntil: 0 }
+  entry.count++
+  if (entry.count >= MAX_ATTEMPTS) {
+    entry.lockedUntil = now + LOCKOUT_MINUTES * 60 * 1000
+  }
+  loginAttempts.set(ip, entry)
+}
+
+function resetAttempts(ip: string) {
+  loginAttempts.delete(ip)
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // 速率限制检查
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               request.headers.get('x-real-ip') || 
+               '127.0.0.1'
+    const { allowed, remaining, lockedUntil } = getRateLimitInfo(ip)
+    
+    if (!allowed) {
+      const waitSeconds = Math.ceil((lockedUntil! - Date.now()) / 1000)
+      return NextResponse.json(
+        { error: `登录尝试过于频繁，请 ${waitSeconds} 秒后再试` },
+        { status: 429 }
+      )
+    }
+    
     const { email, username, password } = await request.json()
 
     if (!password) {
@@ -49,11 +98,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValid) {
+      recordFailedAttempt(ip)
+      const remaining = MAX_ATTEMPTS - (loginAttempts.get(ip)?.count || 0)
       return NextResponse.json(
-        { error: '密码错误' },
+        { error: '密码错误', remainingAttempts: remaining },
         { status: 401 }
       )
     }
+
+    // 登录成功，清除失败记录
+    resetAttempts(ip)
 
     // 明文密码自动升级为 bcrypt
     if (needsUpgrade) {

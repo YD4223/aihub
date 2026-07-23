@@ -57,6 +57,11 @@ const nextConfig = {
             key: 'X-XSS-Protection',
             value: '0',  // 禁用已废弃的 XSS 过滤器（现代浏览器用 CSP 替代）
           },
+          // 限制浏览器 API 权限
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
         ]
       },
       // API 路由 — 通用头（不加 Cache-Control，让具体路由自行控制）
