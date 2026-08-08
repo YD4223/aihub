@@ -10,6 +10,23 @@ import Parser from 'rss-parser'
 import { prisma } from '@/lib/prisma'
 import { autoCategorize } from '@/lib/categorize'
 
+// 数据库连接池可能瞬时耗尽（子进程占用连接未释放），自动重试
+async function withRetry<T>(fn: () => Promise<T>, retries = 5): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn()
+    } catch (err: any) {
+      const isPoolError = err?.code === 'P2024' || 
+        (err?.message && err.message.includes('Timed out fetching a new connection'))
+      if (!isPoolError || i === retries - 1) throw err
+      const wait = 1000 * Math.pow(2, i)  // 1s, 2s, 4s, 8s, 16s
+      console.log(`⏳ 连接池繁忙，${wait / 1000}s 后重试 (${i + 1}/${retries})...`)
+      await new Promise(r => setTimeout(r, wait))
+    }
+  }
+  throw new Error('重试次数用尽')
+}
+
 // 加载 .env 文件（tsx 不会自动加载）
 try {
   const envPath = resolve(process.cwd(), '.env')
@@ -168,7 +185,7 @@ async function saveTools(tools: any[]) {
   const slugs = tools.map(t => generateSlug(t.name))
   const urls = tools.flatMap(t => [t.websiteUrl, t.githubUrl].filter(Boolean) as string[])
   
-  const existingTools = await prisma.tool.findMany({
+  const existingTools = await withRetry(() => prisma.tool.findMany({
     where: {
       OR: [
         { slug: { in: slugs } },
@@ -177,7 +194,7 @@ async function saveTools(tools: any[]) {
       ]
     },
     select: { id: true, slug: true, websiteUrl: true, githubUrl: true }
-  })
+  }))
   const existingSlugs = new Set(existingTools.map(t => t.slug))
   const existingUrls = new Set(existingTools.flatMap(t => [t.websiteUrl, t.githubUrl].filter(Boolean)))
   const existingMap = new Map(existingTools.map(t => [t.slug, t]))
@@ -185,7 +202,7 @@ async function saveTools(tools: any[]) {
   // 预缓存"其他工具"分类（避免并行时争抢连接）
   let otherCategoryId: number | null = null
   try {
-    const other = await prisma.category.findFirst({ where: { name: '其他工具' } })
+    const other = await withRetry(() => prisma.category.findFirst({ where: { name: '其他工具' } }))
     otherCategoryId = other?.id || null
   } catch {}
   
@@ -205,10 +222,10 @@ async function saveTools(tools: any[]) {
         const existing = existingMap.get(slug) || 
           existingTools.find(t => t.websiteUrl === tool.websiteUrl || t.githubUrl === tool.githubUrl)
         if (existing) {
-          await prisma.tool.update({
+          await withRetry(() => prisma.tool.update({
             where: { id: existing.id },
             data: { publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : undefined }
-          })
+          }))
         }
         return { status: 'skipped', name: tool.name }
       }
@@ -229,7 +246,7 @@ async function saveTools(tools: any[]) {
       
       const desc = tool.shortDesc || tool.description || ''
       
-      await prisma.tool.create({
+      await withRetry(() => prisma.tool.create({
         data: {
           name: cleanText(tool.name),
           slug,
@@ -244,7 +261,7 @@ async function saveTools(tools: any[]) {
           publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : new Date(),
           categoryId, status: 'approved', isActive: true
         }
-      })
+      }))
       return { status: 'saved', name: tool.name }
     }))
     results.push(...batchResults)
@@ -270,9 +287,9 @@ async function main() {
   // 阶段 1: 查询现有数据库，准备去重
   // =========================================================
   console.log('📦 查询现有工具列表...')
-  const existingTools = await prisma.tool.findMany({
+  const existingTools = await withRetry(() => prisma.tool.findMany({
     select: { slug: true, name: true, githubUrl: true, websiteUrl: true },
-  })
+  }))
   const existingUrls = new Set<string>()
   const existingNames = new Set<string>()
   for (const t of existingTools) {
