@@ -161,6 +161,12 @@ const rssSources = [
     language: 'en',
     category: 'AI新闻'
   },
+  {
+    name: 'AI Weekly',
+    url: 'https://aiweekly.co/feed',
+    language: 'en',
+    category: 'AI新闻'
+  },
 ]
 
 // 生成唯一 slug
