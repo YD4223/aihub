@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 
 // POST /api/user/delete-account - 注销账户
 export async function POST(request: NextRequest) {
   try {
+    // 会话归属校验：必须已登录，且只能注销自己的账号（防越权删号）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { userId, password } = body
 
     if (!userId) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权注销该账号' }, { status: 403 })
     }
 
     // 1. 获取用户信息

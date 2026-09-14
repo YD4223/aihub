@@ -75,3 +75,39 @@ export async function verifyAdmin(request: NextRequest): Promise<AuthResult | Ne
     return NextResponse.json({ error: '鉴权失败' }, { status: 500 })
   }
 }
+
+export interface UserAuthResult {
+  userId: number
+  role: string
+}
+
+/**
+ * 校验「当前登录用户」（任意角色，不要求 ADMIN）。
+ * 从 auth_token cookie 取 sessionToken，反查数据库确认归属。
+ * 通过返回 { userId, role }，失败返回 401 NextResponse。
+ *
+ * 用途：所有「以客户端传入的 userId 操作数据」的用户级路由，
+ * 都必须用它确认「当前登录用户 === 目标 userId」，防止越权（IDOR）。
+ */
+export async function requireUser(request: NextRequest): Promise<UserAuthResult | NextResponse> {
+  try {
+    const token = request.cookies.get('auth_token')?.value
+    if (!token) {
+      return NextResponse.json({ error: '未登录' }, { status: 401 })
+    }
+
+    const rows = await prisma.$queryRawUnsafe<Array<any>>(
+      `SELECT id, role FROM users WHERE "sessionToken" = $1 LIMIT 1`,
+      token
+    )
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return NextResponse.json({ error: '登录已过期，请重新登录' }, { status: 401 })
+    }
+
+    return { userId: rows[0].id, role: rows[0].role }
+  } catch (error: any) {
+    console.error('[Auth] requireUser 失败:', error)
+    return NextResponse.json({ error: '鉴权失败' }, { status: 500 })
+  }
+}

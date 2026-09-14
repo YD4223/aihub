@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/user/avatar - 上传头像（Base64 方案，兼容 Vercel 无服务器环境）
 export async function POST(request: NextRequest) {
   try {
+    // 会话归属校验：必须已登录，且只能改自己的头像（防越权涂抹）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const formData = await request.formData()
     const userId = formData.get('userId') as string
     const file = formData.get('avatar') as File
 
     if (!userId || !file) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权修改该用户头像' }, { status: 403 })
     }
 
     // 验证文件类型
@@ -61,11 +70,19 @@ export async function POST(request: NextRequest) {
 // DELETE /api/user/avatar - 删除头像（恢复为首字母头像）
 export async function DELETE(request: NextRequest) {
   try {
+    // 会话归属校验：必须已登录，且只能改自己的头像
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
     if (!userId) {
       return NextResponse.json({ error: '缺少用户ID' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权修改该用户头像' }, { status: 403 })
     }
 
     // 清除头像URL
