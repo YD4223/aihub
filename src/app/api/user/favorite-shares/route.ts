@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 
 // GET /api/user/favorite-shares?userId=xxx
 export async function GET(request: NextRequest) {
   try {
+    // 会话归属校验：只能读取自己的收藏
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     if (!userId) return NextResponse.json({ error: '需要userId' }, { status: 400 })
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权操作该用户的收藏' }, { status: 403 })
+    }
 
     const records = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT id, share_data, added_at FROM user_favorite_shares WHERE user_id = $1 ORDER BY added_at DESC`,
@@ -28,8 +36,15 @@ export async function GET(request: NextRequest) {
 // POST /api/user/favorite-shares - 添加/取消收藏分享
 export async function POST(request: NextRequest) {
   try {
+    // 会话归属校验：只能操作自己的收藏
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { userId, shareId, shareData } = await request.json()
     if (!userId || !shareId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权操作该用户的收藏' }, { status: 403 })
+    }
 
     const existing = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT id FROM user_favorite_shares WHERE user_id = $1 AND share_id = $2 LIMIT 1`,
@@ -55,10 +70,17 @@ export async function POST(request: NextRequest) {
 // DELETE /api/user/favorite-shares?userId=xxx&shareId=xxx
 export async function DELETE(request: NextRequest) {
   try {
+    // 会话归属校验：只能操作自己的收藏
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
     const userId = parseInt(searchParams.get('userId') || '0')
     const shareId = parseInt(searchParams.get('shareId') || '0')
     if (!userId || !shareId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    if (auth.userId !== userId) {
+      return NextResponse.json({ error: '无权操作该用户的收藏' }, { status: 403 })
+    }
 
     await prisma.$executeRawUnsafe(
       `DELETE FROM user_favorite_shares WHERE user_id = $1 AND share_id = $2`,

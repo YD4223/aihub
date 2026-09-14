@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { requireUser } from '@/lib/auth'
 
 // PUT /api/user/password - 修改密码
 export async function PUT(request: NextRequest) {
   try {
+    // 会话归属校验：只能修改自己的密码（防越权改密 / 账号接管）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { userId, currentPassword, newPassword } = body
 
     if (!userId || !currentPassword || !newPassword) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权修改该账号密码' }, { status: 403 })
     }
 
     // 获取用户当前密码

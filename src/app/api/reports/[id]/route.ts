@@ -1,20 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createNotification } from '@/lib/notification'
+import { verifyAdmin } from '@/lib/auth'
 
-// PATCH /api/reports/[id] - 处理举报
+// PATCH /api/reports/[id] - 处理举报（仅管理员）
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // 管理操作，仅管理员可执行
+    const auth = await verifyAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const reportId = parseInt(params.id)
     if (isNaN(reportId)) {
       return NextResponse.json({ error: '无效的举报ID' }, { status: 400 })
     }
 
     const body = await request.json()
-    const { action, resolution, adminId, suspendTarget } = body
+    const { action, resolution, suspendTarget } = body
 
     if (!action || !['resolved', 'dismissed'].includes(action)) {
       return NextResponse.json(
@@ -73,14 +78,14 @@ export async function PATCH(
       }
     }
 
-    // 更新举报状态
+    // 更新举报状态（处理人取自会话，取信不过客户端）
     await prisma.$executeRaw`
       UPDATE reports 
       SET 
         status = ${action},
         resolution = ${resolution || null},
         resolvedAt = NOW(),
-        resolvedBy = ${adminId || null},
+        resolvedBy = ${auth.userId},
         updatedAt = NOW()
       WHERE id = ${reportId}
     `
@@ -113,12 +118,16 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/reports/[id] - 删除举报
+// DELETE /api/reports/[id] - 删除举报（仅管理员）
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // 管理操作，仅管理员可执行
+    const auth = await verifyAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const reportId = parseInt(params.id)
     if (isNaN(reportId)) {
       return NextResponse.json({ error: '无效的举报ID' }, { status: 400 })

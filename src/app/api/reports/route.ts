@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // POST /api/reports - 提交举报
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { type, targetId, reason, description, reporterId } = body
+    const { type, targetId, reason, description } = body
+
+    // 举报人身份一律以会话为准（防伪造）；未登录则记为匿名（reporterId = null）
+    const token = request.cookies.get('auth_token')?.value
+    let reporterId: number | null = null
+    if (token) {
+      const rows = await prisma.$queryRawUnsafe<Array<any>>(
+        `SELECT id FROM users WHERE "sessionToken" = $1 LIMIT 1`,
+        token
+      )
+      if (Array.isArray(rows) && rows.length > 0) reporterId = rows[0].id
+    }
 
     // 验证必填字段
     if (!type || !targetId || !reason) {
@@ -69,7 +81,7 @@ export async function POST(request: NextRequest) {
         SELECT id FROM reports 
         WHERE type = ${type} 
           AND targetId = ${parseInt(targetId)}
-          AND reporterId = ${parseInt(reporterId)}
+          AND reporterId = ${parseInt(String(reporterId))}
           AND status = 'pending'
       `
       if ((existingReport as any[]).length > 0) {
@@ -88,7 +100,7 @@ export async function POST(request: NextRequest) {
         ${parseInt(targetId)}, 
         ${reason}, 
         ${description || null}, 
-        ${reporterId || null}, 
+        ${reporterId}, 
         'pending',
         NOW(), 
         NOW()
@@ -108,19 +120,28 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/reports - 获取举报列表（管理后台）
+// GET /api/reports - 获取举报列表（管理后台，仅管理员）
 export async function GET(request: NextRequest) {
   try {
+    // 管理后台数据，仅管理员可访问
+    const auth = await verifyAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') || 'pending'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const statusParam = searchParams.get('status') || 'pending'
+    // 白名单校验，杜绝 status 拼接导致的 SQL 注入
+    const allowedStatus = ['pending', 'resolved', 'dismissed', 'all']
+    const status = allowedStatus.includes(statusParam) ? statusParam : 'pending'
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20))
     const skip = (page - 1) * limit
 
-    // 构建查询条件
-    let whereClause = `WHERE r.status = ${status === 'all' ? "r.status" : `'${status}'`}`
-    if (status === 'all') {
-      whereClause = ''
+    // 参数化 WHERE（status 走 $1 绑定）
+    const whereParams: any[] = []
+    let whereClause = ''
+    if (status !== 'all') {
+      whereClause = 'WHERE r.status = $1'
+      whereParams.push(status)
     }
 
     // 获取举报列表
@@ -133,12 +154,12 @@ export async function GET(request: NextRequest) {
       ${whereClause}
       ORDER BY r.createdAt DESC
       LIMIT ${limit} OFFSET ${skip}
-    `)
+    `, ...whereParams)
 
     // 获取总数
     const countResult = await prisma.$queryRawUnsafe(`
       SELECT COUNT(*) as count FROM reports r ${whereClause}
-    `)
+    `, ...whereParams)
     const total = Number((countResult as any)[0].count)
 
     // 获取被举报对象的详细信息

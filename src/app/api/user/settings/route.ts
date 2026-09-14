@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 
 // GET /api/user/settings - 获取用户设置
 export async function GET(request: NextRequest) {
   try {
+    // 会话归属校验：只能读取自己的设置
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
     if (!userId) {
       return NextResponse.json({ error: '缺少用户ID' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权查看该用户设置' }, { status: 403 })
     }
 
     const user = await prisma.$queryRaw`
@@ -53,11 +62,19 @@ export async function GET(request: NextRequest) {
 // PUT /api/user/settings - 更新用户设置
 export async function PUT(request: NextRequest) {
   try {
+    // 会话归属校验：只能修改自己的设置
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { userId, type, settings } = body
 
     if (!userId || !type || !settings) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权修改该用户设置' }, { status: 403 })
     }
 
     if (type === 'notifications') {
