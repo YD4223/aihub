@@ -4,8 +4,16 @@
 #        bash src/scripts/indexnow.sh --url "https://..."
 
 SITE_HOST="ai999999.top"
-API_KEY="25dae7e87ad508621408a0351647d05d19fa4c606d8266bfffa947146a16c4ac"
 SITEMAP_URL="https://ai999999.top/sitemap.xml"
+
+# 从 .env 读取 INDEXNOW_KEY（若环境中未提供）
+if [ -z "${INDEXNOW_KEY:-}" ] && [ -f .env ]; then
+  INDEXNOW_KEY=$(grep -E '^INDEXNOW_KEY=' .env | head -1 | cut -d= -f2- | tr -d '\r' | sed 's/^["'\'']//; s/["'\'']$//')
+fi
+if [ -z "${INDEXNOW_KEY:-}" ]; then
+  echo "❌ 缺少环境变量 INDEXNOW_KEY（请在 .env 中配置，或先 export 后重试）"
+  exit 1
+fi
 PRIMARY_API="https://api.indexnow.org/indexnow"
 FALLBACK_API="https://www.bing.com/indexnow"
 
@@ -32,7 +40,7 @@ json_escape() {
 curl_post_batch() {
   local batch_items=$1
   local api_url=$2
-  local payload="{\"host\":\"$SITE_HOST\",\"key\":\"$API_KEY\",\"keyLocation\":\"https://$SITE_HOST/$API_KEY.txt\",\"urlList\":$batch_items}"
+  local payload="{\"host\":\"$SITE_HOST\",\"key\":\"$INDEXNOW_KEY\",\"keyLocation\":\"https://$SITE_HOST/$INDEXNOW_KEY.txt\",\"urlList\":$batch_items}"
 
   CURL_VERBOSE_FILE=$(mktemp /tmp/indexnow_verbose.XXXXXX)
   local resp_body_file=$(mktemp /tmp/indexnow_body.XXXXXX)

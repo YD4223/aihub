@@ -9,18 +9,17 @@ import { execSync } from 'child_process'
 import Parser from 'rss-parser'
 import { prisma } from '@/lib/prisma'
 import { autoCategorize } from '@/lib/categorize'
+import { isTransientDbError } from '@/lib/db-retry'
 
-// 数据库连接池可能瞬时耗尽（子进程占用连接未释放），自动重试
+// 数据库瞬时错误自动重试（连接池耗尽 P2024 / 网络不可达 P1001 / 连接被关闭等）
 async function withRetry<T>(fn: () => Promise<T>, retries = 5): Promise<T> {
   for (let i = 0; i < retries; i++) {
     try {
       return await fn()
     } catch (err: any) {
-      const isPoolError = err?.code === 'P2024' || 
-        (err?.message && err.message.includes('Timed out fetching a new connection'))
-      if (!isPoolError || i === retries - 1) throw err
+      if (!isTransientDbError(err) || i === retries - 1) throw err
       const wait = 1000 * Math.pow(2, i)  // 1s, 2s, 4s, 8s, 16s
-      console.log(`⏳ 连接池繁忙，${wait / 1000}s 后重试 (${i + 1}/${retries})...`)
+      console.log(`⏳ 数据库瞬时繁忙，${wait / 1000}s 后重试 (${i + 1}/${retries})...`)
       await new Promise(r => setTimeout(r, wait))
     }
   }

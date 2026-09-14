@@ -34,3 +34,4 @@ jobs:
         run: npx tsx scripts/submit-indexnow.ts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}

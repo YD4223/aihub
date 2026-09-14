@@ -3,10 +3,31 @@
  * 避免 Cloudflare 拦截问题
  * 用法: npx tsx scripts/submit-indexnow.ts
  */
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import { prisma } from '@/lib/prisma'
 
+// 加载 .env（tsx 不自动加载；作为子进程运行时也会继承父进程变量）
+try {
+  const envPath = resolve(process.cwd(), '.env')
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const t = line.trim()
+    if (!t || t.startsWith('#')) continue
+    const i = t.indexOf('=')
+    if (i > 0) {
+      const k = t.slice(0, i).trim()
+      const v = t.slice(i + 1).trim().replace(/^["']|["']$/g, '')
+      if (!process.env[k]) process.env[k] = v
+    }
+  }
+} catch {}
+
 const SITE_HOST = 'ai999999.top'
-const API_KEY = '25dae7e87ad508621408a0351647d05d19fa4c606d8266bfffa947146a16c4ac'
+const API_KEY = process.env.INDEXNOW_KEY
+if (!API_KEY) {
+  console.error('❌ 缺少环境变量 INDEXNOW_KEY（请在 .env 中配置，值即 public/<key>.txt 的文件名）')
+  process.exit(1)
+}
 const PRIMARY_API = 'https://api.indexnow.org/indexnow'
 const FALLBACK_API = 'https://www.bing.com/indexnow'
 const BATCH_SIZE = 5

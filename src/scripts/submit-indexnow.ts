@@ -12,10 +12,33 @@
  *   npm run indexnow -- --url "..."   # 推送单条 URL
  */
 
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
 const INDEXNOW_API = 'https://api.indexnow.org/indexnow'
 const SITE_HOST = 'ai999999.top'
 const SITEMAP_URL = 'https://ai999999.top/sitemap.xml'
-const API_KEY = '25dae7e87ad508621408a0351647d05d19fa4c606d8266bfffa947146a16c4ac'
+
+// 加载 .env（tsx 不自动加载）
+try {
+  const envPath = resolve(process.cwd(), '.env')
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const t = line.trim()
+    if (!t || t.startsWith('#')) continue
+    const i = t.indexOf('=')
+    if (i > 0) {
+      const k = t.slice(0, i).trim()
+      const v = t.slice(i + 1).trim().replace(/^["']|["']$/g, '')
+      if (!process.env[k]) process.env[k] = v
+    }
+  }
+} catch {}
+
+const API_KEY = process.env.INDEXNOW_KEY
+if (!API_KEY) {
+  console.error('❌ 缺少环境变量 INDEXNOW_KEY（请在 .env 中配置，值即 public/<key>.txt 的文件名）')
+  process.exit(1)
+}
 const KEY_LOCATION = `https://${SITE_HOST}/${API_KEY}.txt`
 
 // 每批提交数量（Bing 推荐流式模式，每批不超过 5 条）
