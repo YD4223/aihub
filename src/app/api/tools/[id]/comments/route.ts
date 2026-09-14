@@ -5,6 +5,7 @@ import { createNotification } from '@/lib/notification'
 import { addExp } from '@/lib/add-exp'
 import { EXP_RULES } from '@/lib/level'
 import sanitizeHtml from 'sanitize-html'
+import { requireUser } from '@/lib/auth'
 
 // GET /api/tools/[id]/comments - 获取工具的评论列表
 export async function GET(
@@ -69,8 +70,13 @@ export async function POST(
   }
 
   try {
+    // 会话归属校验：评论人身份以会话为准（防冒名评论）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+    const userId = auth.userId
+
     const body = await request.json()
-    const { content, userId = 1 } = body
+    const { content } = body
 
     if (!content || content.trim() === '') {
       return NextResponse.json({ error: '评论内容不能为空' }, { status: 400 })

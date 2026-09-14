@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { uploadImage, parseBase64Image, isR2Configured } from '@/lib/r2'
 import sanitizeHtml from 'sanitize-html'
+import { requireUser } from '@/lib/auth'
 
 // GET /api/shares?type=tool|life|tech_share|qa_help&toolId=&sort=new|hot&page=1&limit=10&search=
 export async function GET(request: NextRequest) {
@@ -130,6 +131,10 @@ export async function GET(request: NextRequest) {
 // POST /api/shares  发布分享（需要登录）
 export async function POST(request: NextRequest) {
   try {
+    // 会话归属校验：必须登录，发布者身份以会话为准（防冒名发帖 / 冒用管理员身份免审）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const contentType = request.headers.get('content-type') || ''
     let type: string, content: string, toolId: string | null, images: string[] | null, userId: string, video: string | null = null, tags: string | null = null
     
@@ -174,13 +179,13 @@ export async function POST(request: NextRequest) {
       tags = body.tags || null
     }
 
+    // 发布者身份一律以会话为准（忽略客户端传入的 userId）
+    userId = String(auth.userId)
+
     if (!content?.trim()) {
       return NextResponse.json({ error: '内容不能为空' }, { status: 400 })
     }
     content = sanitizeHtml(content.trim(), { allowedTags: [], allowedAttributes: {} })
-    if (!userId) {
-      return NextResponse.json({ error: '请先登录' }, { status: 401 })
-    }
     // 工具圈分享必须关联工具
     if (type === 'tool' && !toolId) {
       return NextResponse.json({ error: '请关联一个工具' }, { status: 400 })

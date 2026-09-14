@@ -5,6 +5,7 @@ import { createNotification } from '@/lib/notification'
 import { addExp } from '@/lib/add-exp'
 import { EXP_RULES } from '@/lib/level'
 import { checkAndUnlock } from '@/lib/check-achievements'
+import { requireUser } from '@/lib/auth'
 
 // POST /api/comments/[id]/like - 点赞/取消点赞评论
 export async function POST(
@@ -18,8 +19,10 @@ export async function POST(
   }
 
   try {
-    const body = await request.json()
-    const { userId = 1 } = body
+    // 会话归属校验：点赞人身份以会话为准（防冒名点赞）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+    const userId = auth.userId
 
     // 检查点赞次数限制
     const { allowed, remaining } = await canLike(userId)

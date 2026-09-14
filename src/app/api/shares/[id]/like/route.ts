@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { canLike, incrementLikeCount } from '@/lib/daily-limit'
 import { createNotification } from '@/lib/notification'
+import { requireUser } from '@/lib/auth'
 
 // GET /api/shares/[id]/like  获取当前点赞数
 export async function GET(
@@ -30,7 +31,12 @@ export async function POST(
   try {
     const shareId = parseInt(params.id)
     const body = await request.json()
-    const { action, userId = 1 } = body // 'like' | 'unlike'
+    const { action } = body // 'like' | 'unlike'
+
+    // 会话归属校验：点赞人身份以会话为准（防冒名点赞）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+    const userId = auth.userId
 
     // 点赞时检查次数限制
     if (action === 'like') {
