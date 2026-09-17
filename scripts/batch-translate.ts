@@ -94,9 +94,13 @@ async function main() {
     }
   }
 
-  // 清理临时文件
-  fs.unlinkSync(inputFile)
-  fs.unlinkSync(outputFile)
+  // 清理临时文件（失败不影响已完成的翻译）
+  try {
+    fs.unlinkSync(inputFile)
+    fs.unlinkSync(outputFile)
+  } catch (e) {
+    console.warn('⚠️ 临时文件清理失败（不影响翻译结果）:', e instanceof Error ? e.message : e)
+  }
 
   console.log(`\n✨ 完成! 更新了 ${updated} 个工具的简介`)
   await prisma.$disconnect()
