@@ -96,7 +96,12 @@ async function searchGitHubTools(): Promise<GitHubTool[]> {
         console.log(`  Error: ${result.errors[0]?.message}`)
         continue
       }
-      const repos = result.data?.search?.nodes || []
+      if (!result.data?.search) {
+        // 例如 Token 失效：{"message":"Bad credentials", ...}（无 data 也无 errors）
+        console.log(`  ⚠️ GitHub 响应异常（可能 Token 失效）: ${result.message || JSON.stringify(result).slice(0, 200)}`)
+        continue
+      }
+      const repos = result.data.search.nodes || []
       let newCount = 0
       for (const repo of repos) {
         if (!repo.name) continue
@@ -152,7 +157,12 @@ async function searchPopularGitHubTools(): Promise<GitHubTool[]> {
         console.log(`  Error: ${result.errors[0]?.message}`)
         continue
       }
-      const repos = result.data?.search?.nodes || []
+      if (!result.data?.search) {
+        // 例如 Token 失效：{"message":"Bad credentials", ...}
+        console.log(`  ⚠️ GitHub 响应异常（可能 Token 失效）: ${result.message || JSON.stringify(result).slice(0, 200)}`)
+        continue
+      }
+      const repos = result.data.search.nodes || []
       let newCount = 0
       for (const repo of repos) {
         if (!repo.name) continue
