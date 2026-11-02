@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import Parser from 'rss-parser'
 import slugify from 'slugify'
+import { translateToChinese } from '@/lib/translate'
 
 const prisma = new PrismaClient()
 const rssParser = new Parser({
@@ -10,79 +11,9 @@ const rssParser = new Parser({
   }
 })
 
-// 调用腾讯翻译 API 翻译摘要
+// 翻译：腾讯 TMT → 本地 Ollama → MyMemory（实现见 @/lib/translate）
 async function translateSummary(text: string): Promise<string> {
-  const secretId = process.env.TENCENT_TRANSLATE_SECRET_ID
-  const secretKey = process.env.TENCENT_TRANSLATE_SECRET_KEY
-  
-  // 如果没有配置腾讯翻译，尝试使用本地 Ollama
-  if (!secretId || !secretKey) {
-    console.log('   ⚠️ 未配置腾讯翻译，尝试本地模型...')
-    return translateWithLocalModel(text)
-  }
-  
-  try {
-    // 使用腾讯云 SDK（tsx/ESM 下兼容 CJS 模块）
-    const tmtModule = await import('tencentcloud-sdk-nodejs-tmt')
-    const tencentcloud = tmtModule.default || tmtModule
-    const TmtClient = tencentcloud.tmt.v20180321.Client
-    
-    const clientConfig = {
-      credential: {
-        secretId: secretId,
-        secretKey: secretKey,
-      },
-      region: 'ap-guangzhou',
-      profile: {
-        signMethod: 'TC3-HMAC-SHA256',
-        httpProfile: {
-          reqMethod: 'POST',
-          reqTimeout: 30,
-        },
-      },
-    }
-    
-    const client = new TmtClient(clientConfig)
-    
-    const params = {
-      SourceText: text,
-      Source: 'en',
-      Target: 'zh',
-      ProjectId: 0,
-    }
-    
-    const result = await client.TextTranslate(params)
-    return result.TargetText || ''
-  } catch (error) {
-    console.error('腾讯翻译失败:', error)
-    // 失败后尝试本地模型
-    return translateWithLocalModel(text)
-  }
-}
-
-// 本地模型翻译（备用方案）
-async function translateWithLocalModel(text: string): Promise<string> {
-  try {
-    const response = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'qwen2.5:3b',
-        prompt: `请将以下英文内容翻译成简洁流畅的中文摘要（100字以内）：\n\n${text}\n\n中文摘要：`,
-        stream: false
-      })
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    return data.response?.trim() || ''
-  } catch (error) {
-    console.error('本地翻译也失败:', error)
-    return ''
-  }
+  return translateToChinese(text)
 }
 
 // AI 资讯 RSS 源列表（精选有实质内容的源）

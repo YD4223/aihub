@@ -14,6 +14,7 @@
     "db:batch-import": "tsx src/scripts/batch-crawler.ts",
     "crawl": "tsx src/scripts/crawler.ts",
     "crawl:rss": "tsx src/scripts/rss-crawler.ts",
+    "backfill:news-translate": "tsx scripts/backfill-news-translate.ts",
     "crawl:latest": "tsx src/scripts/latest-tools-crawler.ts",
     "backfill:stars": "tsx scripts/backfill-stars.ts",
     "crawl:itc": "tsx src/scripts/itc-crawler.ts",
