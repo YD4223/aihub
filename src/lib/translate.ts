@@ -117,21 +117,33 @@ async function translateWithMyMemory(text: string): Promise<string> {
       const res = await fetch(`https://api.mymemory.translated.net/get?${params}`, {
         signal: AbortSignal.timeout(20000),
       })
+
+      // 429 = 免费额度用尽（或限流），本次运行不再尝试
+      if (res.status === 429) {
+        myMemoryQuotaOut = true
+        console.warn('   ⚠️ MyMemory 免费额度已用尽（约 24 小时后恢复），本次运行不再尝试')
+        return results.join('') || ''
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
       const data: any = await res.json()
 
-      if (data?.quotaFinished) {
+      // 有的响应返回 HTTP 200 但 responseStatus=429 且文本是 WARNING
+      const translated = data?.responseData?.translatedText
+      const isQuotaWarning =
+        data?.responseStatus === 429 ||
+        (typeof translated === 'string' && translated.includes('MYMEMORY WARNING'))
+
+      if (data?.quotaFinished || isQuotaWarning) {
         myMemoryQuotaOut = true
-        console.warn('   ⚠️ MyMemory 今日额度已用完')
+        console.warn('   ⚠️ MyMemory 免费额度已用尽（约 24 小时后恢复），本次运行不再尝试')
         return results.join('') || ''
       }
 
-      const translated = data?.responseData?.translatedText
       if (!translated) return results.join('') || ''
       results.push(translated)
 
-      if (chunks.length > 1) await new Promise((r) => setTimeout(r, 200))
+      if (chunks.length > 1) await new Promise((r) => setTimeout(r, 250))
     } catch (e: any) {
       console.warn(`   ⚠️ MyMemory 翻译失败: ${e?.message || e}`)
       return results.join('') || ''

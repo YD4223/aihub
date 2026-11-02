@@ -27,6 +27,8 @@ prisma/dev.db-journal
 
 # Build artifacts
 tsconfig.tsbuildinfo
+__pycache__/
+*.pyc
 
 # OS
 .DS_Store

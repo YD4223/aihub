@@ -4,6 +4,7 @@
  * 用法: npx tsx scripts/batch-translate.ts
  */
 import { prisma } from '@/lib/prisma'
+import { withDbRetry } from '@/lib/db-retry'
 import { execSync } from 'child_process'
 
 const PYTHON = 'C:\\Users\\Lenovo\\.workbuddy\\binaries\\python\\versions\\3.13.12\\python.exe'
@@ -12,16 +13,22 @@ async function main() {
   console.log('📦 查询需要翻译的工具...')
 
   // 找出 shortDesc 或 description 不含中文的（已翻译过的跳过）
-  const tools = await prisma.tool.findMany({
-    where: {
-      OR: [
-        { shortDesc: { not: null } },
-        { description: { not: null } },
-      ]
-    },
-    select: { id: true, name: true, shortDesc: true, description: true },
-    orderBy: { stars: 'desc' },
-  })
+  // 加 DB 重试：作为 crawl 子进程运行时，主进程仍持有连接，偶发 P1001/P2024
+  const tools = await withDbRetry(
+    () =>
+      prisma.tool.findMany({
+        where: {
+          OR: [
+            { shortDesc: { not: null } },
+            { description: { not: null } },
+          ]
+        },
+        select: { id: true, name: true, shortDesc: true, description: true },
+        orderBy: { stars: 'desc' },
+      }),
+    5,
+    '查询工具列表'
+  )
 
   // 筛选出需要翻译的
   const hasChinese = (s: string | null) => {
@@ -73,23 +80,43 @@ async function main() {
 
   const output = fs.readFileSync(outputFile, 'utf-8')
   const translationMap: Record<string, string> = JSON.parse(output)
-  
-  const successCount = Object.keys(translationMap).length
-  console.log(`✅ 翻译成功: ${successCount}`)
-  console.log(`⚠️  失败: ${uniqueTexts.length - successCount}`)
+
+  // 真实成功 = 译出中文且与原文不同（全部通道失效时会回退成原文，不能只看 key 数量）
+  const reallyTranslated = uniqueTexts.filter(
+    (t) => translationMap[t] && translationMap[t] !== t && /[\u4e00-\u9fff]/.test(translationMap[t])
+  ).length
+  console.log(`✅ 翻译成功: ${reallyTranslated}`)
+  console.log(`⚠️  未翻译: ${uniqueTexts.length - reallyTranslated}`)
+
+  if (reallyTranslated === 0) {
+    console.warn('\n⚠️ 所有文本都未译出中文——翻译通道可能全部不可用')
+    console.warn('   检查：腾讯 TMT 免费额度 / 本地 Ollama 是否启动 / MyMemory 额度')
+    console.warn('   本次不写库，避免把原文当译文覆盖。')
+    try { fs.unlinkSync(inputFile); fs.unlinkSync(outputFile) } catch {}
+    await prisma.$disconnect()
+    return
+  }
 
   // 更新数据库
   let updated = 0
   for (const t of toTranslate) {
     const updates: any = {}
-    if (t.shortDesc && translationMap[t.shortDesc] && translationMap[t.shortDesc] !== t.shortDesc) {
+    if (t.shortDesc && translationMap[t.shortDesc] &&
+        translationMap[t.shortDesc] !== t.shortDesc &&
+        /[\u4e00-\u9fff]/.test(translationMap[t.shortDesc])) {
       updates.shortDesc = translationMap[t.shortDesc]
     }
-    if (t.description && translationMap[t.description] && translationMap[t.description] !== t.description) {
+    if (t.description && translationMap[t.description] &&
+        translationMap[t.description] !== t.description &&
+        /[\u4e00-\u9fff]/.test(translationMap[t.description])) {
       updates.description = translationMap[t.description]
     }
     if (Object.keys(updates).length > 0) {
-      await prisma.tool.update({ where: { id: t.id }, data: updates })
+      await withDbRetry(
+        () => prisma.tool.update({ where: { id: t.id }, data: updates }),
+        5,
+        `更新工具 ${t.id}`
+      )
       updated++
     }
   }

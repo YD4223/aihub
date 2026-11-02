@@ -1,13 +1,15 @@
 """
-翻译工作进程 - 使用腾讯云机器翻译 TMT API（纯标准库，TC3-HMAC-SHA256 签名）
+翻译工作进程 - 多级 fallback：腾讯云 TMT → MyMemory 免费接口
 
 说明：官方 tencentcloud SDK 的 tmt 模块打包不完整（缺 TextTranslateRequest），
-故这里直接用标准库实现 TC3 签名调用 tmt.tencentcloudapi.com，去掉对 SDK 的依赖。
+故腾讯通道用标准库实现 TC3 签名；腾讯额度用尽时自动降级到 MyMemory。
 
 限制：每秒最多 4 次请求
 用法：python translate-worker.py [输入json] [输出json]
+环境变量：TENCENT_TRANSLATE_SECRET_ID / _KEY、MYMEMORY_EMAIL（可选，提升配额）
 """
 import sys, json, os, time, hashlib, hmac
+import urllib.parse
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
@@ -118,6 +120,77 @@ if not lines:
 texts = json.loads(lines)
 results = {}
 
+# 通道状态（进程内缓存，避免每条重复重试已失效的通道）
+tencent_disabled = False
+mymemory_quota_out = False
+
+
+def translate_with_mymemory(text):
+    """MyMemory 免费翻译（无需密钥，云端兜底）。单次 ≤500 字符。"""
+    global mymemory_quota_out
+    if mymemory_quota_out:
+        return ''
+
+    chunks = split_for_translation(text, 450)
+    parts = []
+
+    for chunk in chunks:
+        params = {'q': chunk, 'langpair': 'en|zh-CN'}
+        email = os.environ.get('MYMEMORY_EMAIL', '')
+        if email:
+            params['de'] = email
+
+        url = 'https://api.mymemory.translated.net/get?' + urllib.parse.urlencode(params)
+        try:
+            with urlopen(url, timeout=20) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+        except HTTPError as e:
+            if e.code == 429:
+                mymemory_quota_out = True
+                print('WARN: MyMemory 免费额度已用尽（约 24 小时后恢复）', file=sys.stderr)
+                return ''.join(parts) or ''
+            print(f'WARN: MyMemory HTTP {e.code}', file=sys.stderr)
+            return ''.join(parts) or ''
+        except Exception as e:
+            print(f'WARN: MyMemory 失败 {e}', file=sys.stderr)
+            return ''.join(parts) or ''
+
+        translated = (data.get('responseData') or {}).get('translatedText') or ''
+        if data.get('quotaFinished') or 'MYMEMORY WARNING' in translated or data.get('responseStatus') == 429:
+            mymemory_quota_out = True
+            print('WARN: MyMemory 免费额度已用尽（约 24 小时后恢复）', file=sys.stderr)
+            return ''.join(parts) or ''
+
+        if not translated:
+            return ''.join(parts) or ''
+        parts.append(translated)
+
+        if len(chunks) > 1:
+            time.sleep(0.25)
+
+    return ''.join(parts)
+
+
+def split_for_translation(text, max_len):
+    """按句子切分，适配 MyMemory 单次 500 字符限制"""
+    if len(text) <= max_len:
+        return [text]
+
+    parts = []
+    rest = text.strip()
+    while len(rest) > max_len:
+        cut = rest.rfind('. ', 0, max_len)
+        if cut < max_len * 0.5:
+            cut = rest.rfind(' ', 0, max_len)
+        if cut < max_len * 0.5:
+            cut = max_len
+        parts.append(rest[:cut + 1].strip())
+        rest = rest[cut + 1:].strip()
+    if rest:
+        parts.append(rest)
+    return [p for p in parts if p]
+
+
 for i, text in enumerate(texts):
     if not text or not text.strip():
         results[text] = text
@@ -127,11 +200,25 @@ for i, text in enumerate(texts):
     if i > 0 and i % 4 == 0:
         time.sleep(1)
 
-    try:
-        results[text] = translate(text)
-    except Exception as e:
-        print(f"WARN [{text[:40]}]: {e}", file=sys.stderr)
-        results[text] = text  # 失败保留原文
+    out = ''
+
+    # 1) 腾讯 TMT（质量最好）
+    if not tencent_disabled:
+        try:
+            out = translate(text)
+        except Exception as e:
+            msg = str(e)
+            if 'NoFreeAmount' in msg or 'free amount' in msg.lower() or 'quota' in msg.lower():
+                tencent_disabled = True
+                print('WARN: 腾讯翻译本月免费额度已用完，改用 MyMemory', file=sys.stderr)
+            else:
+                print(f'WARN [{text[:40]}]: {e}', file=sys.stderr)
+
+    # 2) MyMemory 兜底
+    if not out:
+        out = translate_with_mymemory(text)
+
+    results[text] = out or text  # 全部失败保留原文
 
 json_output = json.dumps(results, ensure_ascii=True)
 if output_file:
