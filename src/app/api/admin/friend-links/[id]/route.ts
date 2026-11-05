@@ -3,10 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyAdmin } from '@/lib/auth'
 
 // PUT /api/admin/friend-links/[id] - 更新友情链接
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth
@@ -38,10 +36,8 @@ export async function PUT(
 }
 
 // DELETE /api/admin/friend-links/[id] - 删除友情链接
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth

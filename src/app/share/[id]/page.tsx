@@ -11,10 +11,11 @@ import type { Metadata } from 'next'
 export const revalidate = 14400
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const share = await prisma.share.findUnique({
     where: { id: parseInt(params.id) },
     select: { content: true },
@@ -24,7 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function ShareDetailPage({ params }: Props) {
+export default async function ShareDetailPage(props: Props) {
+  const params = await props.params;
   const id = parseInt(params.id)
   if (isNaN(id)) notFound()
 

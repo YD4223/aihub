@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 interface UserSharePageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 async function getToolShares(sort?: string, search?: string, page: number = 1) {
@@ -389,12 +389,13 @@ async function getPopularTags() {
   }
 }
 
-export default async function UserSharePage({ searchParams }: UserSharePageProps) {
+export default async function UserSharePage(props: UserSharePageProps) {
+  const searchParams = await props.searchParams;
   const sort = searchParams.sort as string | undefined
   const search = searchParams.search as string | undefined
   const tab = searchParams.tab as string | undefined || 'tool'
   const page = Math.max(1, parseInt(searchParams.page as string) || 1)
-  
+
   // 鉴权：验证是否已登录（未登录则显示登录提示）
   const cookieStore = await cookies()
   const token = cookieStore.get('auth_token')?.value
@@ -408,11 +409,11 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
       isLoggedIn = Array.isArray(userResult) && userResult.length > 0
     } catch {}
   }
-  
+
   if (!isLoggedIn) {
     return <LoginPrompt />
   }
-  
+
   let toolShares: any[] = [], lifeShares: any[] = [], techShares: any[] = [], qaShares: any[] = [], stats: any = { toolCount: 0, lifeCount: 0, techCount: 0, qaCount: 0, totalLikes: 0, totalComments: 0 }, popularTags: any[] = []
   try {
     const results = await Promise.all([

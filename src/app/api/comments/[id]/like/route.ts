@@ -8,10 +8,8 @@ import { checkAndUnlock } from '@/lib/check-achievements'
 import { requireUser } from '@/lib/auth'
 
 // POST /api/comments/[id]/like - 点赞/取消点赞评论
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const commentId = parseInt(params.id)
 
   if (isNaN(commentId)) {

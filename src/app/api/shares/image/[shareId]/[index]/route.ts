@@ -22,8 +22,9 @@ function imageResponse(buffer: Buffer, mimeType: string, isHit: boolean): Respon
 // 从数据库读取分享图片，返回 HTTP 图片响应
 export async function GET(
   request: NextRequest,
-  { params }: { params: { shareId: string; index: string } }
+  props: { params: Promise<{ shareId: string; index: string }> }
 ) {
+  const params = await props.params;
   try {
     const shareId = parseInt(params.shareId)
     const index = parseInt(params.index)

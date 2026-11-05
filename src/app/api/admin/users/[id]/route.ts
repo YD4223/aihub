@@ -3,10 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyAdmin } from '@/lib/auth'
 
 // PATCH /api/admin/users/[id] - 封禁/解封用户
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth
@@ -92,10 +90,8 @@ export async function PATCH(
 }
 
 // GET /api/admin/users/[id] - 获取用户详情
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth

@@ -4,10 +4,8 @@ import { verifyAdmin } from '@/lib/auth'
 import { createNotification } from '@/lib/notification'
 
 // POST /api/admin/tools/[id]/review
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth

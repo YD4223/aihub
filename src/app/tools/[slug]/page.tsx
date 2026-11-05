@@ -17,10 +17,11 @@ import type { Metadata } from 'next'
 export const revalidate = 14400
 
 interface ToolPageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: ToolPageProps): Promise<Metadata> {
+export async function generateMetadata(props: ToolPageProps): Promise<Metadata> {
+  const params = await props.params;
   const tool = await prisma.tool.findUnique({
     where: { slug: params.slug },
     select: { name: true, shortDesc: true, description: true }
@@ -67,10 +68,11 @@ function parseTags(tags: string | null): string[] {
   return tags.split(',').map(t => t.trim()).filter(Boolean)
 }
 
-export default async function ToolPage({ params }: ToolPageProps) {
+export default async function ToolPage(props: ToolPageProps) {
+  const params = await props.params;
   // 解码 URL 编码的 slug（处理中文等特殊字符）
   const decodedSlug = decodeURIComponent(params.slug)
-  
+
   // 从数据库获取工具数据
   const tool = await prisma.tool.findUnique({
     where: { slug: decodedSlug },
@@ -109,7 +111,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
   return (
     <div className="min-h-screen bg-cyber-background">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <Link
@@ -370,5 +372,5 @@ export default async function ToolPage({ params }: ToolPageProps) {
       <ViewTracker toolId={tool.id} />
       <Footer />
     </div>
-  )
+  );
 }

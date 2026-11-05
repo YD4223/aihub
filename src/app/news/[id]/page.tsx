@@ -12,28 +12,30 @@ export const revalidate = 14400
 
 
 interface NewsDetailPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export async function generateMetadata({ params }: NewsDetailPageProps): Promise<Metadata> {
+export async function generateMetadata(props: NewsDetailPageProps): Promise<Metadata> {
+  const params = await props.params;
   const newsId = parseInt(params.id, 10)
   if (isNaN(newsId)) return { title: '资讯未找到 | AI Hub' }
-  
+
   const news = await prisma.news.findUnique({
     where: { id: newsId },
     select: { title: true, titleZh: true, summary: true }
   })
   if (!news) return { title: '资讯未找到 | AI Hub' }
-  
+
   return {
     title: `${news.titleZh || news.title} - AI资讯 | AI Hub`,
     description: news.summary || `了解最新AI资讯：${news.titleZh || news.title}`,
   }
 }
 
-export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
+export default async function NewsDetailPage(props: NewsDetailPageProps) {
+  const params = await props.params;
   const newsId = parseInt(params.id, 10)
-  
+
   if (isNaN(newsId)) {
     notFound()
   }
@@ -184,7 +186,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                   {news.content ? (
                     news.content.split('\n\n').map((para, i) => {
                       if (para.startsWith('**') && para.endsWith('**')) {
-                        return <h3 key={i} className="text-lg font-semibold text-neon-cyan mt-6 mb-2 font-orbitron">{para.replace(/\*\*/g, '')}</h3>
+                        return <h3 key={i} className="text-lg font-semibold text-neon-cyan mt-6 mb-2 font-orbitron">{para.replace(/\*\*/g, '')}</h3>;
                       }
                       if (para.includes('\n') && para.match(/^\d+\./)) {
                         return (
@@ -193,7 +195,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                               <li key={j}>{line.replace(/^\d+\.\s/, '')}</li>
                             ))}
                           </ul>
-                        )
+                        );
                       }
                       return <p key={i} className="text-cyber-muted-foreground leading-relaxed mb-4">{para}</p>
                     })
@@ -258,7 +260,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
       <Footer />
     </div>
-  )
+  );
 }
 
 // 根据字符串生成一致的颜色

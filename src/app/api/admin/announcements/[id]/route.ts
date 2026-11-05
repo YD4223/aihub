@@ -3,10 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyAdmin } from '@/lib/auth'
 
 // PUT /api/admin/announcements/[id] - 更新公告
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth
@@ -34,10 +32,8 @@ export async function PUT(
 }
 
 // DELETE /api/admin/announcements/[id] - 删除公告
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth

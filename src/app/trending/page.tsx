@@ -12,12 +12,13 @@ export const metadata = {
 
 // 趋势榜页面 - 支持热度/最新/评分三种排序
 interface TrendingPageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export const revalidate = 14400
 
-export default async function TrendingPage({ searchParams }: TrendingPageProps) {
+export default async function TrendingPage(props: TrendingPageProps) {
+  const searchParams = await props.searchParams;
   const tab = (searchParams.tab as string) || 'trending'
 
   // 基础查询条件

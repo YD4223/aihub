@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import OpenSourceFilter from '@/components/OpenSourceFilter'
 
 interface OpenSourcePageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export const metadata = {
@@ -30,7 +30,8 @@ function stringToColor(str: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-export default async function OpenSourcePage({ searchParams }: OpenSourcePageProps) {
+export default async function OpenSourcePage(props: OpenSourcePageProps) {
+  const searchParams = await props.searchParams;
   const lang = searchParams.lang as string | undefined
   const sort = searchParams.sort as string | undefined
 
@@ -306,5 +307,5 @@ export default async function OpenSourcePage({ searchParams }: OpenSourcePagePro
 
       <Footer />
     </div>
-  )
+  );
 }

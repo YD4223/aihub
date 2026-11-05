@@ -4,10 +4,8 @@ import { createNotification } from '@/lib/notification'
 import { verifyAdmin } from '@/lib/auth'
 
 // PATCH /api/reports/[id] - 处理举报（仅管理员）
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     // 管理操作，仅管理员可执行
     const auth = await verifyAdmin(request)
@@ -119,10 +117,8 @@ export async function PATCH(
 }
 
 // DELETE /api/reports/[id] - 删除举报（仅管理员）
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     // 管理操作，仅管理员可执行
     const auth = await verifyAdmin(request)

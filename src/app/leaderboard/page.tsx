@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export const revalidate = 14400
 
 interface Props {
-  searchParams: { tab?: string }
+  searchParams: Promise<{ tab?: string }>
 }
 
 const TAB_CONFIG = {
@@ -178,7 +178,8 @@ function stringToColor(str: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-export default async function LeaderboardPage({ searchParams }: Props) {
+export default async function LeaderboardPage(props: Props) {
+  const searchParams = await props.searchParams;
   const tab = (searchParams.tab as TabKey) || 'shares'
   const validTab = tab in TAB_CONFIG ? tab : 'shares'
   const data = await getLeaderboard(validTab)

@@ -9,10 +9,8 @@ import sanitizeHtml from 'sanitize-html'
 import { requireUser } from '@/lib/auth'
 
 // GET /api/shares/[id]/comments - 获取分享的评论列表
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const shareId = parseInt(params.id)
 
   if (isNaN(shareId)) {
@@ -44,10 +42,8 @@ export async function GET(
 }
 
 // POST /api/shares/[id]/comments - 发表评论
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const shareId = parseInt(params.id)
 
   if (isNaN(shareId)) {

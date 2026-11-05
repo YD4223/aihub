@@ -7,10 +7,8 @@ import { checkAndUnlock } from '@/lib/check-achievements'
 import { createNotification } from '@/lib/notification'
 
 // POST /api/admin/shares/[id]/review  审核分享/下架/恢复
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth

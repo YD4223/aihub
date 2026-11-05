@@ -3,10 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyAdmin } from '@/lib/auth'
 
 // PATCH /api/admin/comments/:id - 下架/恢复评论
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 鉴权
   const auth = await verifyAdmin(request)
   if (auth instanceof NextResponse) return auth

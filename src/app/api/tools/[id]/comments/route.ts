@@ -8,10 +8,8 @@ import sanitizeHtml from 'sanitize-html'
 import { requireUser } from '@/lib/auth'
 
 // GET /api/tools/[id]/comments - 获取工具的评论列表
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const toolId = parseInt(params.id)
 
   if (isNaN(toolId)) {
@@ -59,10 +57,8 @@ export async function GET(
 }
 
 // POST /api/tools/[id]/comments - 给工具发表评论
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const toolId = parseInt(params.id)
 
   if (isNaN(toolId)) {

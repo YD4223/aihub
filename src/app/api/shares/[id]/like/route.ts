@@ -5,10 +5,8 @@ import { createNotification } from '@/lib/notification'
 import { requireUser } from '@/lib/auth'
 
 // GET /api/shares/[id]/like  获取当前点赞数
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const shareId = parseInt(params.id)
     const share = await prisma.share.findUnique({
@@ -24,10 +22,8 @@ export async function GET(
 }
 
 // POST /api/shares/[id]/like  点赞/取消点赞
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const shareId = parseInt(params.id)
     const body = await request.json()
