@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 import { generateAIReply, shouldAIReply, shouldAILike } from '@/lib/ai-service'
 
 /**
@@ -11,8 +12,17 @@ import { generateAIReply, shouldAIReply, shouldAILike } from '@/lib/ai-service'
  */
 export async function POST(request: NextRequest) {
   try {
+    // 会话归属校验：触发者必须是已登录用户，authorId 以会话为准（防匿名刷 AI 互动/冒名）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
-    const { targetType, targetId, content, authorName, authorId, context } = body
+    const { targetType, targetId, content, authorName, authorId: bodyAuthorId, context } = body
+    const authorId = auth.userId
+
+    if (bodyAuthorId && parseInt(bodyAuthorId) !== authorId) {
+      return NextResponse.json({ error: '无权以他人身份触发互动' }, { status: 403 })
+    }
 
     // 验证参数
     if (!targetType || !targetId || !content || !authorName) {

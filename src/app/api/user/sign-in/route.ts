@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 import { getLevelByExp, EXP_RULES } from '@/lib/level'
 import { checkAndUnlock } from '@/lib/check-achievements'
 
 // POST /api/user/sign-in
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json()
-    if (!userId) return NextResponse.json({ error: '请先登录' }, { status: 401 })
+    // 会话归属校验：只能给自己签到（防冒名刷经验）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
+    const { userId: bodyUserId } = await request.json()
+    const userId = auth.userId
+    if (bodyUserId && parseInt(bodyUserId) !== userId) {
+      return NextResponse.json({ error: '无权替他人签到' }, { status: 403 })
+    }
 
     const today = new Date().toISOString().split('T')[0]
 
     // 检查今天是否已签到
     const existing = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT id FROM user_sign_ins WHERE "userId" = $1 AND "signInDate" = $2::date`,
-      parseInt(userId), today
+      userId, today
     )
     if (existing.length > 0) {
       return NextResponse.json({ error: '今天已签到', signedIn: true })
@@ -27,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const lastSignIn = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT streak FROM user_sign_ins WHERE "userId" = $1 AND "signInDate" = $2::date LIMIT 1`,
-      parseInt(userId), yesterdayStr
+      userId, yesterdayStr
     )
 
     const streak = lastSignIn.length > 0 ? lastSignIn[0].streak + 1 : 1
@@ -35,7 +43,7 @@ export async function POST(request: NextRequest) {
     // 插入签到记录
     await prisma.$queryRawUnsafe(
       `INSERT INTO user_sign_ins ("userId", "signInDate", streak) VALUES ($1, $2::date, $3)`,
-      parseInt(userId), today, streak
+      userId, today, streak
     )
 
     // 计算经验：签到基础 + 连续加成
@@ -44,7 +52,7 @@ export async function POST(request: NextRequest) {
     // 更新用户经验
     const result = await prisma.$queryRawUnsafe<Array<any>>(
       `UPDATE users SET exp = exp + $1 WHERE id = $2 RETURNING exp`,
-      expGain, parseInt(userId)
+      expGain, userId
     )
 
     const totalExp = Number(result[0]?.exp || 0)
@@ -53,11 +61,11 @@ export async function POST(request: NextRequest) {
     // 更新等级
     await prisma.$executeRawUnsafe(
       `UPDATE users SET level = $1 WHERE id = $2`,
-      newLevel, parseInt(userId)
+      newLevel, userId
     )
 
     // 成就检查
-    checkAndUnlock(parseInt(userId)).catch(() => {})
+    checkAndUnlock(userId).catch(() => {})
 
     return NextResponse.json({
       success: true,

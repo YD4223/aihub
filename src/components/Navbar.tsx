@@ -184,18 +184,26 @@ export default function Navbar() {
     if (parsed?.id && sessionToken) {
       doVerify(sessionToken)
     } else if (parsed?.id) {
-      // 没有 token 就去获取（已有则返回旧token，没有则生成新token）
+      // 没有本地 token：靠 cookie 会话续期（服务端需要有效会话，否则视为未登录）
       fetch('/api/auth/refresh-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: parsed.id })
       })
-        .then(r => r.json())
-        .then(data => {
-          if (data.sessionToken) {
-            localStorage.setItem('sessionToken', data.sessionToken)
-            doVerify(data.sessionToken)
+        .then(r => {
+          if (!r.ok) {
+            // 会话已失效 → 清理本地登录态，避免"看起来已登录但所有操作 401"
+            localStorage.removeItem('user')
+            localStorage.removeItem('sessionToken')
+            setUser(null)
+            return null
           }
+          return r.json()
+        })
+        .then(data => {
+          // 服务端已续期 httpOnly cookie，本页面保持当前登录态即可
+          // 不写入假 token，避免下次加载误判为 token 失效
+          if (!data?.success) setUser(null)
         })
         .catch(() => {})
     }

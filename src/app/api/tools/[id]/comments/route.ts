@@ -148,13 +148,17 @@ export async function POST(
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ai999999.top'
       fetch(`${baseUrl}/api/ai/interact`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // 转发当前用户的会话，ai/interact 已要求登录
+          cookie: request.headers.get('cookie') || '',
+        },
         body: JSON.stringify({
           targetType: 'comment',
           targetId: comment.id,
           content: cleanContent,
           authorName: comment.userName || '用户',
-          authorId: userId,
+          authorId: Number(userId),
           context: comment.toolName || undefined
         })
       }).catch(err => console.error('AI 互动触发失败:', err))

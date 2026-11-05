@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdmin } from '@/lib/auth'
 
 // 缓存控制：5分钟CDN缓存 + 10分钟 stale-while-revalidate
 const CACHE_HEADERS = {
@@ -84,9 +85,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 记录每日趋势数据（供爬虫调用）
+// 记录每日趋势数据（管理端/爬虫内部使用，需管理员会话）
 export async function POST(request: NextRequest) {
   try {
+    // 匿名者可写入任意工具的虚假趋势数据 → 仅管理员可写
+    const auth = await verifyAdmin(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { toolId, date, upvotes, viewCount, stars, rank } = body
     

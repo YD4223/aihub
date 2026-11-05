@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 
 // PUT /api/user/profile - 更新用户资料
 export async function PUT(request: NextRequest) {
   try {
+    // 会话归属校验：必须已登录，且只能改自己的资料（防越权改资料/改他人邮箱）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { userId, username, email, bio, location, website, avatarUrl } = body
 
     if (!userId) {
       return NextResponse.json({ error: '用户ID不能为空' }, { status: 400 })
+    }
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权修改他人资料' }, { status: 403 })
     }
 
     // 检查用户名是否已被其他用户使用

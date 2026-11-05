@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 import { canLike, incrementLikeCount } from '@/lib/daily-limit'
 import { createNotification } from '@/lib/notification'
 import { addExp } from '@/lib/add-exp'
@@ -9,9 +10,17 @@ import { checkAndUnlock } from '@/lib/check-achievements'
 // GET /api/user/likes?userId=xxx
 export async function GET(request: NextRequest) {
   try {
+    // 会话归属校验：只能读自己的点赞记录
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     if (!userId) return NextResponse.json({ error: '需要userId' }, { status: 400 })
+
+    if (auth.userId !== parseInt(userId)) {
+      return NextResponse.json({ error: '无权查看他人点赞记录' }, { status: 403 })
+    }
 
     const records = await prisma.$queryRawUnsafe<Array<any>>(
       `SELECT id, tool_data, liked_at FROM user_like_tools WHERE user_id = $1 ORDER BY liked_at DESC`,
@@ -33,8 +42,16 @@ export async function GET(request: NextRequest) {
 // POST /api/user/likes - 添加/取消点赞
 export async function POST(request: NextRequest) {
   try {
-    const { userId, toolId, toolData, shareId } = await request.json()
-    if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    // 会话归属校验：点赞操作者以会话为准，忽略客户端 userId（防冒名点赞/刷赞）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
+    const { userId: bodyUserId, toolId, toolData, shareId } = await request.json()
+    const userId = auth.userId
+    if (bodyUserId && parseInt(bodyUserId) !== userId) {
+      return NextResponse.json({ error: '无权操作他人点赞' }, { status: 403 })
+    }
+    if (!toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
     // 只限制"点赞"操作，取消点赞不限制
     const existing = await prisma.$queryRawUnsafe<Array<any>>(
@@ -123,10 +140,18 @@ export async function POST(request: NextRequest) {
 // DELETE /api/user/likes?userId=xxx&toolId=xxx
 export async function DELETE(request: NextRequest) {
   try {
+    // 会话归属校验：只能删自己的点赞记录
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const { searchParams } = new URL(request.url)
     const userId = parseInt(searchParams.get('userId') || '0')
     const toolId = parseInt(searchParams.get('toolId') || '0')
     if (!userId || !toolId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+
+    if (auth.userId !== userId) {
+      return NextResponse.json({ error: '无权操作他人点赞' }, { status: 403 })
+    }
 
     await prisma.$executeRawUnsafe(
       `DELETE FROM user_like_tools WHERE user_id = $1 AND tool_id = $2`,

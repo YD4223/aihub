@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 import { createNotification } from '@/lib/notification'
 
 // POST /api/user/follow - 关注/取消关注
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { followerId, followingId } = body
+    // 会话归属校验：关注人必须是自己（防冒名关注/取关）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
 
-    if (!followerId || !followingId) {
+    const body = await request.json()
+    const { followerId: bodyFollowerId, followingId } = body
+    const followerId = auth.userId
+
+    if (bodyFollowerId && parseInt(bodyFollowerId) !== followerId) {
+      return NextResponse.json({ error: '无权以他人身份关注' }, { status: 403 })
+    }
+
+    if (!followingId) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
     }
 
-    if (followerId === followingId) {
+    if (followerId === parseInt(followingId)) {
       return NextResponse.json({ error: '不能关注自己' }, { status: 400 })
     }
 
@@ -27,7 +37,7 @@ export async function POST(request: NextRequest) {
     // 检查是否已经关注
     const existing = await prisma.$queryRaw`
       SELECT id FROM follows 
-      WHERE "followerId" = ${parseInt(followerId)} AND "followingId" = ${parseInt(followingId)}
+      WHERE "followerId" = ${followerId} AND "followingId" = ${parseInt(followingId)}
       LIMIT 1
     `
 
@@ -35,14 +45,14 @@ export async function POST(request: NextRequest) {
       // 已关注 -> 取消关注
       await prisma.$executeRaw`
         DELETE FROM follows 
-        WHERE "followerId" = ${parseInt(followerId)} AND "followingId" = ${parseInt(followingId)}
+        WHERE "followerId" = ${followerId} AND "followingId" = ${parseInt(followingId)}
       `
       return NextResponse.json({ following: false, message: '已取消关注' })
     } else {
       // 未关注 -> 关注
       await prisma.$executeRaw`
         INSERT INTO follows ("followerId", "followingId", "createdAt")
-        VALUES (${parseInt(followerId)}, ${parseInt(followingId)}, NOW())
+        VALUES (${followerId}, ${parseInt(followingId)}, NOW())
       `
 
       // 发送关注通知
@@ -52,7 +62,7 @@ export async function POST(request: NextRequest) {
         title: '有人关注了你',
         content: '',
         link: `/user-center`,
-        relatedUserId: parseInt(followerId),
+        relatedUserId: followerId,
       }).catch(() => {})
 
       return NextResponse.json({ following: true, message: '关注成功' })

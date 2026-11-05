@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/auth'
 import { createNotification } from '@/lib/notification'
 import { uploadImage, parseBase64Image, isR2Configured } from '@/lib/r2'
 
@@ -77,6 +78,10 @@ export async function GET(request: NextRequest) {
 // POST /api/tools - 提交新工具（创建 shares 记录，显示在工具圈）
 export async function POST(request: NextRequest) {
   try {
+    // 会话归属校验：提交者以会话为准（防冒用他人/站长身份提交，绕过审核+置顶）
+    const auth = await requireUser(request)
+    if (auth instanceof NextResponse) return auth
+
     const body = await request.json()
     const { 
       name, 
@@ -87,10 +92,14 @@ export async function POST(request: NextRequest) {
       pricingType,
       githubUrl,
       logoUrl,
-      userId,
+      userId: bodyUserId,
       tags 
     } = body
     let images: string[] | null = body.images
+
+    if (bodyUserId && parseInt(bodyUserId) !== auth.userId) {
+      return NextResponse.json({ error: '无权以他人身份提交' }, { status: 403 })
+    }
 
     // 验证必填字段
     if (!name?.trim()) {
@@ -113,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查用户是否站长（ADMIN），站长自动通过审核+置顶24小时
-    const submitterId = userId ? parseInt(userId) : null
+    const submitterId: number | null = auth.userId
     let toolStatus = 'pending'
     let isAdmin = false
     if (submitterId) {
