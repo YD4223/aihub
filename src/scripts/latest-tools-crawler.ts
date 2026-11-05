@@ -395,7 +395,9 @@ async function main() {
       execSync('npx tsx scripts/batch-translate.ts', {
         cwd: process.cwd(),
         encoding: 'utf-8',
-        timeout: 300000,
+        timeout: 600000,
+        stdio: 'inherit', // 直接把日志透传，避免 pipe 缓冲导致看起来"卡住"
+        maxBuffer: 10 * 1024 * 1024,
       })
     } catch (err) {
       console.error('⚠️ 翻译过程出错（不影响已保存的工具）:', err instanceof Error ? err.message : err)

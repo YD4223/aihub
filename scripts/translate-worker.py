@@ -123,11 +123,13 @@ results = {}
 # 通道状态（进程内缓存，避免每条重复重试已失效的通道）
 tencent_disabled = False
 mymemory_quota_out = False
+mymemory_fail_streak = 0
+MYMEMORY_MAX_FAIL_STREAK = 2
 
 
 def translate_with_mymemory(text):
     """MyMemory 免费翻译（无需密钥，云端兜底）。单次 ≤500 字符。"""
-    global mymemory_quota_out
+    global mymemory_quota_out, mymemory_fail_streak
     if mymemory_quota_out:
         return ''
 
@@ -142,17 +144,26 @@ def translate_with_mymemory(text):
 
         url = 'https://api.mymemory.translated.net/get?' + urllib.parse.urlencode(params)
         try:
-            with urlopen(url, timeout=20) as resp:
+            # 正常响应 1-2s；8s 未回基本可判定不可用，避免逐条干等
+            with urlopen(url, timeout=8) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
         except HTTPError as e:
             if e.code == 429:
                 mymemory_quota_out = True
                 print('WARN: MyMemory 免费额度已用尽（约 24 小时后恢复）', file=sys.stderr)
                 return ''.join(parts) or ''
-            print(f'WARN: MyMemory HTTP {e.code}', file=sys.stderr)
+            mymemory_fail_streak += 1
+            print(f'WARN: MyMemory HTTP {e.code} ({mymemory_fail_streak}/{MYMEMORY_MAX_FAIL_STREAK})', file=sys.stderr)
+            if mymemory_fail_streak >= MYMEMORY_MAX_FAIL_STREAK:
+                mymemory_quota_out = True
+                print('WARN: MyMemory 连续失败，已熔断', file=sys.stderr)
             return ''.join(parts) or ''
         except Exception as e:
-            print(f'WARN: MyMemory 失败 {e}', file=sys.stderr)
+            mymemory_fail_streak += 1
+            print(f'WARN: MyMemory 失败 {e} ({mymemory_fail_streak}/{MYMEMORY_MAX_FAIL_STREAK})', file=sys.stderr)
+            if mymemory_fail_streak >= MYMEMORY_MAX_FAIL_STREAK:
+                mymemory_quota_out = True
+                print('WARN: MyMemory 连续失败，已熔断', file=sys.stderr)
             return ''.join(parts) or ''
 
         translated = (data.get('responseData') or {}).get('translatedText') or ''
@@ -163,6 +174,7 @@ def translate_with_mymemory(text):
 
         if not translated:
             return ''.join(parts) or ''
+        mymemory_fail_streak = 0
         parts.append(translated)
 
         if len(chunks) > 1:

@@ -13,6 +13,10 @@
 let tencentDisabled = false
 let ollamaAlive: boolean | null = null
 let myMemoryQuotaOut = false
+let myMemoryFailStreak = 0
+
+// 连续失败这么多次就熔断本通道（区分"偶发失败"和"服务挂了/额度耗尽"）
+const MYMEMORY_MAX_FAIL_STREAK = 2
 
 function isQuotaError(err: any): boolean {
   const code = err?.code || ''
@@ -115,7 +119,8 @@ async function translateWithMyMemory(text: string): Promise<string> {
       if (process.env.MYMEMORY_EMAIL) params.set('de', process.env.MYMEMORY_EMAIL)
 
       const res = await fetch(`https://api.mymemory.translated.net/get?${params}`, {
-        signal: AbortSignal.timeout(20000),
+        // 正常响应 1-2s；8s 未回基本可判定不可用，避免逐条干等 20s 拖垮整批
+        signal: AbortSignal.timeout(8000),
       })
 
       // 429 = 免费额度用尽（或限流），本次运行不再尝试
@@ -141,11 +146,20 @@ async function translateWithMyMemory(text: string): Promise<string> {
       }
 
       if (!translated) return results.join('') || ''
+      myMemoryFailStreak = 0
       results.push(translated)
 
       if (chunks.length > 1) await new Promise((r) => setTimeout(r, 250))
     } catch (e: any) {
-      console.warn(`   ⚠️ MyMemory 翻译失败: ${e?.message || e}`)
+      myMemoryFailStreak++
+      const reason = e?.name === 'TimeoutError' ? '超时' : e?.message || e
+      console.warn(`   ⚠️ MyMemory 翻译失败(${myMemoryFailStreak}/${MYMEMORY_MAX_FAIL_STREAK}): ${reason}`)
+
+      // 连续失败 → 熔断，后续文本不再尝试（避免整批被超时拖死）
+      if (myMemoryFailStreak >= MYMEMORY_MAX_FAIL_STREAK) {
+        myMemoryQuotaOut = true
+        console.warn('   ⚠️ MyMemory 连续失败，已熔断，本次运行不再尝试')
+      }
       return results.join('') || ''
     }
   }

@@ -69,29 +69,58 @@ async function main() {
   // 用 Python 批量翻译
   console.log('🚀 启动翻译进程（这需要一些时间）...')
   const fs = await import('fs')
-  const inputFile = '.workbuddy/translate_input.json'
-  const outputFile = '.workbuddy/translate_output.json'
+  // 用系统临时目录：.workbuddy/ 受 WorkBuddy 管理，临时文件会被清理导致 worker 读不到输入
+  const os = await import('os')
+  const path = await import('path')
+  const inputFile = path.join(os.tmpdir(), `translate_input_${process.pid}.json`)
+  const outputFile = path.join(os.tmpdir(), `translate_output_${process.pid}.json`)
   fs.writeFileSync(inputFile, JSON.stringify(uniqueTexts), 'utf-8')
 
-  execSync(
-    `"${PYTHON}" scripts/translate-worker.py "${inputFile}" "${outputFile}"`,
-    { cwd: process.cwd(), encoding: 'utf-8', timeout: 600000, stdio: 'pipe' }
-  )
+  try {
+    execSync(
+      `"${PYTHON}" scripts/translate-worker.py "${inputFile}" "${outputFile}"`,
+      { cwd: process.cwd(), encoding: 'utf-8', timeout: 600000, stdio: 'pipe', maxBuffer: 10 * 1024 * 1024 }
+    )
+  } catch (err: any) {
+    // 把 worker 的 stderr 透出来，否则只能看到一句"翻译失败"无从排查
+    if (err?.stderr) console.error(String(err.stderr).trim())
+    throw err
+  }
+
+  if (!fs.existsSync(outputFile)) {
+    throw new Error(`翻译进程未产出结果文件: ${outputFile}`)
+  }
 
   const output = fs.readFileSync(outputFile, 'utf-8')
   const translationMap: Record<string, string> = JSON.parse(output)
 
-  // 真实成功 = 译出中文且与原文不同（全部通道失效时会回退成原文，不能只看 key 数量）
-  const reallyTranslated = uniqueTexts.filter(
-    (t) => translationMap[t] && translationMap[t] !== t && /[\u4e00-\u9fff]/.test(translationMap[t])
-  ).length
-  console.log(`✅ 翻译成功: ${reallyTranslated}`)
-  console.log(`⚠️  未翻译: ${uniqueTexts.length - reallyTranslated}`)
+  // 三分法，避免把"产品名无需翻译"误报成"翻译通道全挂"：
+  //   translated  —— 译出中文，写库
+  //   unchanged   —— 译文==原文（产品名 / 已中文），跳过但不报警
+  //   missing     —— worker 未返回（通道失败）
+  const isChinese = (s: string) => /[\u4e00-\u9fff]/.test(s)
+  const translated = uniqueTexts.filter(
+    (t) => translationMap[t] && translationMap[t] !== t && isChinese(translationMap[t])
+  )
+  const unchanged = uniqueTexts.filter((t) => translationMap[t] === t)
+  const missing = uniqueTexts.filter((t) => !translationMap[t])
 
-  if (reallyTranslated === 0) {
-    console.warn('\n⚠️ 所有文本都未译出中文——翻译通道可能全部不可用')
+  console.log(`✅ 译出中文: ${translated.length}`)
+  console.log(`➖ 无需翻译(产品名/已中文): ${unchanged.length}`)
+  console.log(`⚠️  未返回: ${missing.length}`)
+
+  // 只有"有内容未返回"且"一条都没译出"才算通道故障
+  if (translated.length === 0 && missing.length > 0) {
+    console.warn('\n⚠️ 有文本未返回且无任何译文——翻译通道可能不可用')
     console.warn('   检查：腾讯 TMT 免费额度 / 本地 Ollama 是否启动 / MyMemory 额度')
     console.warn('   本次不写库，避免把原文当译文覆盖。')
+    try { fs.unlinkSync(inputFile); fs.unlinkSync(outputFile) } catch {}
+    await prisma.$disconnect()
+    return
+  }
+
+  if (translated.length === 0) {
+    console.log('\n✅ 本次无需翻译（全部为产品名或已中文内容）')
     try { fs.unlinkSync(inputFile); fs.unlinkSync(outputFile) } catch {}
     await prisma.$disconnect()
     return
