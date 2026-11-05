@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST() {
   // 让数据库中的 sessionToken 失效
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
     if (token) {
       await prisma.$executeRawUnsafe(

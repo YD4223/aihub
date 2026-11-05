@@ -396,7 +396,7 @@ export default async function UserSharePage({ searchParams }: UserSharePageProps
   const page = Math.max(1, parseInt(searchParams.page as string) || 1)
   
   // 鉴权：验证是否已登录（未登录则显示登录提示）
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get('auth_token')?.value
   let isLoggedIn = false
   if (token) {

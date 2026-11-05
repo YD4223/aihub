@@ -3,7 +3,13 @@ node_modules/
 
 # Next.js
 .next/
+.next-verify/
+.next-probe/
 out/
+
+# npm 本地缓存（安装大包时指定，避免写系统缓存失败）
+.npm-cache/
+_audit.json
 
 # Backups
 *.bak

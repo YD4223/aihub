@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 站点不使用 next/image（外链图片直接 <img>），保持不优化即可。
+  // Next 15 起 `images.domains` 已废弃，故不再配置。
   images: {
-    domains: ['localhost', 'ph-files.imgix.net', 'avatars.githubusercontent.com', 'logo.clearbit.com', 'www.google.com'],
     unoptimized: true,
   },
   env: {
