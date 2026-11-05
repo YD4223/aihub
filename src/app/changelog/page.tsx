@@ -7,6 +7,21 @@ export const revalidate = 14400
 
 const updates = [
   {
+    date: '2026-11-05',
+    title: '全站安全加固 & Next.js 15 升级',
+    icon: Shield,
+    color: 'text-neon-green',
+    items: [
+      '🛡️ Next.js 14.2.35 → 15.5.29，覆盖全部 25 项已知安全公告',
+      '🔐 修复 token 刷新接口账号接管漏洞（不再回传 token，仅限本人续期）',
+      '🚫 全面收敛越权写接口：个人资料、点赞、签到、关注、评论、通知统一会话校验',
+      '💉 修复后台报表 SQL 注入风险，用户输入全部改为参数化查询',
+      '🧹 依赖漏洞清零：npm audit 从 16 项降至 0 项',
+      '🌐 翻译链路升级为多级兜底（腾讯 → Ollama → MyMemory），单点故障不再整批失败',
+      '🔑 更新 GitHub 抓取 Token，修复项目抓取中断',
+    ]
+  },
+  {
     date: '2026-06-25',
     title: '验证码防封 & 邮箱优化',
     icon: Shield,

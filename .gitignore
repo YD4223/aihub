@@ -88,3 +88,6 @@ build.log
 
 # Article drafts (not project code)
 docs/
+
+# npm 本地缓存（避免系统缓存写入被拦）
+.npm-tmp/
