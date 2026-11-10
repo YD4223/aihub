@@ -29,7 +29,8 @@ export async function generateMetadata(props: ToolPageProps): Promise<Metadata> 
   if (!tool) return { title: '工具未找到 | AI Hub' }
   return {
     title: `${tool.name} - AI工具详情 | AI Hub`,
-    description: tool.shortDesc || tool.description || `了解AI工具 ${tool.name} 的详细信息、功能特点和用户评价。`,
+    // description 为完整介绍，优先用于 SEO；shortDesc 是列表卡片用的简短句，仅作兜底
+    description: tool.description || tool.shortDesc || `了解AI工具 ${tool.name} 的详细信息、功能特点和用户评价。`,
   }
 }
 
