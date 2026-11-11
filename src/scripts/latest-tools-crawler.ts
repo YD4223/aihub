@@ -249,7 +249,9 @@ async function saveTools(tools: any[]) {
         data: {
           name: cleanText(tool.name),
           slug,
-          ...(desc.length > 110 ? { description: desc } : {}),
+          // 有内容就写 description：原先只在 >110 字时才写，导致短描述工具
+          // description 永久为空（翻译流程只翻译已存在字段，补不回来）
+          ...(desc.trim() ? { description: desc } : {}),
           shortDesc: desc.slice(0, 100),
           websiteUrl: tool.websiteUrl || '',
           githubUrl: tool.githubUrl || '',
