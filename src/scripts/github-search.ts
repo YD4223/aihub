@@ -30,7 +30,12 @@ function githubGraphQL(query: string, variables: Record<string, string>): Promis
       let data = ''
       res.on('data', chunk => data += chunk)
       res.on('end', () => {
-        try { resolve(JSON.parse(data)) } catch { reject(new Error('JSON parse error')) }
+        try {
+          resolve(JSON.parse(data))
+        } catch {
+          // 带状态码和响应片段，否则网络截断时只剩一句无信息量的 "JSON parse error"
+          reject(new Error(`JSON parse error (HTTP ${res.statusCode}, ${data.length} bytes): ${data.slice(0, 120)}`))
+        }
       })
     })
     req.on('error', reject)
@@ -85,13 +90,31 @@ async function searchGitHubTools(): Promise<GitHubTool[]> {
   const seen = new Set<string>()
   const ago = new Date(Date.now() - DAYS * 86400000).toISOString()
 
+  // 本机到 GitHub 偶有连接截断，单次失败会静默丢掉整组 100 个候选，故重试 3 次
+  const gqlWithRetry = async (searchQuery: string) => {
+    let lastErr: any
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await githubGraphQL(GQL_QUERY, { searchQuery })
+      } catch (e: any) {
+        lastErr = e
+        if (attempt < 3) {
+          const wait = attempt * 3000
+          console.log(`  ⚠️ 请求失败（${String(e.message).slice(0, 80)}），${wait / 1000}s 后重试`)
+          await new Promise(r => setTimeout(r, wait))
+        }
+      }
+    }
+    throw lastErr
+  }
+
   for (let i = 0; i < QUERIES.length; i++) {
     const q = `${QUERIES[i]}${ago} sort:stars-desc`
     console.log(`GitHub ${i+1}/${QUERIES.length}: "${q.slice(0,60)}..."`)
     if (i > 0) await new Promise(r => setTimeout(r, 2000))
 
     try {
-      const result = await githubGraphQL(GQL_QUERY, { searchQuery: q })
+      const result = await gqlWithRetry(q)
       if (result.errors) {
         console.log(`  Error: ${result.errors[0]?.message}`)
         continue
