@@ -212,7 +212,15 @@ async function saveTools(tools: any[]) {
   for (let i = 0; i < tools.length; i += CONCURRENCY) {
     const batch = tools.slice(i, i + CONCURRENCY)
     const batchResults = await Promise.all(batch.map(async (tool) => {
-      const slug = generateSlug(tool.name)
+      let slug = generateSlug(tool.name)
+      // slug 撞车且是不同仓库时（同名不同 owner），用 owner-repo 前缀区分，避免整条项目被丢弃
+      if (existingSlugs.has(slug) && tool.githubUrl) {
+        const gh = tool.githubUrl.match(/github\.com\/([^/]+)\/([^/]+)\/?$/i)
+        if (gh) {
+          const alt = generateSlug(`${gh[1]}-${gh[2]}`)
+          if (!existingSlugs.has(alt)) slug = alt
+        }
+      }
       
       // 跳过已存在的（slug、websiteUrl、githubUrl 任一匹配即跳过）
       if (existingSlugs.has(slug) || 
@@ -326,7 +334,11 @@ async function main() {
     const name = t.name?.toLowerCase() || ''
     const ghUrl = t.githubUrl?.replace(/\/$/, '').toLowerCase() || ''
     const wUrl = t.websiteUrl?.replace(/\/$/, '').toLowerCase() || ''
-    return !existingNames.has(name) && !existingUrls.has(ghUrl) && !existingUrls.has(wUrl)
+    if (existingUrls.has(ghUrl) || existingUrls.has(wUrl)) return false
+    // 有 githubUrl 时只认 URL：同名不同仓库是不同项目（如 EvoMap/AutoResearch 与 karpathy/autoresearch），
+    // 按裸名比对会把它们误挡在库外
+    if (!ghUrl && existingNames.has(name)) return false
+    return true
   })
   console.log(`\n🔥 热门项目: 共获取 ${hotTools.length}，新增 ${hotNew.length}\n`)
 
@@ -369,7 +381,9 @@ async function main() {
     const name = t.name?.toLowerCase() || ''
     const ghUrl = t.githubUrl?.replace(/\/$/, '').toLowerCase() || ''
     const wUrl = t.websiteUrl?.replace(/\/$/, '').toLowerCase() || ''
-    return !existingNames.has(name) && !existingUrls.has(ghUrl) && !existingUrls.has(wUrl)
+    if (existingUrls.has(ghUrl) || existingUrls.has(wUrl)) return false
+    if (!ghUrl && existingNames.has(name)) return false
+    return true
   })
   console.log(`\n📦 近期项目: 共获取 ${githubTools.length}，新增 ${recentNew.length}\n`)
 
@@ -378,7 +392,13 @@ async function main() {
   // =========================================================
   const allNewTools = [...recentNew]
   const uniqueTools = allNewTools.filter((tool, index, self) =>
-    index === self.findIndex(t => t.name === tool.name || (t.websiteUrl && tool.websiteUrl && t.websiteUrl === tool.websiteUrl))
+    index === self.findIndex(t => {
+      // 同一轮里去重也以 githubUrl 为准，没有 URL 才退回按名字
+      if (tool.githubUrl && t.githubUrl) {
+        return t.githubUrl.replace(/\/$/, '').toLowerCase() === tool.githubUrl.replace(/\/$/, '').toLowerCase()
+      }
+      return t.name === tool.name || (t.websiteUrl && tool.websiteUrl && t.websiteUrl === tool.websiteUrl)
+    })
   )
 
   console.log(`\n📊 共获取 ${uniqueTools.length} 个唯一新工具`)
