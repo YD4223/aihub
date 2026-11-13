@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/**'
       - 'prisma/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - '.vercelignore'
   workflow_dispatch:

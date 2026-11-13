@@ -25,8 +25,11 @@ try {
 const SITE_HOST = 'ai999999.top'
 const API_KEY = process.env.INDEXNOW_KEY
 if (!API_KEY) {
-  console.error('❌ 缺少环境变量 INDEXNOW_KEY（请在 .env 中配置，值即 public/<key>.txt 的文件名）')
-  process.exit(1)
+  // 缺密钥属「未启用」而非「出错」：exit 1 只会在 CI 里制造红叉，
+  // 与 workflow 的 continue-on-error（无密钥不阻塞）意图不符
+  console.warn('⚠️ 未配置 INDEXNOW_KEY，跳过 IndexNow 提交')
+  console.warn('   在 .env 或 GitHub Secrets 中配置后自动生效，值即 public/<key>.txt 的文件名')
+  process.exit(0)
 }
 const PRIMARY_API = 'https://api.indexnow.org/indexnow'
 const FALLBACK_API = 'https://www.bing.com/indexnow'
