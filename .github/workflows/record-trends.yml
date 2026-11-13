@@ -23,6 +23,9 @@ jobs:
           npx prisma generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # 本工作流不需要 puppeteer 的 Chrome；不跳过会在 npm ci 时下载 ~150MB，
+          # 一旦网络 ECONNRESET 就整步失败（2026-11-13 就是这么挂的）
+          PUPPETEER_SKIP_DOWNLOAD: '1'
 
       - name: 📊 记录每日趋势数据
         run: npx tsx src/scripts/record-daily-trends.ts

@@ -29,6 +29,8 @@ jobs:
           npx prisma generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # 不需要 puppeteer 的 Chrome，跳过下载避免网络抖动导致 npm ci 失败
+          PUPPETEER_SKIP_DOWNLOAD: '1'
 
       - name: 📤 提交 IndexNow
         run: npx tsx scripts/submit-indexnow.ts
