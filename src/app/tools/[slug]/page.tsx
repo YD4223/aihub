@@ -26,8 +26,9 @@ export async function generateMetadata(props: ToolPageProps): Promise<Metadata> 
     where: { slug: params.slug },
     select: { name: true, shortDesc: true, description: true, isActive: true }
   })
-  // 已下架工具直接 404：此处必须先拦住，否则 metadata 已生成、响应头已发出 200，
-  // 页面 body 再触发 notFound() 会变成 soft 404（内容 404、状态码 200），影响 SEO
+  // 已下架工具在 metadata 阶段就短路，避免把下架内容的标题/简介写进 <head>
+  // 注意：本路由挂了 tools/loading.tsx（Suspense 边界），响应头会先发 200 再流式渲染，
+  // 因此这里的 notFound() 只能保证内容为 404 页，无法改变最终 HTTP 状态码
   if (!tool || !tool.isActive) notFound()
   return {
     title: `${tool.name} - AI工具详情 | AI Hub`,
