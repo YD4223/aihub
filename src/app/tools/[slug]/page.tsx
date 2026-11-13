@@ -24,9 +24,11 @@ export async function generateMetadata(props: ToolPageProps): Promise<Metadata> 
   const params = await props.params;
   const tool = await prisma.tool.findUnique({
     where: { slug: params.slug },
-    select: { name: true, shortDesc: true, description: true }
+    select: { name: true, shortDesc: true, description: true, isActive: true }
   })
-  if (!tool) return { title: '工具未找到 | AI Hub' }
+  // 已下架工具直接 404：此处必须先拦住，否则 metadata 已生成、响应头已发出 200，
+  // 页面 body 再触发 notFound() 会变成 soft 404（内容 404、状态码 200），影响 SEO
+  if (!tool || !tool.isActive) notFound()
   return {
     title: `${tool.name} - AI工具详情 | AI Hub`,
     // description 为完整介绍，优先用于 SEO；shortDesc 是列表卡片用的简短句，仅作兜底
