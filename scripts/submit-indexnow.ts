@@ -55,6 +55,41 @@ async function fetchWithRetry(url: string, payload: any, retries = 3): Promise<b
   return false
 }
 
+/**
+ * 取工具 slug 列表。
+ * 用 pg 直连而非 Prisma：Prisma Rust 引擎在本机建连需 11~17s，作为爬虫子进程运行时
+ * 叠加父进程占用的连接，极易撞 pool_timeout(30s) 报 P2024；本脚本只需一列 slug，
+ * pg 建连约 3~5s，且不启动 Prisma 引擎。
+ * 本机到 Supabase(US East) 链路会偶发瞬断，故失败重试一次。
+ */
+async function fetchSlugs(limit: number): Promise<Array<{ slug: string }>> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 40000,
+    })
+    try {
+      await client.connect()
+      const res = await client.query<{ slug: string }>(
+        `SELECT slug FROM tools WHERE status = 'approved' AND "isActive" = true LIMIT $1::int`,
+        [limit]
+      )
+      return res.rows
+    } catch (e) {
+      lastError = e
+      if (attempt === 1) {
+        console.warn(`   数据库查询失败，3s 后重试: ${(e as Error).message}`)
+        await new Promise(r => setTimeout(r, 3000))
+      }
+    } finally {
+      await client.end().catch(() => {})
+    }
+  }
+  throw lastError
+}
+
 async function main() {
   console.log('══════════════════════════════════════════')
   console.log('  IndexNow 推送工具 (Node.js)')
@@ -79,25 +114,7 @@ async function main() {
   ]
 
   // 从数据库获取工具详情页
-  // 用 pg 直连而非 Prisma：Prisma Rust 引擎在本机建连需 11~17s，作为爬虫子进程运行时
-  // 叠加父进程占用的连接，极易撞 pool_timeout(30s) 报 P2024；本脚本只需一列 slug，
-  // pg 建连约 3s，且不启动 Prisma 引擎，稳定性远好于走连接池
-  let tools: Array<{ slug: string }> = []
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 45000,
-  })
-  try {
-    await client.connect()
-    const res = await client.query(
-      `SELECT slug FROM tools WHERE status = 'approved' AND "isActive" = true LIMIT $1::int`,
-      [MAX_URLS - urls.length]
-    )
-    tools = res.rows
-  } finally {
-    await client.end().catch(() => {})
-  }
+  const tools = await fetchSlugs(MAX_URLS - urls.length)
   for (const t of tools) {
     urls.push(`${baseUrl}/tools/${t.slug}`)
   }
