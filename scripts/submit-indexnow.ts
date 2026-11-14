@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { prisma } from '@/lib/prisma'
+import { Client } from 'pg'
 
 // 加载 .env（tsx 不自动加载；作为子进程运行时也会继承父进程变量）
 try {
@@ -79,11 +79,25 @@ async function main() {
   ]
 
   // 从数据库获取工具详情页
-  const tools = await prisma.tool.findMany({
-    where: { status: 'approved', isActive: true },
-    select: { slug: true },
-    take: MAX_URLS - urls.length,
+  // 用 pg 直连而非 Prisma：Prisma Rust 引擎在本机建连需 11~17s，作为爬虫子进程运行时
+  // 叠加父进程占用的连接，极易撞 pool_timeout(30s) 报 P2024；本脚本只需一列 slug，
+  // pg 建连约 3s，且不启动 Prisma 引擎，稳定性远好于走连接池
+  let tools: Array<{ slug: string }> = []
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 45000,
   })
+  try {
+    await client.connect()
+    const res = await client.query(
+      `SELECT slug FROM tools WHERE status = 'approved' AND "isActive" = true LIMIT $1::int`,
+      [MAX_URLS - urls.length]
+    )
+    tools = res.rows
+  } finally {
+    await client.end().catch(() => {})
+  }
   for (const t of tools) {
     urls.push(`${baseUrl}/tools/${t.slug}`)
   }
@@ -126,8 +140,6 @@ async function main() {
     // 批次间隔
     await new Promise(r => setTimeout(r, 500))
   }
-
-  await prisma.$disconnect()
 
   console.log('\n══════════════════════════════════════════')
   console.log(`  ✅ 成功: ${success}`)
