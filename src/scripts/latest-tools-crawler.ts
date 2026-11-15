@@ -263,10 +263,14 @@ function dropSeoFarms<T extends { name?: string; githubUrl?: string; shortDesc?:
   }
 
   // 规则C：描述是 API 报价单，如「$0.0961/秒 + OpenAI 兼容网关 + 最低充值 1 美元」
+  // 价格必须是「小数单价」或「按秒/按张」这类计量词。
+  // 不能用泛化的 `$\d` 匹配：真实项目也会写硬件价格，如
+  // esp32-iphone-agent 的「a $7 ESP32 … any OpenAI-compatible vision model」
+  // 会被误判（4,983★ 真实项目），农场用的是 $0.0961 这种小数单价。
   const isSoftAd = (t: T): boolean => {
     const d = `${t.shortDesc || ''} ${t.description || ''}`.toLowerCase()
-    const hasPrice = /\$\s?\d|per second|每秒|起充/.test(d)
-    const hasSell = /model id|模型\s*id|gateway key|api key|openai\s*兼容|openai-compatible|compatible api/.test(d)
+    const hasPrice = /\$\s?\d+\.\d{2,}|per[- ]?second|per[- ]?image|每秒|每张|起充|最低充值/.test(d)
+    const hasSell = /model id|模型\s*id|gateway key|openai\s*兼容|openai-compatible|compatible api/.test(d)
     return hasPrice && hasSell
   }
 
@@ -603,7 +607,10 @@ async function main() {
     execSync('npx tsx scripts/submit-indexnow.ts', {
       cwd: process.cwd(),
       encoding: 'utf-8',
-      timeout: 60000,
+      // 原 60s 不够：npx 启动(~4s) + 本机到 Supabase 建连(15s) + 200 条 URL
+      // 分 40 批流式提交、每批间隔 500ms(20s+) + 40 次 HTTP 往返，实测 60~90s，
+      // 必然撞 ETIMEDOUT。给足余量，同时覆盖脚本内的 DB 重试。
+      timeout: 180000,
     })
     console.log('✅ IndexNow 提交完成')
   } catch (err) {
