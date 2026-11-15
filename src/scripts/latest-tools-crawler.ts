@@ -159,6 +159,41 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').slice(0, 50)
 }
 
+/** 基础 slug。generateSlug 会把中文等非 ASCII 字符全部清空，此时退化用 GitHub owner-repo */
+function makeBaseSlug(name: string, githubUrl?: string): string {
+  let slug = generateSlug(name)
+  if (!slug) {
+    const gh = githubUrl?.match(/github\.com\/([^/]+)\/([^/]+?)\/?$/i)
+    if (gh) slug = generateSlug(`${gh[1]}-${gh[2]}`)
+  }
+  return slug || 'tool'
+}
+
+/**
+ * 从基础 slug 分配一个本轮内唯一的 slug。
+ * 冲突时优先用 owner-repo（同名不同 owner 是不同项目），仍冲突则追加序号。
+ * 纯同步执行，调用方须在任何 await 之前调用，避免并发任务拿到同一个 slug。
+ */
+function allocateSlug(base: string, githubUrl: string | undefined, used: Set<string>): string {
+  if (!used.has(base)) {
+    used.add(base)
+    return base
+  }
+  const gh = githubUrl?.match(/github\.com\/([^/]+)\/([^/]+?)\/?$/i)
+  if (gh) {
+    const alt = generateSlug(`${gh[1]}-${gh[2]}`)
+    if (alt && !used.has(alt)) {
+      used.add(alt)
+      return alt
+    }
+  }
+  let n = 2
+  while (used.has(`${base}-${n}`)) n++
+  const slug = `${base}-${n}`
+  used.add(slug)
+  return slug
+}
+
 // Clean text to prevent SQLite hex escape / unicode errors
 function cleanText(text: string | undefined | null): string {
   if (!text) return ''
@@ -174,10 +209,42 @@ function cleanText(text: string | undefined | null): string {
   return result.slice(0, 500)
 }
 
-async function saveTools(tools: any[]) {
+/**
+ * 过滤 fork farm：同一批次内「同名 + owner 各不相同」的仓库达到 3 个以上，
+ * 基本可判定为刷量农场。真实项目不会出现多个不同 owner 同日使用同一个仓库名，
+ * 而农场会用大量账号 fork 同一个仓库、改描述来占满 GitHub 搜索结果。
+ * 实例：2026-11-15 一次抓到 19 个不同账号的 "GitHub-Copilot-app"。
+ */
+function dropForkFarms<T extends { name?: string; githubUrl?: string }>(tools: T[]): T[] {
+  const groups = new Map<string, T[]>()
+  for (const t of tools) {
+    const key = (t.name || '').trim().toLowerCase()
+    if (!key) continue
+    const arr = groups.get(key)
+    if (arr) arr.push(t)
+    else groups.set(key, [t])
+  }
+  const spam = new Set<T>()
+  for (const group of groups.values()) {
+    if (group.length < 3) continue
+    const owners = new Set(
+      group
+        .map(t => t.githubUrl?.match(/github\.com\/([^/]+)\//i)?.[1]?.toLowerCase())
+        .filter(Boolean) as string[]
+    )
+    if (owners.size >= 3) group.forEach(t => spam.add(t))
+  }
+  if (spam.size > 0) {
+    console.log(`🧹 过滤疑似 fork farm: ${spam.size} 条（同名不同 owner 批量刷榜）`)
+  }
+  return tools.filter(t => !spam.has(t))
+}
+
+async function saveTools(rawTools: any[]) {
   let saved = 0
   let skipped = 0
-  
+
+  const tools = dropForkFarms(rawTools)
   if (tools.length === 0) return { saved, skipped }
   
   // 第一步：批量预查所有 slug、websiteUrl、githubUrl（1次查询代替 N 次逐条查询）
@@ -192,10 +259,16 @@ async function saveTools(tools: any[]) {
         ...(urls.length > 0 ? [{ githubUrl: { in: urls } }] : []),
       ]
     },
-    select: { id: true, slug: true, websiteUrl: true, githubUrl: true }
+    select: { id: true, slug: true, name: true, websiteUrl: true, githubUrl: true }
   }))
+  // URL 统一归一化（去尾斜杠 + 小写），与 main() 判重口径一致；
+  // 两边口径不同会导致「main 认为重复、这里认为不重复」进而插入重复记录
+  const normUrl = (u?: string | null) => (u ? u.replace(/\/$/, '').toLowerCase() : '')
   const existingSlugs = new Set(existingTools.map(t => t.slug))
-  const existingUrls = new Set(existingTools.flatMap(t => [t.websiteUrl, t.githubUrl].filter(Boolean)))
+  const existingUrls = new Set(
+    existingTools.flatMap(t => [normUrl(t.websiteUrl), normUrl(t.githubUrl)]).filter(Boolean)
+  )
+  const existingNames = new Set(existingTools.map(t => t.name.toLowerCase()))
   const existingMap = new Map(existingTools.map(t => [t.slug, t]))
   
   // 预缓存"其他工具"分类（避免并行时争抢连接）
@@ -208,35 +281,49 @@ async function saveTools(tools: any[]) {
   // 第二步：分批并行处理（每批3个，不超过连接池限制）
   const CONCURRENCY = 3
   const results: { status: string; name: string }[] = []
+  // 已占用的 slug = 数据库已有 + 本轮已分配。原实现只用创建前的快照，
+  // 同一次运行里两个同名项目会算出同一个 slug，第二个必然撞 P2002
+  const usedSlugs = new Set(existingSlugs)
   
   for (let i = 0; i < tools.length; i += CONCURRENCY) {
     const batch = tools.slice(i, i + CONCURRENCY)
     const batchResults = await Promise.all(batch.map(async (tool) => {
-      let slug = generateSlug(tool.name)
-      // slug 撞车且是不同仓库时（同名不同 owner），用 owner-repo 前缀区分，避免整条项目被丢弃
-      if (existingSlugs.has(slug) && tool.githubUrl) {
-        const gh = tool.githubUrl.match(/github\.com\/([^/]+)\/([^/]+)\/?$/i)
-        if (gh) {
-          const alt = generateSlug(`${gh[1]}-${gh[2]}`)
-          if (!existingSlugs.has(alt)) slug = alt
-        }
+      // 先用基础 slug 做去重判断（不受后续编号影响）
+      const base = makeBaseSlug(tool.name, tool.githubUrl)
+      const ghKey = normUrl(tool.githubUrl)
+      const wKey = normUrl(tool.websiteUrl)
+      // 创建成功后立即记入本轮去重集合，避免同批其他条目（URL 大小写不同 / 同名）重复插入
+      const markCreated = (finalSlug: string) => {
+        if (ghKey) existingUrls.add(ghKey)
+        if (wKey) existingUrls.add(wKey)
+        existingSlugs.add(finalSlug)
+        existingNames.add((tool.name || '').toLowerCase())
       }
-      
-      // 跳过已存在的（slug、websiteUrl、githubUrl 任一匹配即跳过）
-      if (existingSlugs.has(slug) || 
-          (tool.websiteUrl && existingUrls.has(tool.websiteUrl)) ||
-          (tool.githubUrl && existingUrls.has(tool.githubUrl))) {
-        const existing = existingMap.get(slug) || 
-          existingTools.find(t => t.websiteUrl === tool.websiteUrl || t.githubUrl === tool.githubUrl)
+
+      // 判重只认 URL（同一项目才跳过）。slug 撞车不等于同一项目——
+      // 同名不同 owner 是不同的仓库，交给 allocateSlug 分配新 slug，不能直接丢弃
+      const isDuplicate = (ghKey && existingUrls.has(ghKey)) ||
+        (wKey && existingUrls.has(wKey)) ||
+        (!ghKey && existingNames.has((tool.name || '').toLowerCase()))
+
+      if (isDuplicate) {
+        const existing = existingTools.find(t =>
+          (ghKey && normUrl(t.githubUrl) === ghKey) || (wKey && normUrl(t.websiteUrl) === wKey)
+        )
         if (existing) {
-          await withRetry(() => prisma.tool.update({
-            where: { id: existing.id },
-            data: { publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : undefined }
-          }))
+          try {
+            await withRetry(() => prisma.tool.update({
+              where: { id: existing.id },
+              data: { publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : undefined }
+            }))
+          } catch {}
         }
         return { status: 'skipped', name: tool.name }
       }
       
+      // 去重通过后再分配本轮唯一的 slug（同步完成，不与其他并发任务交错）
+      const slug = allocateSlug(base, tool.githubUrl, usedSlugs)
+
       // 自动分类（纯本地关键词匹配，很快）
       let categoryId = null
       try {
@@ -253,37 +340,57 @@ async function saveTools(tools: any[]) {
       
       const desc = tool.shortDesc || tool.description || ''
       
-      await withRetry(() => prisma.tool.create({
-        data: {
-          name: cleanText(tool.name),
-          slug,
-          // 有内容就写 description：原先只在 >110 字时才写，导致短描述工具
-          // description 永久为空（翻译流程只翻译已存在字段，补不回来）
-          ...(desc.trim() ? { description: desc } : {}),
-          shortDesc: desc.slice(0, 100),
-          websiteUrl: tool.websiteUrl || '',
-          githubUrl: tool.githubUrl || '',
-          stars: tool.stars || 0, upvotes: 0,
-          isOpenSource: tool.isOpenSource,
-          tags: cleanText(tool.tags), source: cleanText(tool.source),
-          sourceUrl: cleanText(tool.sourceUrl),
-          publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : new Date(),
-          categoryId, status: 'approved', isActive: true
+      const data = {
+        name: cleanText(tool.name),
+        slug,
+        // 有内容就写 description：原先只在 >110 字时才写，导致短描述工具
+        // description 永久为空（翻译流程只翻译已存在字段，补不回来）
+        ...(desc.trim() ? { description: desc } : {}),
+        shortDesc: desc.slice(0, 100),
+        websiteUrl: tool.websiteUrl || '',
+        githubUrl: tool.githubUrl || '',
+        stars: tool.stars || 0, upvotes: 0,
+        isOpenSource: tool.isOpenSource,
+        tags: cleanText(tool.tags), source: cleanText(tool.source),
+        sourceUrl: cleanText(tool.sourceUrl),
+        publishedAt: tool.publishedAt ? new Date(tool.publishedAt) : new Date(),
+        categoryId, status: 'approved', isActive: true
+      }
+
+      try {
+        await withRetry(() => prisma.tool.create({ data }))
+        markCreated(slug)
+        return { status: 'saved', name: tool.name }
+      } catch (e: any) {
+        // 兜底：分配后数据库又出现同 slug（并发写入）时，换带序号的 slug 再试一次。
+        // 单条失败绝不能拖垮整批 Promise.all，否则已成功的条目也统计不到
+        if (e?.code === 'P2002') {
+          const fallback = allocateSlug(`${base}-${Date.now().toString(36)}`, tool.githubUrl, usedSlugs)
+          try {
+            await withRetry(() => prisma.tool.create({ data: { ...data, slug: fallback } }))
+            markCreated(fallback)
+            return { status: 'saved', name: tool.name }
+          } catch {}
         }
-      }))
-      return { status: 'saved', name: tool.name }
+        console.log(`⚠️ 保存失败已跳过: ${tool.name} (${e?.code || e?.message || 'unknown'})`)
+        return { status: 'failed', name: tool.name }
+      }
     }))
     results.push(...batchResults)
   }
   
+  let failed = 0
   for (const r of results) {
     if (r.status === 'saved') {
       saved++
       console.log(`✅ 已保存: ${r.name}`)
+    } else if (r.status === 'failed') {
+      failed++
     } else {
       skipped++
     }
   }
+  if (failed > 0) console.log(`⚠️ 失败 ${failed} 条（已逐条跳过，未影响其他条目）`)
   
   return { saved, skipped }
 }
