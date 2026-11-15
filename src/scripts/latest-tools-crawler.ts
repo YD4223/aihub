@@ -240,11 +240,63 @@ function dropForkFarms<T extends { name?: string; githubUrl?: string }>(tools: T
   return tools.filter(t => !spam.has(t))
 }
 
+/**
+ * 过滤 API 转售 SEO 农场：同一团伙用大量新注册账号批量建仓库，把
+ * 「模型名 + api/gateway/prompts」堆进仓库名与描述，抢占模型名的搜索流量。
+ * 这类仓库 stars 靠刷、描述是报价单，对导航站是纯噪音。
+ * 2026-11-15 全库排查出 77 条，命中四条规则，误杀 0（34 个知名 owner 项目全未命中）。
+ */
+function dropSeoFarms<T extends { name?: string; githubUrl?: string; shortDesc?: string; description?: string }>(tools: T[]): T[] {
+  // 规则A：归一化后模型名重复两遍，如 seedance2.5-seedance-2.5-api-cn → seedance25 ×2
+  const repeatTwice = (name: string): boolean => {
+    const n = name.toLowerCase().replace(/[^a-z0-9]/g, '')
+    for (let len = Math.floor(n.length / 2); len >= 6; len--) {
+      if (n.slice(0, len) === n.slice(len, len * 2)) return true
+    }
+    return false
+  }
+
+  // 规则B：apimart 批量账号 或 official-api-(ja|cn|ko) 后缀
+  const isMarketingOwner = (t: T): boolean => {
+    const owner = (t.githubUrl?.match(/github\.com\/([^/]+)\//i)?.[1] || '').toLowerCase()
+    return /^apimart/.test(owner) || /official-api-(ja|cn|ko)$/i.test(t.name || '')
+  }
+
+  // 规则C：描述是 API 报价单，如「$0.0961/秒 + OpenAI 兼容网关 + 最低充值 1 美元」
+  const isSoftAd = (t: T): boolean => {
+    const d = `${t.shortDesc || ''} ${t.description || ''}`.toLowerCase()
+    const hasPrice = /\$\s?\d|per second|每秒|起充/.test(d)
+    const hasSell = /model id|模型\s*id|gateway key|api key|openai\s*兼容|openai-compatible|compatible api/.test(d)
+    return hasPrice && hasSell
+  }
+
+  // 规则D：名字连字符堆砌 ≥3 段 + 变现后缀 + 版本号，且描述提到 model id
+  const isNameStacked = (t: T): boolean => {
+    const name = t.name || ''
+    const segs = name.toLowerCase().split(/[-_\s]+/).filter(Boolean)
+    const hasMoneyWord = /(^|-)(api|gateway|prompts?|4k|2k)(-|$)|official-api/i.test(name)
+    const hasVersion = /\d/.test(name)
+    const descModelId = /model id|模型\s*id|model-id/i.test(`${t.shortDesc || ''} ${t.description || ''}`)
+    return segs.length >= 3 && hasMoneyWord && hasVersion && descModelId
+  }
+
+  const spam = new Set<T>()
+  for (const t of tools) {
+    const name = t.name || ''
+    if (repeatTwice(name) || isMarketingOwner(t) || isSoftAd(t) || isNameStacked(t)) spam.add(t)
+  }
+  if (spam.size > 0) {
+    console.log(`🧹 过滤 API 转售 SEO 农场: ${spam.size} 条（模型名堆砌/报价单描述）`)
+    spam.forEach(t => console.log(`   跳过: ${t.name}`))
+  }
+  return tools.filter(t => !spam.has(t))
+}
+
 async function saveTools(rawTools: any[]) {
   let saved = 0
   let skipped = 0
 
-  const tools = dropForkFarms(rawTools)
+  const tools = dropSeoFarms(dropForkFarms(rawTools))
   if (tools.length === 0) return { saved, skipped }
   
   // 第一步：批量预查所有 slug、websiteUrl、githubUrl（1次查询代替 N 次逐条查询）
