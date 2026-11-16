@@ -190,6 +190,15 @@ const tools = [
     pricing: 'PAID',
     source: 'crawler',
   },
+  {
+    name: 'GetYouTubeTranscript',
+    slug: 'getyoutubetranscript',
+    description: 'YouTube视频字幕文稿提取工具，可带时间戳或翻译成其他语言，支持批量获取，提供API、MCP服务器和浏览器扩展',
+    url: 'https://getyoutubetranscript.com',
+    categoryId: 'video',
+    pricing: 'FREEMIUM',
+    source: 'crawler',
+  },
   // AI音频
   {
     name: 'ElevenLabs',
