@@ -255,6 +255,15 @@ const tools = [
     pricing: 'FREEMIUM',
     source: 'crawler',
   },
+  {
+    name: 'DisconfirmAI',
+    slug: 'disconfirmai',
+    description: '投资研究与阅读网站，下结论前先找可能推翻观点的反面证据，有每日公开资料阅读、财报与数据研究、条件雷达、投资框架、AI 100 榜单和产业地图，不提供买卖建议',
+    url: 'https://disconfirmai.com/zh',
+    categoryId: 'search',
+    pricing: 'FREEMIUM',
+    source: 'crawler',
+  },
 ];
 
 async function main() {
