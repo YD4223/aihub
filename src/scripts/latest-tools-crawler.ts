@@ -246,7 +246,7 @@ function dropForkFarms<T extends { name?: string; githubUrl?: string }>(tools: T
  * 这类仓库 stars 靠刷、描述是报价单，对导航站是纯噪音。
  * 2026-11-15 全库排查出 77 条，命中四条规则，误杀 0（34 个知名 owner 项目全未命中）。
  */
-function dropSeoFarms<T extends { name?: string; githubUrl?: string; shortDesc?: string; description?: string }>(tools: T[]): T[] {
+function dropSeoFarms<T extends { name?: string; githubUrl?: string; shortDesc?: string; description?: string; tags?: string }>(tools: T[]): T[] {
   // 规则A：归一化后模型名重复两遍，如 seedance2.5-seedance-2.5-api-cn → seedance25 ×2
   const repeatTwice = (name: string): boolean => {
     const n = name.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -284,10 +284,49 @@ function dropSeoFarms<T extends { name?: string; githubUrl?: string; shortDesc?:
     return segs.length >= 3 && hasMoneyWord && hasVersion && descModelId
   }
 
+  // 规则E：名字/描述/tags 里带 apimart 指纹。
+  // 该团伙把 GitHub topics 设成 apimart 蹭流量，换了 owner 名也藏不住。
+  // 实例：2026-11-18 的 fujc683，一个账号 23 个仓库，topics 全带 apimart
+  const hasApimartMark = (t: T): boolean =>
+    /apimart/i.test(`${t.name || ''} ${t.tags || ''} ${t.shortDesc || ''} ${t.description || ''}`)
+
+  // 规则F：同一批次里单个 owner 批量建仓，且仓库名高度同前缀。
+  // 真实公司偶尔一次发多个仓库，但名字不会同前缀堆砌；
+  // 农场是「模型名 + 变现后缀」批量生成，前缀必然高度重合。
+  // 实例：fujc683 的 gpt-image-2-6-*（14 个）/ seedance-2-5-flash-*（9 个）
+  // 注意：一个 owner 可能有多个系列，不能对所有名字求一次共同前缀（会得 0），
+  // 必须按「前 10 字符」分组，任一组达到 4 个即判定该 owner 为批量号，其候选全部丢弃。
+  const byOwner = new Map<string, T[]>()
+  for (const t of tools) {
+    const owner = (t.githubUrl?.match(/github\.com\/([^/]+)\//i)?.[1] || '').toLowerCase()
+    if (!owner) continue
+    const arr = byOwner.get(owner)
+    if (arr) arr.push(t)
+    else byOwner.set(owner, [t])
+  }
+  const ownerSpam = new Set<T>()
+  for (const group of byOwner.values()) {
+    if (group.length < 4) continue
+    const byPrefix = new Map<string, T[]>()
+    for (const t of group) {
+      const key = (t.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10)
+      if (key.length < 10) continue
+      const arr = byPrefix.get(key)
+      if (arr) arr.push(t)
+      else byPrefix.set(key, [t])
+    }
+    let batch = false
+    for (const sub of byPrefix.values()) {
+      if (sub.length >= 4) { batch = true; break }
+    }
+    if (batch) group.forEach(t => ownerSpam.add(t))
+  }
+
   const spam = new Set<T>()
   for (const t of tools) {
     const name = t.name || ''
-    if (repeatTwice(name) || isMarketingOwner(t) || isSoftAd(t) || isNameStacked(t)) spam.add(t)
+    if (repeatTwice(name) || isMarketingOwner(t) || isSoftAd(t) || isNameStacked(t) ||
+        hasApimartMark(t) || ownerSpam.has(t)) spam.add(t)
   }
   if (spam.size > 0) {
     console.log(`🧹 过滤 API 转售 SEO 农场: ${spam.size} 条（模型名堆砌/报价单描述）`)
