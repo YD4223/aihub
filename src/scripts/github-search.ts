@@ -70,7 +70,13 @@ const HOT_PER_PAGE = 30  // 热门搜索每批少取一些，避免重复
 const DAYS = 90
 const PER_PAGE = 100
 
-const GQL_QUERY = "query($searchQuery:String!){search(query:$searchQuery,type:REPOSITORY,first:" + PER_PAGE + "){nodes{...on Repository{name description url homepageUrl createdAt stargazerCount repositoryTopics(first:5){nodes{topic{name}}}owner{login}}}}}"
+// forkCount / watchers / diskUsage 是判定刷星农场的核心依据：
+// 真项目涨到 100★ 必然有人 fork、有人 watch，代码也不会只有几十 KB。
+// 三个都是标量/单层 connection，开销可控。
+// 不要在这里加 owner 的 followers/repositories —— 那要对每个 repo 展开 owner
+// 子查询，实测直接把 search 撞上 "Resource limits for this query exceeded"（第 2/5 组失败）。
+const GQL_FIELDS = "name description url homepageUrl createdAt stargazerCount forkCount diskUsage watchers{totalCount} repositoryTopics(first:5){nodes{topic{name}}} owner{login}"
+const GQL_QUERY = "query($searchQuery:String!){search(query:$searchQuery,type:REPOSITORY,first:" + PER_PAGE + "){nodes{...on Repository{" + GQL_FIELDS + "}}}}"
 
 interface GitHubTool {
   name: string
@@ -78,11 +84,24 @@ interface GitHubTool {
   githubUrl: string
   websiteUrl: string
   stars: number
+  /** 用于识别刷星农场：真项目 stars>=100 时 forks/watchers 不可能同时为 0 */
+  forks?: number
+  watchers?: number
+  /** 仓库体量（KB）。刷星农场的代码只有几十到几百 KB，却挂着几百颗星 */
+  sizeKB?: number
   publishedAt: string
   source: string
   sourceUrl: string
   tags: string
   isOpenSource: boolean
+}
+
+function pickRepoMeta(repo: any) {
+  return {
+    forks: repo.forkCount ?? 0,
+    watchers: repo.watchers?.totalCount ?? 0,
+    sizeKB: repo.diskUsage ?? 0,
+  }
 }
 
 async function searchGitHubTools(): Promise<GitHubTool[]> {
@@ -141,6 +160,7 @@ async function searchGitHubTools(): Promise<GitHubTool[]> {
           githubUrl: repo.url,
           websiteUrl: repo.homepageUrl || '',
           stars: repo.stargazerCount || 0,
+          ...pickRepoMeta(repo),
           publishedAt: repo.createdAt,
           source: `github-${i}`,
           sourceUrl: repo.url,
@@ -167,7 +187,7 @@ async function searchPopularGitHubTools(): Promise<GitHubTool[]> {
   const allTools: GitHubTool[] = []
   const seen = new Set<string>()
 
-  const GQL_HOT = "query($searchQuery:String!){search(query:$searchQuery,type:REPOSITORY,first:" + HOT_PER_PAGE + "){nodes{...on Repository{name description url homepageUrl createdAt stargazerCount repositoryTopics(first:5){nodes{topic{name}}}owner{login}}}}}"
+  const GQL_HOT = "query($searchQuery:String!){search(query:$searchQuery,type:REPOSITORY,first:" + HOT_PER_PAGE + "){nodes{...on Repository{" + GQL_FIELDS + "}}}}"
 
   for (let i = 0; i < HOT_QUERIES.length; i++) {
     const q = HOT_QUERIES[i]
@@ -200,6 +220,7 @@ async function searchPopularGitHubTools(): Promise<GitHubTool[]> {
           githubUrl: repo.url,
           websiteUrl: repo.homepageUrl || '',
           stars: repo.stargazerCount || 0,
+          ...pickRepoMeta(repo),
           publishedAt: repo.createdAt,
           source: `hot-${i}`,
           sourceUrl: repo.url,

@@ -335,11 +335,93 @@ function dropSeoFarms<T extends { name?: string; githubUrl?: string; shortDesc?:
   return tools.filter(t => !spam.has(t))
 }
 
+/**
+ * 过滤盗版 / 破解 / 外挂分发：这类仓库发布商业软件的破解安装包或游戏作弊器。
+ * 对导航站是「法律 + 安全」双重风险——破解包普遍捆绑木马，而导航站是导流入口。
+ * 2026-11-20 全库排查出 8 条，误杀 0。
+ * 实例：
+ *   adobe-acrobat-pdf-desktop  topics 含 acrobat-for-free-2026 / acrobat-no-limits
+ *   copilot-emulator-patch     描述「无需订阅即可获得高级功能」
+ *   axion-cs2-rage-cheat       CS2 外挂
+ *   stable-diffusion-crack-2026
+ * 注意：`crack` 单独不能判——计算机视觉里 crack 指「裂缝检测」（concrete-crack-detection
+ * 是真实项目）。所以必须跟 version/download/free/年份 这类变现词组合。
+ */
+function dropPiracy<T extends { name?: string; shortDesc?: string; description?: string; tags?: string }>(tools: T[]): T[] {
+  const textOf = (t: T) => `${t.name || ''} ${t.tags || ''} ${t.shortDesc || ''} ${t.description || ''}`
+
+  const RULES: Array<[RegExp, string]> = [
+    // 破解版/注册机/激活器（必须带变现词，避免误杀「裂缝检测」类项目）
+    // 不能用裸 `activator`：GitHub topics 里被滥用成通用标签，
+    // 实测会把 mindact-agent（AI 代理）、grizl-fabric-observability（Azure KQL 库）误判
+    [/crack(ed)?[-_ ]?(version|download|free|pro|20\d\d)|keygen|warez|nulled[-_ ]?(app|version|edition|script)|(kms|office|windows|acrobat)[-_ ]?(activator|loader|patch)/i, '破解版'],
+    // 明码标价的「免费/无限制」
+    [/(^|-)for-free-20\d\d|no-limits|emulator-patch|unlimited[-_ ](license|activation|rage|health|ammo)/i, '免订阅/游戏作弊'],
+    // 中文破解话术
+    [/破解|注册机|激活码|激活工具|绿色版|免激活|产品密钥/, '中文破解'],
+  ]
+  // 规则只测仓库名：名字以 desktop/setup/installer 结尾才算「盗版安装包」。
+  // 不能拿拼上 tags+描述的大字符串去测 `$` —— 那样永远匹配不到（2026-11-20 踩过）
+  const PIRACY_NAME_RE = /(adobe|acrobat|photoshop|pro-?tools|beyond-compare|pixverse|leonardo-ai|figma|office|matlab)[-_ ]?.*[-_ ](desktop|setup|installer)$/i
+
+  const spam = new Set<T>()
+  for (const t of tools) {
+    const all = textOf(t)
+    // 每个词都必须带词边界：裸 `rage-bot` 会命中 Arbi**trage-Bot**（MEV 套利机器人，1.4k★）
+    const hasCheatTool = /cheat[-_ ]?engine|\baimbot\b|\bwallhack\b|\btriggerbot\b|\brage[-_ ]?bot\b|\bhwid[-_ ]?spoofer\b/i.test(all)
+    // 游戏外挂：游戏名 + 作弊词同时出现即判（单看 cheat 会误杀 git cheat sheet 类项目）
+    const isGameCheat = /\b(cs2|csgo|cs-go|valorant|fortnite|apex-legends|gta-v)\b/i.test(all) &&
+      /\b(cheat|hack|aimbot|triggerbot|rage[-_ ]?bot|esp[-_ ]?wallhack)\b/i.test(all)
+    if (isGameCheat || hasCheatTool) { spam.add(t); console.log(`   跳过(作弊工具): ${t.name}`); continue }
+    if (PIRACY_NAME_RE.test(t.name || '')) { spam.add(t); console.log(`   跳过(商业软件盗版包): ${t.name}`); continue }
+    for (const [re, label] of RULES) {
+      if (re.test(all)) { spam.add(t); console.log(`   跳过(${label}): ${t.name}`); break }
+    }
+  }
+  if (spam.size > 0) console.log(`🧹 过滤盗版/破解/外挂: ${spam.size} 条`)
+  return tools.filter(t => !spam.has(t))
+}
+
+/**
+ * 过滤刷星农场：真项目涨到 100 星必然有人 fork、有人 watch。
+ * `stars>=100 且 forks=0 且 watchers=0` 是刷星的硬特征——它跟项目好不好无关，
+ * 是「星是买的、代码没人用」的数学证据。
+ * 但单靠这一条会误杀「内容真实、星被买过」的项目（实测 6/6 命中都是有 1~33MB
+ * 真实代码的项目），所以必须叠加**体量**：农场批量生成的空壳只有几十到几百 KB。
+ *
+ * 2026-11-20 闭环验证（库内 2,042 个 GitHub 项目 + 已删的 8 条垃圾正样本）：
+ *   正样本全部命中；负样本仅额外命中 1 条（revana-js，38KB 的 API 中转马甲，
+ *   star 同样是刷的），真实项目 0 误杀。
+ *
+ * 注：不做 owner 关注数/仓库数判定 —— 那些字段要在 GraphQL 里对每个 repo 展开
+ * connection，会直接把 search 查询撞上复杂度上限（实测第 2/5 组报
+ * Resource limits exceeded），得不偿失。
+ */
+function dropStarFarms<T extends { name?: string; stars?: number; forks?: number; watchers?: number; sizeKB?: number }>(tools: T[]): T[] {
+  const spam = new Set<T>()
+  for (const t of tools) {
+    const stars = t.stars || 0
+    if (stars < 100) continue
+    if ((t.forks ?? 0) > 0 || (t.watchers ?? 0) > 0) continue
+    // 缺字段的旧调用方（手工导入）不拿缺失当证据
+    if (t.sizeKB === undefined) continue
+    // 有真实代码体量的项目放过：刷星归刷星，内容本身对导航站有价值。
+    // 门槛定 200KB —— 实测 270KB 的 VibeCodingAssistant（Codex/Claude Code
+    // 交叉审计工具，479★/0fork/0watch）功能真实，只是星被刷过，不该删；
+    // 200KB 以下的空壳才是批量生成的农场（实测垃圾样本 111~159KB）。
+    if (t.sizeKB >= 200) continue
+    spam.add(t)
+    console.log(`   跳过(刷星 ${stars}★/0fork/0watch/${t.sizeKB}KB): ${t.name}`)
+  }
+  if (spam.size > 0) console.log(`🧹 过滤刷星农场: ${spam.size} 条`)
+  return tools.filter(t => !spam.has(t))
+}
+
 async function saveTools(rawTools: any[]) {
   let saved = 0
   let skipped = 0
 
-  const tools = dropSeoFarms(dropForkFarms(rawTools))
+  const tools = dropStarFarms(dropPiracy(dropSeoFarms(dropForkFarms(rawTools))))
   if (tools.length === 0) return { saved, skipped }
   
   // 第一步：批量预查所有 slug、websiteUrl、githubUrl（1次查询代替 N 次逐条查询）
